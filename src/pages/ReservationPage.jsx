@@ -1,19 +1,21 @@
 import { useState } from 'react';
 import { useReservation } from '../context/ReservationContext';
-import { formatDate, formatTime } from '../utils/format'; // 이 줄 추가!
+import { formatDate, formatTime } from '../utils/format';
 import SeminarSelector from '../components/reservation/SeminarSelector';
 import PhoneInput from '../components/reservation/PhoneInput';
 import StudentInfoForm from '../components/reservation/StudentInfoForm';
 import ReservationComplete from '../components/reservation/ReservationComplete';
-import Button from '../components/common/Button';
+import ReservationCheck from '../components/reservation/ReservationCheck';
+import ReservationResult from '../components/reservation/ReservationResult';
 import { supabase } from '../utils/supabase';
 
 export default function ReservationPage() {
   const { selectedSeminar, showToast } = useReservation();
-  const [step, setStep] = useState('home'); // home, phone, info, complete
+  const [step, setStep] = useState('home');
   const [phone, setPhone] = useState('');
   const [previousInfo, setPreviousInfo] = useState(null);
   const [completedReservation, setCompletedReservation] = useState(null);
+  const [checkedReservation, setCheckedReservation] = useState(null);
 
   const handleProceedToReservation = () => {
     if (!selectedSeminar) {
@@ -21,6 +23,10 @@ export default function ReservationPage() {
       return;
     }
     setStep('phone');
+  };
+
+  const handleCheckReservation = () => {
+    setStep('check');
   };
 
   const handlePhoneNext = (phoneNumber) => {
@@ -58,134 +64,169 @@ export default function ReservationPage() {
     setStep('complete');
   };
 
+  const handleCheckResult = (reservation) => {
+    setCheckedReservation(reservation);
+    setStep('result');
+  };
+
   const handleHome = () => {
     setStep('home');
     setPhone('');
     setPreviousInfo(null);
     setCompletedReservation(null);
+    setCheckedReservation(null);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* 홈 화면 */}
-        {step === 'home' && (
-          <div className="bg-white rounded-xl shadow-lg p-8 space-y-6">
-            <div className="text-center mb-6">
-              <img
-                src="/assets/images/istudy-logo.png"
-                alt="i.study"
-                className="h-8 mx-auto mb-2"
-              />
-              <h2 className="text-2xl font-bold text-primary mb-2">
-                VIP 학부모 설명회
-              </h2>
-              <p className="text-gray-600 text-sm">설명회 참석 예약 시스템</p>
-              <div className="w-full h-px bg-gray-200 mt-4"></div>
+    <div className="container">
+      {/* 홈 화면 */}
+      {step === 'home' && (
+        <div className="card">
+          <img
+            src="/assets/images/istudy-logo.png"
+            alt="i.study"
+            className="logo"
+          />
+
+          <h1>VIP 학부모 설명회</h1>
+          <h2>설명회 참석 예약 시스템</h2>
+
+          <p className="select-guide">참석하실 설명회를 선택해주세요</p>
+
+          <SeminarSelector />
+
+          {selectedSeminar && (
+            <div className="info-box">
+              <p>
+                <strong>{selectedSeminar.title}</strong>
+              </p>
+              <ul>
+                <li>
+                  일시: {formatDate(selectedSeminar.date)}{' '}
+                  {formatTime(selectedSeminar.time)}
+                </li>
+                <li>장소: {selectedSeminar.location}</li>
+                <li>대상: 초/중등 학부모님</li>
+              </ul>
+              <p style={{ fontSize: '13px', marginTop: '10px', color: '#666' }}>
+                ※ 설명회 참석 후 개별 맞춤 컨설팅이 가능합니다.
+              </p>
             </div>
+          )}
 
-            {selectedSeminar && (
-              <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                <p className="font-semibold text-sm mb-1 text-primary">
-                  {selectedSeminar.title} 선택됨
-                </p>
-              </div>
-            )}
-
-            <SeminarSelector />
-
-            {selectedSeminar && (
-              <div className="bg-gray-50 rounded-lg p-4 mt-4">
-                <p className="font-semibold text-sm mb-1">
-                  강남점 VIP 설명회 - 테스트
-                </p>
-                <ul className="text-sm text-gray-700 space-y-1 mt-2">
-                  <li>
-                    • 일시: {formatDate(selectedSeminar.date)}{' '}
-                    {formatTime(selectedSeminar.time)}
-                  </li>
-                  <li>• 장소: {selectedSeminar.location}</li>
-                  <li>• 대상: 초/중등 학부모님</li>
-                </ul>
-                <p className="text-xs text-gray-500 mt-3">
-                  ※ 설명회 참석 후 개별 맞춤 컨설팅이 가능합니다.
-                </p>
-              </div>
-            )}
-
-            <Button
+          <div className="btn-group">
+            <button
               onClick={handleProceedToReservation}
               disabled={!selectedSeminar}
+              className="btn btn-primary"
             >
               설명회 예약하기
-            </Button>
-
-            {!selectedSeminar && (
-              <button
-                className="w-full py-3 border-2 border-primary text-primary rounded-lg hover:bg-blue-50 transition-all"
-                disabled
-              >
-                예약 확인하기
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* 전화번호 입력 */}
-        {step === 'phone' && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <button
-              onClick={handleHome}
-              className="text-gray-600 hover:text-gray-800 mb-4"
-            >
-              ← 뒤로
             </button>
 
-            <h2 className="text-2xl font-bold mb-2">
-              {selectedSeminar?.isFull
-                ? '대기예약 신청하기'
-                : '설명회 예약하기'}
-            </h2>
-            <p className="text-gray-600 mb-6">
-              학부모님 연락처를 입력해주세요.
-            </p>
-
-            <PhoneInput
-              onNext={handlePhoneNext}
-              onLoadPrevious={handleLoadPrevious}
-            />
+            <button
+              onClick={handleCheckReservation}
+              className="btn btn-secondary"
+            >
+              예약 확인하기
+            </button>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* 개인정보 입력 */}
-        {step === 'info' && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold mb-2">
-              {selectedSeminar?.isFull
-                ? '대기예약 신청하기'
-                : '설명회 예약하기'}
-            </h2>
-            <p className="text-gray-600 mb-6">참석자 정보를 입력해주세요.</p>
+      {/* 전화번호 입력 */}
+      {step === 'phone' && (
+        <div className="card">
+          <button onClick={handleHome} className="btn-back">
+            ← 뒤로
+          </button>
 
-            <StudentInfoForm
-              phone={phone}
-              previousInfo={previousInfo}
-              onBack={() => setStep('phone')}
-              onComplete={handleComplete}
-            />
-          </div>
-        )}
+          <h1>
+            {selectedSeminar?.isFull ? '대기예약 신청하기' : '설명회 예약하기'}
+          </h1>
+          <h2
+            style={{
+              borderBottom: 'none',
+              paddingBottom: '10px',
+              marginBottom: '20px',
+            }}
+          >
+            학부모님 연락처를 입력해주세요
+          </h2>
 
-        {/* 예약 완료 */}
-        {step === 'complete' && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <ReservationComplete
-              reservation={completedReservation}
-              onHome={handleHome}
-            />
-          </div>
-        )}
-      </div>
+          <PhoneInput
+            onNext={handlePhoneNext}
+            onLoadPrevious={handleLoadPrevious}
+          />
+        </div>
+      )}
+
+      {/* 개인정보 입력 */}
+      {step === 'info' && (
+        <div className="card">
+          <h1>
+            {selectedSeminar?.isFull ? '대기예약 신청하기' : '설명회 예약하기'}
+          </h1>
+          <h2
+            style={{
+              borderBottom: 'none',
+              paddingBottom: '10px',
+              marginBottom: '20px',
+            }}
+          >
+            참석자 정보를 입력해주세요
+          </h2>
+
+          <StudentInfoForm
+            phone={phone}
+            previousInfo={previousInfo}
+            onBack={() => setStep('phone')}
+            onComplete={handleComplete}
+          />
+        </div>
+      )}
+
+      {/* 예약 완료 */}
+      {step === 'complete' && (
+        <div className="card">
+          <ReservationComplete
+            reservation={completedReservation}
+            onHome={handleHome}
+          />
+        </div>
+      )}
+
+      {/* 예약 확인 */}
+      {step === 'check' && (
+        <div className="card">
+          <button onClick={handleHome} className="btn-back">
+            ← 뒤로
+          </button>
+
+          <h1>예약 확인하기</h1>
+          <h2
+            style={{
+              borderBottom: 'none',
+              paddingBottom: '10px',
+              marginBottom: '20px',
+            }}
+          >
+            예약 정보를 입력해주세요
+          </h2>
+
+          <ReservationCheck onBack={handleHome} onResult={handleCheckResult} />
+        </div>
+      )}
+
+      {/* 예약 조회 결과 */}
+      {step === 'result' && (
+        <div className="card">
+          <ReservationResult
+            reservation={checkedReservation}
+            onBack={() => setStep('check')}
+            onHome={handleHome}
+          />
+        </div>
+      )}
     </div>
   );
 }

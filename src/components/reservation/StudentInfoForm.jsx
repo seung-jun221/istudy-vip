@@ -62,6 +62,22 @@ export default function StudentInfoForm({
     setLoading(true);
 
     try {
+      // 🔥 중복 체크 추가!
+      const { data: existing, error: existingError } = await supabase
+        .from('reservations')
+        .select('*')
+        .eq('parent_phone', phone)
+        .eq('seminar_id', selectedSeminar.id)
+        .in('status', ['예약', '대기']);
+
+      if (existingError) throw existingError;
+
+      if (existing && existing.length > 0) {
+        showToast('이미 해당 설명회에 예약이 존재합니다.', 'error');
+        setLoading(false);
+        return;
+      }
+
       // 예약 데이터 생성
       const reservationData = {
         reservation_id: 'R' + Date.now(),
