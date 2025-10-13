@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import Input from '../common/Input';
-import Button from '../common/Button';
-import { validatePhone, formatPhone } from '../../utils/format';
+import { validatePhone } from '../../utils/format';
 import { useReservation } from '../../context/ReservationContext';
 
 export default function PhoneInput({ onNext, onLoadPrevious }) {
@@ -43,21 +41,37 @@ export default function PhoneInput({ onNext, onLoadPrevious }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        label="학부모 연락처"
-        type="tel"
-        value={phone}
-        onChange={handlePhoneChange}
-        placeholder="010-0000-0000"
-        required
-      />
+    <form onSubmit={handleSubmit}>
+      {/* 전화번호 입력 */}
+      <div className="form-group">
+        <label>
+          학부모 연락처 <span className="required-mark">*</span>
+        </label>
+        <input
+          type="tel"
+          value={phone}
+          onChange={handlePhoneChange}
+          placeholder="010-0000-0000"
+          maxLength="13"
+          required
+          autoFocus
+        />
+      </div>
 
-      <Button type="button" variant="secondary" onClick={handleLoadPrevious}>
-        이전 정보 불러오기
-      </Button>
+      {/* 버튼 그룹 */}
+      <div className="btn-group">
+        <button
+          type="button"
+          onClick={handleLoadPrevious}
+          className="btn btn-secondary"
+        >
+          이전 정보 불러오기
+        </button>
 
-      <Button type="submit">다음</Button>
+        <button type="submit" className="btn btn-primary">
+          다음
+        </button>
+      </div>
     </form>
   );
 }
