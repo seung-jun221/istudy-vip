@@ -301,21 +301,21 @@ h2 {
 /* ===== 버튼 그룹 ===== */
 .btn-group {
   display: flex;
-  flex-direction: column;
-  gap: 15px;
+  flex-direction: row;
+  gap: 10px;
 }
 
 /* ===== 버튼 스타일 ===== */
 .btn {
-  padding: 15px;
+  padding: 12px 20px;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
   text-align: center;
-  width: 100%;
+  flex: 1;
 }
 
 .btn-primary {
@@ -353,20 +353,21 @@ h2 {
 }
 
 .btn-back {
-  background: none;
-  border: none;
-  color: #666;
+  background: #666;
+  color: white;
   font-size: 14px;
   cursor: pointer;
   margin-bottom: 20px;
-  padding: 0;
-  transition: color 0.3s;
-  text-align: left;
-  width: auto;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  transition: all 0.3s;
+  text-align: center;
+  display: inline-block;
 }
 
 .btn-back:hover {
-  color: #333;
+  background: #555;
 }
 
 /* ===== 로딩 스피너 ===== */
@@ -454,5 +455,13 @@ h2 {
   .availability-badge {
     font-size: 11px;
     padding: 3px 10px;
+  }
+
+  .btn-group {
+    flex-direction: column;
+  }
+
+  .btn-secondary {
+    width: 100%;
   }
 }

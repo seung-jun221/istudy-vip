@@ -44,9 +44,7 @@ export default function PhoneInput({ onNext, onLoadPrevious }) {
     <form onSubmit={handleSubmit}>
       {/* 전화번호 입력 */}
       <div className="form-group">
-        <label>
-          학부모 연락처 <span className="required-mark">*</span>
-        </label>
+        <label>학부모 연락처</label>
         <input
           type="tel"
           value={phone}
@@ -58,7 +56,7 @@ export default function PhoneInput({ onNext, onLoadPrevious }) {
         />
       </div>
 
-      {/* 버튼 그룹 */}
+      {/* 버튼 그룹 - 가로 배치 */}
       <div className="btn-group">
         <button
           type="button"

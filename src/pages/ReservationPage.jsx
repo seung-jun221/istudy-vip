@@ -142,18 +142,12 @@ export default function ReservationPage() {
             ← 뒤로
           </button>
 
-          <h1>
+          <h2 id="phoneTitle">
             {selectedSeminar?.isFull ? '대기예약 신청하기' : '설명회 예약하기'}
-          </h1>
-          <h2
-            style={{
-              borderBottom: 'none',
-              paddingBottom: '10px',
-              marginBottom: '20px',
-            }}
-          >
-            학부모님 연락처를 입력해주세요
           </h2>
+          <p style={{ marginBottom: '20px', color: '#666' }}>
+            학부모님 연락처를 입력해주세요.
+          </p>
 
           <PhoneInput
             onNext={handlePhoneNext}
@@ -168,15 +162,7 @@ export default function ReservationPage() {
           <h1>
             {selectedSeminar?.isFull ? '대기예약 신청하기' : '설명회 예약하기'}
           </h1>
-          <h2
-            style={{
-              borderBottom: 'none',
-              paddingBottom: '10px',
-              marginBottom: '20px',
-            }}
-          >
-            참석자 정보를 입력해주세요
-          </h2>
+          <h2>참석자 정보를 입력해주세요</h2>
 
           <StudentInfoForm
             phone={phone}
@@ -205,15 +191,7 @@ export default function ReservationPage() {
           </button>
 
           <h1>예약 확인하기</h1>
-          <h2
-            style={{
-              borderBottom: 'none',
-              paddingBottom: '10px',
-              marginBottom: '20px',
-            }}
-          >
-            예약 정보를 입력해주세요
-          </h2>
+          <h2>예약 정보를 입력해주세요</h2>
 
           <ReservationCheck onBack={handleHome} onResult={handleCheckResult} />
         </div>
