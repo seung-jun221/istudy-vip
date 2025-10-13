@@ -62,23 +62,7 @@ export default function StudentInfoForm({
     setLoading(true);
 
     try {
-      // 🔥 중복 체크 추가!
-      const { data: existing, error: existingError } = await supabase
-        .from('reservations')
-        .select('*')
-        .eq('parent_phone', phone)
-        .eq('seminar_id', selectedSeminar.id)
-        .in('status', ['예약', '대기']);
-
-      if (existingError) throw existingError;
-
-      if (existing && existing.length > 0) {
-        showToast('이미 해당 설명회에 예약이 존재합니다.', 'error');
-        setLoading(false);
-        return;
-      }
-
-      // 예약 데이터 생성
+      // 예약 데이터 생성 (중복 체크는 이미 2단계에서 완료!)
       const reservationData = {
         reservation_id: 'R' + Date.now(),
         seminar_id: selectedSeminar.id,
@@ -112,6 +96,7 @@ export default function StudentInfoForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* 이전 정보 로드 알림 */}
       {previousInfo && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
           <p className="text-green-700 text-sm">
@@ -120,6 +105,7 @@ export default function StudentInfoForm({
         </div>
       )}
 
+      {/* 학생명 */}
       <Input
         label="학생명"
         value={formData.studentName}
@@ -128,6 +114,10 @@ export default function StudentInfoForm({
         required
       />
 
+      {/* 학부모 연락처 (읽기 전용) */}
+      <Input label="학부모 연락처" value={phone} readOnly disabled />
+
+      {/* 학교 & 학년 */}
       <div className="grid grid-cols-2 gap-3">
         <Input
           label="학교"
@@ -148,16 +138,23 @@ export default function StudentInfoForm({
             required
           >
             <option value="">선택</option>
-            <option value="중1">중1</option>
-            <option value="중2">중2</option>
-            <option value="중3">중3</option>
-            <option value="고1">고1</option>
-            <option value="고2">고2</option>
-            <option value="고3">고3</option>
+            <option value="초1">초등학교 1학년</option>
+            <option value="초2">초등학교 2학년</option>
+            <option value="초3">초등학교 3학년</option>
+            <option value="초4">초등학교 4학년</option>
+            <option value="초5">초등학교 5학년</option>
+            <option value="초6">초등학교 6학년</option>
+            <option value="중1">중학교 1학년</option>
+            <option value="중2">중학교 2학년</option>
+            <option value="중3">중학교 3학년</option>
+            <option value="고1">고등학교 1학년</option>
+            <option value="고2">고등학교 2학년</option>
+            <option value="고3">고등학교 3학년</option>
           </select>
         </div>
       </div>
 
+      {/* 수학 선행정도 */}
       <Input
         label="수학 선행정도"
         value={formData.mathLevel}
@@ -166,6 +163,7 @@ export default function StudentInfoForm({
         required
       />
 
+      {/* 비밀번호 */}
       <Input
         label="비밀번호 (숫자 6자리)"
         type="password"
@@ -181,27 +179,61 @@ export default function StudentInfoForm({
         required
       />
 
-      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-        <h3 className="font-semibold text-sm">개인정보 수집 및 이용 동의</h3>
-        <div className="text-xs text-gray-600 space-y-2">
-          <p>• 수집 목적: 설명회 참석 신청 및 관리</p>
-          <p>• 수집 항목: 학생명, 학부모 연락처, 학교, 학년, 수학 선행정도</p>
-          <p>• 보유 기간: 수집일로부터 1년</p>
+      {/* 개인정보 수집 동의 섹션 */}
+      <div className="privacy-section">
+        <div className="privacy-title">개인정보 수집 및 이용 동의</div>
+
+        <div className="privacy-content">
+          <h4>1. 개인정보 수집 목적</h4>
+          <p>- 설명회 참석 신청 및 관리</p>
+          <p>- 설명회 관련 안내 사항 전달</p>
+          <p>- 설명회 참석 후 개별 컨설팅 예약 관리</p>
+          <p>- 대기예약 신청 시 취소자 발생 안내</p>
+
+          <h4>2. 수집하는 개인정보 항목</h4>
+          <table>
+            <tbody>
+              <tr>
+                <th>필수항목</th>
+                <td>학생명, 학부모 연락처, 학교, 학년, 수학 선행정도</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>3. 개인정보 보유 및 이용기간</h4>
+          <p>- 수집일로부터 1년간 보유</p>
+          <p>
+            - 관계 법령에 따라 보존할 필요가 있는 경우 해당 법령에서 정한 기간
+            동안 보유
+          </p>
+
+          <h4>4. 개인정보 제3자 제공</h4>
+          <p>- 원칙적으로 이용자의 개인정보를 제3자에게 제공하지 않습니다.</p>
+          <p>- 단, 이용자의 동의가 있거나 법령에 의한 경우는 예외로 합니다.</p>
+
+          <h4>5. 동의 거부권 및 불이익</h4>
+          <p>- 개인정보 수집 및 이용에 대한 동의를 거부할 권리가 있습니다.</p>
+          <p>- 다만, 동의를 거부할 경우 설명회 예약이 불가능합니다.</p>
         </div>
 
-        <label className="flex items-center gap-2 cursor-pointer">
+        <div className="checkbox-group">
           <input
             type="checkbox"
+            id="privacyConsent"
             checked={formData.privacyConsent}
             onChange={(e) => handleChange('privacyConsent', e.target.checked)}
-            className="w-4 h-4"
           />
-          <span className="text-sm">
+          <label htmlFor="privacyConsent" className="checkbox-label">
             <strong>[필수]</strong> 위 개인정보 수집 및 이용에 동의합니다.
-          </span>
-        </label>
+          </label>
+        </div>
+
+        <div className="privacy-notice">
+          ※ 만 14세 미만 아동의 경우 법정대리인의 동의가 필요합니다.
+        </div>
       </div>
 
+      {/* 비밀번호 경고 */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
         <p className="text-yellow-800 text-sm">
           ⚠️ 비밀번호는 예약 확인 및 취소 시 필요합니다. 안전한 곳에
@@ -209,6 +241,7 @@ export default function StudentInfoForm({
         </p>
       </div>
 
+      {/* 버튼 */}
       <div className="flex gap-3">
         <Button type="button" variant="secondary" onClick={onBack}>
           ← 뒤로

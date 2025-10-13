@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Input from '../common/Input';
 import Button from '../common/Button';
 import {
@@ -10,10 +10,25 @@ import {
 import { useReservation } from '../../context/ReservationContext';
 import { supabase, hashPassword } from '../../utils/supabase';
 
-export default function ReservationCheck({ onBack, onResult }) {
+export default function ReservationCheck({
+  onBack,
+  onResult,
+  prefilledPhone = '',
+}) {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const { showToast, setLoading } = useReservation();
+
+  // prefilledPhone이 있으면 자동 입력
+  useEffect(() => {
+    if (prefilledPhone) {
+      setPhone(prefilledPhone);
+      // 비밀번호 입력란에 포커스
+      setTimeout(() => {
+        document.querySelector('input[type="password"]')?.focus();
+      }, 100);
+    }
+  }, [prefilledPhone]);
 
   const handlePhoneChange = (e) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
@@ -91,6 +106,15 @@ export default function ReservationCheck({ onBack, onResult }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* 전화번호 자동 입력 안내 */}
+      {prefilledPhone && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <p className="text-blue-700 text-sm">
+            ✅ 전화번호가 자동으로 입력되었습니다. 비밀번호만 입력해주세요.
+          </p>
+        </div>
+      )}
+
       <p className="text-gray-600 mb-4">예약 정보를 입력해주세요.</p>
 
       <Input
@@ -100,6 +124,7 @@ export default function ReservationCheck({ onBack, onResult }) {
         onChange={handlePhoneChange}
         placeholder="010-0000-0000"
         required
+        disabled={!!prefilledPhone}
       />
 
       <Input

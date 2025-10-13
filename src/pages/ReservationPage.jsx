@@ -13,6 +13,7 @@ export default function ReservationPage() {
   const { selectedSeminar, showToast } = useReservation();
   const [step, setStep] = useState('home');
   const [phone, setPhone] = useState('');
+  const [checkPhone, setCheckPhone] = useState(''); // 예약 확인용 전화번호
   const [previousInfo, setPreviousInfo] = useState(null);
   const [completedReservation, setCompletedReservation] = useState(null);
   const [checkedReservation, setCheckedReservation] = useState(null);
@@ -26,7 +27,15 @@ export default function ReservationPage() {
   };
 
   const handleCheckReservation = () => {
+    setCheckPhone(''); // 초기화
     setStep('check');
+  };
+
+  // 예약 확인 페이지로 이동 (전화번호 자동 입력)
+  const handleNavigateToCheck = (phoneNumber) => {
+    setCheckPhone(phoneNumber);
+    setStep('check');
+    showToast('예약 확인 페이지로 이동합니다.', 'info');
   };
 
   const handlePhoneNext = (phoneNumber) => {
@@ -72,6 +81,7 @@ export default function ReservationPage() {
   const handleHome = () => {
     setStep('home');
     setPhone('');
+    setCheckPhone('');
     setPreviousInfo(null);
     setCompletedReservation(null);
     setCheckedReservation(null);
@@ -82,7 +92,6 @@ export default function ReservationPage() {
       {/* 홈 화면 */}
       {step === 'home' && (
         <div className="card">
-          {/* 로고 영역 */}
           <div className="title-area">
             <img
               src="/assets/images/istudy-logo.png"
@@ -152,6 +161,7 @@ export default function ReservationPage() {
           <PhoneInput
             onNext={handlePhoneNext}
             onLoadPrevious={handleLoadPrevious}
+            onNavigateToCheck={handleNavigateToCheck}
           />
         </div>
       )}
@@ -193,7 +203,11 @@ export default function ReservationPage() {
           <h1>예약 확인하기</h1>
           <h2>예약 정보를 입력해주세요</h2>
 
-          <ReservationCheck onBack={handleHome} onResult={handleCheckResult} />
+          <ReservationCheck
+            onBack={handleHome}
+            onResult={handleCheckResult}
+            prefilledPhone={checkPhone}
+          />
         </div>
       )}
 

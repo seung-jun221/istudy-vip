@@ -298,6 +298,87 @@ h2 {
   color: #333;
 }
 
+.privacy-content {
+  background: white;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  line-height: 1.8;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+}
+
+.privacy-content h4 {
+  font-size: 14px;
+  margin: 15px 0 10px 0;
+  color: #1a73e8;
+}
+
+.privacy-content h4:first-child {
+  margin-top: 0;
+}
+
+.privacy-content p {
+  margin: 5px 0;
+}
+
+.privacy-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 12px;
+}
+
+.privacy-content th,
+.privacy-content td {
+  border: 1px solid #e0e0e0;
+  padding: 8px;
+  text-align: left;
+}
+
+.privacy-content th {
+  background: #f5f5f5;
+  font-weight: bold;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.checkbox-group input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.checkbox-label {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  cursor: pointer;
+}
+
+.checkbox-label strong {
+  color: #1a73e8;
+}
+
+.privacy-notice {
+  font-size: 12px;
+  color: #666;
+  margin-top: 10px;
+  padding: 10px;
+  background: #fff3cd;
+  border-radius: 6px;
+  border: 1px solid #ffeaa7;
+}
+
 /* ===== 버튼 그룹 ===== */
 .btn-group {
   display: flex;
