@@ -82,13 +82,15 @@ export default function ReservationPage() {
       {/* 홈 화면 */}
       {step === 'home' && (
         <div className="card">
-          <img
-            src="/assets/images/istudy-logo.png"
-            alt="i.study"
-            className="logo"
-          />
-
-          <h1>VIP 학부모 설명회</h1>
+          {/* 로고 영역 */}
+          <div className="title-area">
+            <img
+              src="/assets/images/istudy-logo.png"
+              alt="i.study"
+              className="logo"
+            />
+            <h1>VIP 학부모 설명회</h1>
+          </div>
           <h2>설명회 참석 예약 시스템</h2>
 
           <p className="select-guide">참석하실 설명회를 선택해주세요</p>
