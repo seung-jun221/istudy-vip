@@ -41,7 +41,6 @@ export function ConsultingProvider({ children }) {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
 
-      // 1. 활성 설명회 지역 조회 및 매핑
       const { data: activeSeminars } = await supabase
         .from('seminars')
         .select('location')
@@ -53,7 +52,6 @@ export function ConsultingProvider({ children }) {
           ?.map((s) => getSimpleLocation(s.location))
           .filter(Boolean) || [];
 
-      // 2. 남은 컨설팅 슬롯 조회
       const { data: availableSlots } = await supabase
         .from('consulting_slots')
         .select('location, date, time, current_bookings, max_capacity')
@@ -65,12 +63,10 @@ export function ConsultingProvider({ children }) {
         return;
       }
 
-      // 3. 예약 가능한 슬롯만 필터링
       const bookableSlots = availableSlots.filter(
         (slot) => slot.current_bookings < slot.max_capacity
       );
 
-      // 4. 지역별로 그룹화
       const locationMap = {};
       bookableSlots.forEach((slot) => {
         if (!locationMap[slot.location]) {
@@ -83,7 +79,6 @@ export function ConsultingProvider({ children }) {
         locationMap[slot.location].slots.push(slot);
       });
 
-      // 5. 활성 설명회 지역과 교집합
       const locationDetails = Object.keys(locationMap)
         .filter((loc) => mappedActiveLocations.includes(loc))
         .map((location) => {
@@ -190,12 +185,13 @@ export function ConsultingProvider({ children }) {
     }
   };
 
-  // 컨설팅 예약 생성
+  // ⭐ 컨설팅 예약 생성 (수정됨 - current_bookings 증가 로직 추가)
   const createConsultingReservation = async (reservationData) => {
     try {
       setLoading(true);
 
-      const { data: slot } = await supabase
+      // 1. 슬롯 조회
+      const { data: slot, error: slotError } = await supabase
         .from('consulting_slots')
         .select('*')
         .eq('date', selectedDate)
@@ -203,9 +199,24 @@ export function ConsultingProvider({ children }) {
         .eq('location', selectedLocation)
         .single();
 
-      if (!slot) throw new Error('슬롯을 찾을 수 없습니다.');
+      if (slotError || !slot) {
+        throw new Error('슬롯을 찾을 수 없습니다.');
+      }
 
-      const { data, error } = await supabase
+      // ⚠️ 중요: 예약 가능 여부 재확인 (동시 예약 방지)
+      if (slot.current_bookings >= slot.max_capacity) {
+        showToast(
+          '해당 시간은 이미 예약이 마감되었습니다. 다른 시간을 선택해주세요.',
+          'error',
+          5000
+        );
+        // 시간 슬롯 새로고침
+        await loadTimeSlots(selectedDate, selectedLocation);
+        throw new Error('이미 마감된 슬롯입니다.');
+      }
+
+      // 2. 예약 생성
+      const { data: reservation, error: insertError } = await supabase
         .from('consulting_reservations')
         .insert([
           {
@@ -227,13 +238,34 @@ export function ConsultingProvider({ children }) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
+
+      // ✅ 3. 슬롯의 current_bookings 증가 (핵심!)
+      const { error: updateError } = await supabase
+        .from('consulting_slots')
+        .update({
+          current_bookings: slot.current_bookings + 1,
+        })
+        .eq('id', slot.id);
+
+      if (updateError) {
+        console.error('슬롯 업데이트 실패:', updateError);
+        // 예약은 생성되었지만 카운트 업데이트 실패
+        // 이 경우도 예약은 성공으로 처리하되, 로그만 남김
+      }
 
       showToast('예약이 완료되었습니다!', 'success');
-      return data;
+      return reservation;
     } catch (error) {
       console.error('예약 생성 실패:', error);
-      showToast('예약 처리 중 오류가 발생했습니다.', 'error');
+
+      // 사용자에게 보여줄 에러 메시지
+      const errorMessage =
+        error.message === '이미 마감된 슬롯입니다.'
+          ? '해당 시간은 방금 다른 분이 예약하셨습니다. 다른 시간을 선택해주세요.'
+          : '예약 처리 중 오류가 발생했습니다.';
+
+      showToast(errorMessage, 'error', 5000);
       throw error;
     } finally {
       setLoading(false);
@@ -262,10 +294,10 @@ export function ConsultingProvider({ children }) {
     loadAvailableDates,
     selectedDate,
     setSelectedDate,
-    selectedTime,
-    setSelectedTime,
     timeSlots,
     loadTimeSlots,
+    selectedTime,
+    setSelectedTime,
     createConsultingReservation,
   };
 

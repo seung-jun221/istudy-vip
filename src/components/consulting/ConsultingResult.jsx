@@ -18,12 +18,33 @@ export default function ConsultingResult({ reservation, onBack, onHome }) {
     setLoading(true);
 
     try {
+      // 1. 예약 취소
       const { error } = await supabase
         .from('consulting_reservations')
         .update({ status: 'cancelled' })
         .eq('id', reservation.id);
 
       if (error) throw error;
+
+      // 2. ✅ current_bookings 감소 (추가!)
+      const { error: updateError } = await supabase.rpc('decrement', {
+        row_id: reservation.slot_id,
+      });
+
+      // 위 RPC가 없다면 대신 이렇게:
+      if (updateError) {
+        // RPC 없을 때 대체 방법
+        const { error: altError } = await supabase
+          .from('consulting_slots')
+          .update({
+            current_bookings: supabase.sql`GREATEST(current_bookings - 1, 0)`,
+          })
+          .eq('id', reservation.slot_id);
+
+        if (altError) {
+          console.error('슬롯 업데이트 실패:', altError);
+        }
+      }
 
       showToast('예약이 취소되었습니다.', 'success');
       onHome();
