@@ -21,20 +21,37 @@ export function ConsultingProvider({ children }) {
   const [selectedTime, setSelectedTime] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
 
-  // 🆕 예약 가능한 지역 동적 로드
+  // 지역 매핑 함수
+  const getSimpleLocation = (location) => {
+    if (!location) return null;
+    const loc = location.toLowerCase();
+
+    if (loc.includes('수내') || loc.includes('분당')) return '분당점';
+    if (loc.includes('대치')) return '대치점';
+    if (loc.includes('강남')) return '강남점';
+    if (loc.includes('서초')) return '서초점';
+    if (loc.includes('역삼')) return '역삼점';
+
+    return location;
+  };
+
+  // 예약 가능한 지역 동적 로드
   const loadAvailableLocations = async () => {
     try {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
 
-      // 1. 활성 설명회 지역 조회
+      // 1. 활성 설명회 지역 조회 및 매핑
       const { data: activeSeminars } = await supabase
         .from('seminars')
         .select('location')
         .eq('status', 'active')
         .gte('date', today);
 
-      const activeLocations = activeSeminars?.map((s) => s.location) || [];
+      const mappedActiveLocations =
+        activeSeminars
+          ?.map((s) => getSimpleLocation(s.location))
+          .filter(Boolean) || [];
 
       // 2. 남은 컨설팅 슬롯 조회
       const { data: availableSlots } = await supabase
@@ -68,7 +85,7 @@ export function ConsultingProvider({ children }) {
 
       // 5. 활성 설명회 지역과 교집합
       const locationDetails = Object.keys(locationMap)
-        .filter((loc) => activeLocations.includes(loc))
+        .filter((loc) => mappedActiveLocations.includes(loc))
         .map((location) => {
           const dates = Array.from(locationMap[location].dates).sort();
           return {
@@ -78,7 +95,7 @@ export function ConsultingProvider({ children }) {
             allDates: dates,
           };
         })
-        .sort((a, b) => a.location.localeCompare(b.location)); // 가나다순
+        .sort((a, b) => a.location.localeCompare(b.location));
 
       setAvailableLocations(locationDetails);
     } catch (error) {
@@ -107,12 +124,10 @@ export function ConsultingProvider({ children }) {
         return;
       }
 
-      // 예약 가능한 슬롯만
       const bookableSlots = slots.filter(
         (slot) => slot.current_bookings < slot.max_capacity
       );
 
-      // 날짜별로 그룹화
       const dateMap = {};
       bookableSlots.forEach((slot) => {
         if (!dateMap[slot.date]) {
@@ -121,10 +136,9 @@ export function ConsultingProvider({ children }) {
         dateMap[slot.date].push(slot);
       });
 
-      // 날짜 정보 생성
       const dates = Object.keys(dateMap)
         .sort()
-        .slice(0, 6) // 최대 6개
+        .slice(0, 6)
         .map((date) => {
           const dateObj = new Date(date);
           const dayOfWeek = dateObj.getDay();
@@ -181,7 +195,6 @@ export function ConsultingProvider({ children }) {
     try {
       setLoading(true);
 
-      // 슬롯 찾기
       const { data: slot } = await supabase
         .from('consulting_slots')
         .select('*')
@@ -192,7 +205,6 @@ export function ConsultingProvider({ children }) {
 
       if (!slot) throw new Error('슬롯을 찾을 수 없습니다.');
 
-      // 예약 생성
       const { data, error } = await supabase
         .from('consulting_reservations')
         .insert([

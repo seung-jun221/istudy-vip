@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useConsulting } from '../context/ConsultingContext';
 import PhoneVerification from '../components/consulting/PhoneVerification';
+import ConsultingInfoForm from '../components/consulting/ConsultingInfoForm';
 import DateSelector from '../components/consulting/DateSelector';
 import TimeSelector from '../components/consulting/TimeSelector';
 import ConsultingComplete from '../components/consulting/ConsultingComplete';
@@ -10,15 +11,43 @@ import ConsultingResult from '../components/consulting/ConsultingResult';
 export default function ConsultingPage() {
   const [step, setStep] = useState('home');
   const [phone, setPhone] = useState('');
-  const [studentName, setStudentName] = useState('');
+  const [userInfo, setUserInfo] = useState(null);
   const [completedReservation, setCompletedReservation] = useState(null);
   const [checkedReservation, setCheckedReservation] = useState(null);
 
-  const { createConsultingReservation, selectedDate, selectedTime } =
-    useConsulting();
+  const {
+    createConsultingReservation,
+    selectedDate,
+    selectedTime,
+    selectedLocation,
+    loadAvailableDates,
+  } = useConsulting();
 
+  // 설명회 예약자 플로우
+  const handleAttendeeNext = async (phoneNumber, attendeeData) => {
+    setPhone(phoneNumber);
+    setUserInfo(attendeeData);
+
+    // 지역이 이미 선택되어 있으므로 바로 날짜 로드
+    await loadAvailableDates(attendeeData.location);
+
+    setStep('date');
+  };
+
+  // 미예약자 플로우
   const handlePhoneNext = (phoneNumber) => {
     setPhone(phoneNumber);
+    setUserInfo(null);
+    setStep('info');
+  };
+
+  // 개인정보 입력 완료
+  const handleInfoNext = async (infoData) => {
+    setUserInfo(infoData);
+
+    // 지역이 선택되어 있으므로 날짜 로드
+    await loadAvailableDates(infoData.location);
+
     setStep('date');
   };
 
@@ -26,25 +55,24 @@ export default function ConsultingPage() {
     setStep('time');
   };
 
-  const handleTimeNext = () => {
-    setStep('confirm');
-  };
-
-  const handleConfirm = async (name, school, grade) => {
+  const handleTimeNext = async () => {
     try {
       const reservation = await createConsultingReservation({
         parentPhone: phone,
-        studentName: name,
-        school: school,
-        grade: grade,
+        studentName: userInfo.studentName,
+        school: userInfo.school,
+        grade: userInfo.grade,
+        isSeminarAttendee: userInfo.isSeminarAttendee || false,
+        linkedSeminarId: userInfo.linkedSeminarId || null,
+        privacyConsent: userInfo.isSeminarAttendee ? null : 'Y',
       });
 
-      // consulting_slots 정보 추가 (완료 화면에 필요)
       const reservationWithSlot = {
         ...reservation,
         consulting_slots: {
           date: selectedDate,
           time: selectedTime + ':00',
+          location: selectedLocation,
         },
       };
 
@@ -63,7 +91,7 @@ export default function ConsultingPage() {
   const handleHome = () => {
     setStep('home');
     setPhone('');
-    setStudentName('');
+    setUserInfo(null);
     setCompletedReservation(null);
     setCheckedReservation(null);
   };
@@ -91,9 +119,9 @@ export default function ConsultingPage() {
 
             <div className="info-box" style={{ marginBottom: '20px' }}>
               <p style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                • <strong>컨설팅 시간:</strong> 화요일 / 목요일 10:30~14:00
+                • <strong>컨설팅 시간:</strong> 지역별 상이
                 <br />• <strong>소요 시간:</strong> 약 30분
-                <br />• <strong>장소:</strong> 수학의 아침 학원
+                <br />• <strong>장소:</strong> 선택하신 학원
               </p>
             </div>
 
@@ -124,7 +152,24 @@ export default function ConsultingPage() {
             <h1>컨설팅 예약하기</h1>
             <h2>본인 확인</h2>
 
-            <PhoneVerification onNext={handlePhoneNext} />
+            <PhoneVerification
+              onNext={handlePhoneNext}
+              onAttendeeNext={handleAttendeeNext}
+            />
+          </div>
+        )}
+
+        {/* 개인정보 입력 (미예약자만) */}
+        {step === 'info' && (
+          <div className="card">
+            <h1>컨설팅 예약하기</h1>
+            <h2>참석자 정보 입력</h2>
+
+            <ConsultingInfoForm
+              phone={phone}
+              onNext={handleInfoNext}
+              onBack={() => setStep('phone')}
+            />
           </div>
         )}
 
@@ -133,9 +178,25 @@ export default function ConsultingPage() {
           <div className="card">
             <h1>컨설팅 예약하기</h1>
 
+            {/* 예약자 정보 표시 */}
+            {userInfo?.isSeminarAttendee && (
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">✅</span>
+                  <span className="font-bold text-blue-900">설명회 예약자</span>
+                </div>
+                <p className="text-sm text-blue-800 ml-8">
+                  <strong>{userInfo.location}</strong> 전용 컨설팅 날짜만
+                  표시됩니다.
+                </p>
+              </div>
+            )}
+
             <DateSelector
               onNext={handleDateNext}
-              onBack={() => setStep('phone')}
+              onBack={() =>
+                setStep(userInfo?.isSeminarAttendee ? 'phone' : 'info')
+              }
             />
           </div>
         )}
@@ -145,23 +206,27 @@ export default function ConsultingPage() {
           <div className="card">
             <h1>컨설팅 예약하기</h1>
 
+            {/* 예약 정보 요약 */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+              <div className="text-sm space-y-1">
+                <div>
+                  <strong>학생명:</strong> {userInfo?.studentName}
+                </div>
+                <div>
+                  <strong>학교:</strong> {userInfo?.school}
+                </div>
+                <div>
+                  <strong>학년:</strong> {userInfo?.grade}
+                </div>
+                <div>
+                  <strong>지역:</strong> {selectedLocation}
+                </div>
+              </div>
+            </div>
+
             <TimeSelector
               onNext={handleTimeNext}
               onBack={() => setStep('date')}
-            />
-          </div>
-        )}
-
-        {/* 정보 확인 */}
-        {step === 'confirm' && (
-          <div className="card">
-            <h1>컨설팅 예약하기</h1>
-            <h2>참석자 정보 입력</h2>
-
-            <ConfirmForm
-              phone={phone}
-              onBack={() => setStep('time')}
-              onConfirm={handleConfirm}
             />
           </div>
         )}
@@ -199,117 +264,6 @@ export default function ConsultingPage() {
             />
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-// 정보 확인 폼 컴포넌트
-function ConfirmForm({ phone, onBack, onConfirm }) {
-  const [formData, setFormData] = useState({
-    studentName: '',
-    school: '',
-    grade: '',
-  });
-
-  const { showToast } = useConsulting();
-
-  const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (formData.studentName.length < 2) {
-      showToast('학생명을 정확히 입력해주세요.', 'error');
-      return;
-    }
-
-    if (formData.school.length < 2) {
-      showToast('학교를 정확히 입력해주세요.', 'error');
-      return;
-    }
-
-    if (!formData.grade) {
-      showToast('학년을 선택해주세요.', 'error');
-      return;
-    }
-
-    onConfirm(formData.studentName, formData.school, formData.grade);
-  };
-
-  return (
-    <div onSubmit={handleSubmit} className="space-y-4">
-      <div className="form-group">
-        <label>
-          학생명 <span className="required-mark">*</span>
-        </label>
-        <input
-          type="text"
-          value={formData.studentName}
-          onChange={(e) => handleChange('studentName', e.target.value)}
-          placeholder="홍길동"
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label>학부모 연락처</label>
-        <input type="tel" value={phone} disabled />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="form-group">
-          <label>
-            학교 <span className="required-mark">*</span>
-          </label>
-          <input
-            type="text"
-            value={formData.school}
-            onChange={(e) => handleChange('school', e.target.value)}
-            placeholder="○○중학교"
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>
-            학년 <span className="required-mark">*</span>
-          </label>
-          <select
-            value={formData.grade}
-            onChange={(e) => handleChange('grade', e.target.value)}
-            required
-          >
-            <option value="">선택</option>
-            <option value="초1">초1</option>
-            <option value="초2">초2</option>
-            <option value="초3">초3</option>
-            <option value="초4">초4</option>
-            <option value="초5">초5</option>
-            <option value="초6">초6</option>
-            <option value="중1">중1</option>
-            <option value="중2">중2</option>
-            <option value="중3">중3</option>
-            <option value="고1">고1</option>
-            <option value="고2">고2</option>
-            <option value="고3">고3</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="btn-group">
-        <button type="button" onClick={onBack} className="btn btn-secondary">
-          ← 뒤로
-        </button>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className="btn btn-primary"
-        >
-          예약 확정
-        </button>
       </div>
     </div>
   );
