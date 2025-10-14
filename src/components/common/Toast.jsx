@@ -1,14 +1,19 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
 
-export default function Toast({ message, type = 'info', onClose }) {
+export default function Toast({
+  message,
+  type = 'info',
+  duration = 3000,
+  onClose,
+}) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 3000);
+    }, duration);
 
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, [duration, onClose]);
 
   const bgColor = {
     success: 'bg-green-500',

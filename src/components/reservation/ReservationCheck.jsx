@@ -1,12 +1,7 @@
 import { useState, useEffect } from 'react';
 import Input from '../common/Input';
 import Button from '../common/Button';
-import {
-  validatePhone,
-  formatDate,
-  formatTime,
-  formatPhone,
-} from '../../utils/format';
+import { validatePhone } from '../../utils/format';
 import { useReservation } from '../../context/ReservationContext';
 import { supabase, hashPassword } from '../../utils/supabase';
 
@@ -19,11 +14,9 @@ export default function ReservationCheck({
   const [password, setPassword] = useState('');
   const { showToast, setLoading } = useReservation();
 
-  // prefilledPhone이 있으면 자동 입력
   useEffect(() => {
     if (prefilledPhone) {
       setPhone(prefilledPhone);
-      // 비밀번호 입력란에 포커스
       setTimeout(() => {
         document.querySelector('input[type="password"]')?.focus();
       }, 100);
@@ -49,9 +42,7 @@ export default function ReservationCheck({
     setPassword(value);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!validatePhone(phone)) {
       showToast('올바른 전화번호를 입력해주세요.', 'error');
       return;
@@ -65,7 +56,6 @@ export default function ReservationCheck({
     setLoading(true);
 
     try {
-      // 예약 조회
       const { data: reservations, error } = await supabase
         .from('reservations')
         .select('*')
@@ -76,16 +66,18 @@ export default function ReservationCheck({
         .limit(1);
 
       if (error || !reservations || reservations.length === 0) {
+        setLoading(false);
+        // 옵션 1: 토스트 메시지 (5초간 표시)
         showToast(
-          '예약을 찾을 수 없거나 비밀번호가 일치하지 않습니다.',
-          'error'
+          '비밀번호가 일치하지 않습니다. 비밀번호를 잊으셨다면 010-8676-1505로 연락주세요.',
+          'error',
+          5000
         );
         return;
       }
 
       const reservation = reservations[0];
 
-      // 설명회 정보 가져오기
       const { data: seminar, error: seminarError } = await supabase
         .from('seminars')
         .select('*')
@@ -94,7 +86,6 @@ export default function ReservationCheck({
 
       if (seminarError) throw seminarError;
 
-      // 결과 전달
       onResult({ ...reservation, seminar });
     } catch (error) {
       console.error('예약 조회 실패:', error);
@@ -104,9 +95,14 @@ export default function ReservationCheck({
     }
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit();
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* 전화번호 자동 입력 안내 */}
+    <div className="space-y-4">
       {prefilledPhone && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
           <p className="text-blue-700 text-sm">
@@ -125,6 +121,7 @@ export default function ReservationCheck({
         placeholder="010-0000-0000"
         required
         disabled={!!prefilledPhone}
+        onKeyPress={handleKeyPress}
       />
 
       <Input
@@ -135,14 +132,31 @@ export default function ReservationCheck({
         placeholder="000000"
         maxLength={6}
         required
+        onKeyPress={handleKeyPress}
       />
+
+      {/* 옵션 2: 안내 문구 추가 */}
+      <div className="info-box" style={{ fontSize: '13px', padding: '12px' }}>
+        💡 비밀번호를 잊으셨나요?{' '}
+        <a
+          href="tel:010-8676-1505"
+          style={{
+            color: '#1976d2',
+            textDecoration: 'underline',
+            fontWeight: '500',
+          }}
+        >
+          010-8676-1505
+        </a>
+        로 연락주세요.
+      </div>
 
       <div className="flex gap-3">
         <Button type="button" variant="secondary" onClick={onBack}>
           ← 뒤로
         </Button>
-        <Button type="submit">예약 확인하기</Button>
+        <Button onClick={handleSubmit}>예약 확인하기</Button>
       </div>
-    </form>
+    </div>
   );
 }

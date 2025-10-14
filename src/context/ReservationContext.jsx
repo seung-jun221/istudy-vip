@@ -17,25 +17,23 @@ export function ReservationProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // 설명회 목록 로드
   useEffect(() => {
     loadSeminars();
   }, []);
 
   const loadSeminars = async () => {
     try {
-      const today = new Date().toISOString().split('T')[0]; // 오늘 날짜
+      const today = new Date().toISOString().split('T')[0];
 
       const { data, error } = await supabase
         .from('seminars')
         .select('*')
-        .gte('date', today) // 오늘 이후 날짜만
-        .eq('status', 'active') // 활성 상태만
+        .gte('date', today)
+        .eq('status', 'active')
         .order('date', { ascending: true });
 
       if (error) throw error;
 
-      // 잔여석 계산
       const seminarsWithAvailability = await Promise.all(
         data.map(async (seminar) => {
           const { count } = await supabase
@@ -63,8 +61,9 @@ export function ReservationProvider({ children }) {
     }
   };
 
-  const showToast = (message, type = 'info') => {
-    setToast({ message, type });
+  // duration 파라미터 추가
+  const showToast = (message, type = 'info', duration = 3000) => {
+    setToast({ message, type, duration });
   };
 
   const hideToast = () => {

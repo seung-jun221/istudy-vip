@@ -14,7 +14,12 @@ function AppContent() {
       <ReservationPage />
       {loading && <Loading />}
       {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration || 3000}
+          onClose={hideToast}
+        />
       )}
     </>
   );
