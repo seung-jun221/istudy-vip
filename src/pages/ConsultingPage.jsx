@@ -1,4 +1,4 @@
-// src/pages/ConsultingPage.jsx - 진단검사 플로우 통합
+// src/pages/ConsultingPage.jsx - 진단검사 플로우 통합 (수정본)
 import { useState } from 'react';
 import { useConsulting } from '../context/ConsultingContext';
 import PhoneVerification from '../components/consulting/PhoneVerification';
@@ -124,15 +124,10 @@ export default function ConsultingPage() {
   // 진단검사 시간 선택 완료 → 예약 생성
   const handleTestTimeNext = async () => {
     try {
-      // ⭐ 선택한 시간의 슬롯 정보 찾기
-      const selectedSlot = testTimeSlots.find((slot) => {
-        const slotTime = slot.time.slice(0, 5); // "10:00:00" → "10:00"
-        return slotTime === selectedTestTime;
-      });
-
-      console.log('선택한 시간:', selectedTestTime);
-      console.log('찾은 슬롯:', selectedSlot);
-      console.log('전체 슬롯:', testTimeSlots);
+      // ✅ 수정: timeDisplay를 사용해서 매칭
+      const selectedSlot = testTimeSlots.find(
+        (slot) => slot.timeDisplay === selectedTestTime
+      );
 
       if (!selectedSlot) {
         showToast('선택한 시간 슬롯을 찾을 수 없습니다.', 'error');
@@ -165,7 +160,7 @@ export default function ConsultingPage() {
   };
 
   // ========================================
-  // 공통 핸들러
+  // 유틸리티 함수들
   // ========================================
 
   const handleCheckResult = (reservation) => {
@@ -185,6 +180,10 @@ export default function ConsultingPage() {
   const handleCheckReservation = () => {
     setStep('check');
   };
+
+  // ========================================
+  // 렌더링
+  // ========================================
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -245,7 +244,7 @@ export default function ConsultingPage() {
           </div>
         )}
 
-        {/* 개인정보 입력 (미예약자만) */}
+        {/* 개인정보 입력 (미예약자) */}
         {step === 'info' && (
           <div className="card">
             <h1>컨설팅 예약하기</h1>
@@ -259,7 +258,7 @@ export default function ConsultingPage() {
           </div>
         )}
 
-        {/* 컨설팅 날짜 선택 */}
+        {/* 날짜 선택 */}
         {step === 'date' && (
           <div className="card">
             <h1 className="mb-6">컨설팅 예약하기</h1>
@@ -291,7 +290,7 @@ export default function ConsultingPage() {
           </div>
         )}
 
-        {/* 컨설팅 시간 선택 */}
+        {/* 시간 선택 */}
         {step === 'time' && (
           <div className="card">
             <h1>컨설팅 예약하기</h1>
@@ -321,7 +320,7 @@ export default function ConsultingPage() {
           </div>
         )}
 
-        {/* 컨설팅 예약 완료 */}
+        {/* 예약 완료 */}
         {step === 'complete' && (
           <div className="card">
             <ConsultingComplete

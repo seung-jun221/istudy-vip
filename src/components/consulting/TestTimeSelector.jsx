@@ -1,4 +1,4 @@
-// src/components/consulting/TestTimeSelector.jsx
+// src/components/consulting/TestTimeSelector.jsx (수정본)
 import { useConsulting } from '../../context/ConsultingContext';
 
 export default function TestTimeSelector({ onNext, onBack }) {
@@ -49,7 +49,8 @@ export default function TestTimeSelector({ onNext, onBack }) {
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {testTimeSlots.map((slot) => {
-            const isSelected = selectedTestTime === slot.time;
+            // ✅ 수정: timeDisplay를 사용
+            const isSelected = selectedTestTime === slot.timeDisplay;
             const isFull = slot.isFull;
             const availableSeats = slot.availableSeats;
 
@@ -57,7 +58,7 @@ export default function TestTimeSelector({ onNext, onBack }) {
               <button
                 key={slot.id}
                 disabled={isFull}
-                onClick={() => handleTimeSelect(slot.time)}
+                onClick={() => handleTimeSelect(slot.timeDisplay)}
                 className={`
                   border-2 rounded-lg p-4 transition-all text-center
                   ${
