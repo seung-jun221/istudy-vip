@@ -1,138 +1,104 @@
-import { useEffect } from 'react';
-import Button from '../common/Button';
+// src/components/consulting/DateSelector.jsx
 import { useConsulting } from '../../context/ConsultingContext';
+import './DateSelector.css';
 
 export default function DateSelector({ onNext, onBack }) {
   const {
     availableDates,
-    loadAvailableDates,
     selectedDate,
     setSelectedDate,
+    loadTimeSlots,
     selectedLocation,
   } = useConsulting();
 
-  useEffect(() => {
-    if (selectedLocation) {
-      loadAvailableDates(selectedLocation);
-    }
-  }, [selectedLocation]);
-
-  const handleDateSelect = (date, isFull) => {
-    if (isFull) return; // 마감된 날짜는 선택 불가
+  const handleDateSelect = async (date) => {
     setSelectedDate(date);
-    // 날짜 선택 즉시 다음 단계로
+    await loadTimeSlots(date, selectedLocation);
+  };
+
+  const handleNext = () => {
+    if (!selectedDate) return;
     onNext();
   };
 
-  // 잔여석 상태 계산
-  const getAvailabilityStatus = (slotCount) => {
-    if (slotCount === 0) {
-      return { text: '마감', className: 'full', isFull: true };
-    } else if (slotCount <= 2) {
-      return { text: '마감임박', className: 'few', isFull: false };
-    } else {
-      return {
-        text: `잔여 ${slotCount}석`,
-        className: 'available',
-        isFull: false,
-      };
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold mb-2">컨설팅 날짜 선택</h3>
-        <p className="text-gray-600 text-sm">
-          {selectedLocation && (
-            <span className="font-medium text-primary">{selectedLocation}</span>
-          )}{' '}
-          원하시는 날짜를 선택해주세요.
-        </p>
-      </div>
+    <div className="date-selector-container">
+      <h2 className="text-2xl font-bold mb-6 text-center">날짜 선택</h2>
 
-      {/* 날짜 없는 경우 */}
-      {availableDates.length === 0 && (
-        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 text-center">
-          <div className="text-4xl mb-3">⚠️</div>
-          <p className="text-gray-700 font-medium">
-            현재 예약 가능한 날짜가 없습니다.
-          </p>
+      {availableDates.length === 0 ? (
+        <div className="no-dates-message">
+          <p>현재 예약 가능한 날짜가 없습니다.</p>
         </div>
-      )}
-
-      {/* 날짜 그리드 */}
-      {availableDates.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
+      ) : (
+        <div className="dates-grid">
           {availableDates.map((dateInfo) => {
-            const status = getAvailabilityStatus(dateInfo.availableSlotCount);
+            // 상태별 클래스 및 텍스트 결정
+            let statusClass = '';
+            let statusText = '';
+            let subText = '';
+            let badgeClass = '';
+            let isDisabled = false;
+
+            if (dateInfo.status === 'full') {
+              // 예약 마감
+              statusClass = 'date-full';
+              statusText = '예약 마감';
+              badgeClass = 'badge-gray';
+              isDisabled = true;
+            } else if (dateInfo.status === 'warning') {
+              // 마감 임박 (4석 미만)
+              statusClass = 'date-warning';
+              statusText = '마감 임박';
+              subText = '잔여석 4석 미만';
+              badgeClass = 'badge-orange';
+            } else {
+              // 예약 가능
+              statusClass = 'date-available';
+              statusText = '예약 가능';
+              badgeClass = 'badge-green';
+            }
+
             const isSelected = selectedDate === dateInfo.date;
-            const isFull = status.isFull;
 
             return (
-              <div
+              <button
                 key={dateInfo.date}
-                onClick={() => handleDateSelect(dateInfo.date, isFull)}
-                className={`
-                  border-2 rounded-lg p-4 transition-all text-center
-                  ${
-                    isFull
-                      ? 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
-                      : isSelected
-                      ? 'border-primary bg-blue-50 cursor-pointer'
-                      : 'border-gray-300 hover:border-primary hover:bg-gray-50 cursor-pointer'
-                  }
-                `}
+                disabled={isDisabled}
+                className={`date-button ${statusClass} ${
+                  isSelected ? 'selected' : ''
+                }`}
+                onClick={() => handleDateSelect(dateInfo.date)}
               >
-                {/* 날짜 헤더 */}
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <span className="text-sm text-gray-600">
-                    {dateInfo.display.split('/')[0]}월
+                <div className="date-content">
+                  <span className="date-text">
+                    {dateInfo.display} ({dateInfo.dayOfWeek})
                   </span>
-                  <span className="text-3xl font-bold text-gray-800">
-                    {dateInfo.display.split('/')[1]}
-                  </span>
-                  <span className="text-sm text-gray-600">
-                    {dateInfo.dayOfWeek}
-                  </span>
+                  <div className="date-status-wrapper">
+                    <span className={`date-badge ${badgeClass}`}>
+                      {statusText}
+                    </span>
+                    {subText && (
+                      <span className="date-sub-text">{subText}</span>
+                    )}
+                  </div>
                 </div>
-
-                {/* 상태 배지 */}
-                <div className="text-center">
-                  <span
-                    className={`
-                    inline-block px-3 py-1 rounded-full text-xs font-medium
-                    ${
-                      status.className === 'available'
-                        ? 'bg-green-100 text-green-700'
-                        : ''
-                    }
-                    ${
-                      status.className === 'few'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : ''
-                    }
-                    ${
-                      status.className === 'full'
-                        ? 'bg-red-100 text-red-700'
-                        : ''
-                    }
-                  `}
-                  >
-                    {status.text}
-                  </span>
-                </div>
-              </div>
+              </button>
             );
           })}
         </div>
       )}
 
-      {/* 버튼 그룹 */}
-      <div className="flex gap-3">
-        <Button type="button" variant="secondary" onClick={onBack}>
-          ← 뒤로
-        </Button>
+      <div className="button-group">
+        <button onClick={onBack} className="btn-secondary">
+          이전
+        </button>
+        <button
+          onClick={handleNext}
+          disabled={!selectedDate}
+          className="btn-primary"
+        >
+          다음
+        </button>
       </div>
     </div>
   );

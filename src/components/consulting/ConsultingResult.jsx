@@ -1,3 +1,4 @@
+// src/components/consulting/ConsultingResult.jsx
 import Button from '../common/Button';
 import { useConsulting } from '../../context/ConsultingContext';
 import { supabase } from '../../utils/supabase';
@@ -26,14 +27,14 @@ export default function ConsultingResult({ reservation, onBack, onHome }) {
 
       if (error) throw error;
 
-      // 2. ✅ current_bookings 감소 (추가!)
-      const { error: updateError } = await supabase.rpc('decrement', {
-        row_id: reservation.slot_id,
+      // 2. ✅ current_bookings 감소 (수정!)
+      const { error: updateError } = await supabase.rpc('decrement_bookings', {
+        slot_uuid: reservation.slot_id, // ← 파라미터 이름 수정!
       });
 
-      // 위 RPC가 없다면 대신 이렇게:
+      // RPC 실패 시 대체 방법
       if (updateError) {
-        // RPC 없을 때 대체 방법
+        console.error('RPC 실패, 대체 방법 사용:', updateError);
         const { error: altError } = await supabase
           .from('consulting_slots')
           .update({

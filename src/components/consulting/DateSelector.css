@@ -1,0 +1,243 @@
+/* src/components/consulting/DateSelector.css */
+
+.date-selector-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.date-selector-container h2 {
+  margin-bottom: 32px; /* 간격 증가 */
+}
+
+.no-dates-message {
+  text-align: center;
+  padding: 40px 20px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  color: #666;
+}
+
+.dates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* 날짜 버튼 기본 스타일 */
+.date-button {
+  padding: 16px 20px;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-align: left;
+  position: relative;
+  min-height: 64px; /* 높이 줄임 */
+}
+
+.date-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.date-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* 상단 정렬 */
+  gap: 16px;
+}
+
+.date-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  letter-spacing: -0.5px;
+}
+
+.date-status-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+/* 🔵 예약 가능 (4석 이상) */
+.date-button.date-available {
+  border-color: #1a73e8;
+  background: #f8fbff;
+}
+
+.date-button.date-available:hover {
+  background: #e3f2fd;
+  border-color: #1565c0;
+}
+
+.date-button.date-available.selected {
+  background: #1a73e8;
+  border-color: #1a73e8;
+}
+
+.date-button.date-available.selected .date-text {
+  color: white;
+}
+
+.date-button.date-available.selected .date-badge {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* 🟠 마감 임박 (1~3석) */
+.date-button.date-warning {
+  border-color: #ff6b35;
+  background: #fff8f5;
+}
+
+.date-button.date-warning:hover {
+  background: #ffe8dd;
+  border-color: #e55a2b;
+}
+
+.date-button.date-warning.selected {
+  background: #ff6b35;
+  border-color: #ff6b35;
+}
+
+.date-button.date-warning.selected .date-text {
+  color: white;
+}
+
+.date-button.date-warning.selected .date-badge {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* ⚫ 예약 마감 (0석) */
+.date-button.date-full {
+  border-color: #ccc;
+  background: #f5f5f5;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.date-button.date-full:hover {
+  transform: none;
+  box-shadow: none;
+  background: #f5f5f5;
+}
+
+.date-button.date-full .date-text {
+  color: #999;
+}
+
+/* 상태 배지 */
+.date-badge {
+  padding: 6px 14px;
+  border-radius: 20px; /* 동그랗게 */
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.date-sub-text {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.badge-green {
+  background: #4caf50;
+  color: white;
+}
+
+.badge-orange {
+  background: #ff6b35;
+  color: white;
+}
+
+.badge-gray {
+  background: #666;
+  color: white;
+}
+
+/* 버튼 그룹 */
+.button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 14px 24px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1565c0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 14px 24px;
+  background: white;
+  color: #333;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+  border-color: #999;
+  transform: translateY(-1px);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .dates-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .date-button {
+    padding: 14px 18px;
+    min-height: 60px;
+  }
+
+  .date-text {
+    font-size: 18px;
+  }
+
+  .date-badge {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+
+  .date-sub-text {
+    font-size: 10px;
+  }
+}
