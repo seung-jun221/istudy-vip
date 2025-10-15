@@ -1,3 +1,4 @@
+// src/components/consulting/TimeSelector.jsx - 수정본
 import { useEffect } from 'react';
 import Button from '../common/Button';
 import { useConsulting } from '../../context/ConsultingContext';
@@ -13,11 +14,13 @@ export default function TimeSelector({ onNext, onBack }) {
     selectedLocation,
   } = useConsulting();
 
+  // ⭐ 시간 페이지 진입 시 항상 다시 로드
   useEffect(() => {
     if (selectedDate && selectedLocation) {
+      console.log('시간 슬롯 로딩:', selectedDate, selectedLocation);
       loadTimeSlots(selectedDate, selectedLocation);
     }
-  }, [selectedDate, selectedLocation]);
+  }, []); // ⭐ 빈 배열: 컴포넌트 마운트 시 한 번만 실행
 
   const handleTimeSelect = (time) => {
     setSelectedTime(time);
@@ -45,30 +48,32 @@ export default function TimeSelector({ onNext, onBack }) {
         </p>
       </div>
 
+      {/* ⭐ 로딩 중 표시 추가 */}
       {timeSlots.length === 0 && (
         <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 text-center">
-          <div className="text-4xl mb-3">⚠️</div>
+          <div className="text-4xl mb-3">⏳</div>
           <p className="text-gray-700 font-medium">
-            예약 가능한 시간이 없습니다.
+            시간 정보를 불러오는 중...
           </p>
+          <p className="text-sm text-gray-600 mt-2">잠시만 기다려주세요</p>
         </div>
       )}
 
       {timeSlots.length > 0 && (
         <div className="grid grid-cols-2 gap-3">
-          {timeSlots.map((slot, index) => {
+          {timeSlots.map((slot) => {
             const timeStr = slot.time.slice(0, 5);
+            const availableSeats = slot.max_capacity - slot.current_bookings;
+            const isAvailable = slot.isAvailable;
 
             return (
               <div
-                key={index}
-                onClick={() =>
-                  slot.isAvailable ? handleTimeSelect(timeStr) : null
-                }
+                key={slot.id}
+                onClick={() => (isAvailable ? handleTimeSelect(timeStr) : null)}
                 className={`
                   border-2 rounded-lg p-4 transition-all text-center
                   ${
-                    !slot.isAvailable
+                    !isAvailable
                       ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
                       : selectedTime === timeStr
                       ? 'border-primary bg-primary text-white cursor-pointer'
@@ -78,7 +83,7 @@ export default function TimeSelector({ onNext, onBack }) {
               >
                 <div className="text-lg font-semibold mb-1">{timeStr}</div>
                 <div className="text-xs">
-                  {slot.isAvailable ? '예약 가능' : '예약 마감'}
+                  {isAvailable ? `잔여 ${availableSeats}석` : '예약 마감'}
                 </div>
               </div>
             );

@@ -1,4 +1,4 @@
-// src/context/ConsultingContext.jsx
+// src/context/ConsultingContext.jsx - 진단검사 기능 추가
 import { createContext, useContext, useState } from 'react';
 import { supabase } from '../utils/supabase';
 
@@ -15,12 +15,21 @@ export function useConsulting() {
 export function ConsultingProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // 컨설팅 예약 관련
   const [availableLocations, setAvailableLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [availableDates, setAvailableDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
+
+  // ⭐ 진단검사 예약 관련 (신규)
+  const [testMethod, setTestMethod] = useState(null); // 'onsite' or 'home'
+  const [availableTestDates, setAvailableTestDates] = useState([]);
+  const [selectedTestDate, setSelectedTestDate] = useState(null);
+  const [selectedTestTime, setSelectedTestTime] = useState(null);
+  const [testTimeSlots, setTestTimeSlots] = useState([]);
 
   // 지역 매핑 함수
   const getSimpleLocation = (location) => {
@@ -35,6 +44,10 @@ export function ConsultingProvider({ children }) {
 
     return location;
   };
+
+  // ========================================
+  // 컨설팅 예약 관련 함수들 (기존)
+  // ========================================
 
   // 예약 가능한 지역 동적 로드
   const loadAvailableLocations = async () => {
@@ -64,37 +77,37 @@ export function ConsultingProvider({ children }) {
         return;
       }
 
-      // ✅ 예약 가능한 슬롯만 필터링 (전체 마감 지역 제외용)
       const bookableSlots = availableSlots.filter(
         (slot) => slot.current_bookings < slot.max_capacity
       );
 
-      const locationMap = {};
+      const locationMap = new Map();
+
       bookableSlots.forEach((slot) => {
-        if (!locationMap[slot.location]) {
-          locationMap[slot.location] = {
-            dates: new Set(),
-            slots: [],
-          };
+        if (!locationMap.has(slot.location)) {
+          locationMap.set(slot.location, {
+            location: slot.location,
+            nextAvailableDate: slot.date,
+            availableDateCount: 0,
+          });
         }
-        locationMap[slot.location].dates.add(slot.date);
-        locationMap[slot.location].slots.push(slot);
+
+        const locInfo = locationMap.get(slot.location);
+        if (slot.date < locInfo.nextAvailableDate) {
+          locInfo.nextAvailableDate = slot.date;
+        }
       });
 
-      const locationDetails = Object.keys(locationMap)
-        .filter((loc) => mappedActiveLocations.includes(loc))
-        .map((location) => {
-          const dates = Array.from(locationMap[location].dates).sort();
-          return {
-            location,
-            availableDateCount: dates.length,
-            nextAvailableDate: dates[0],
-            allDates: dates,
-          };
-        })
-        .sort((a, b) => a.location.localeCompare(b.location));
+      bookableSlots.forEach((slot) => {
+        const locInfo = locationMap.get(slot.location);
+        locInfo.availableDateCount++;
+      });
 
-      setAvailableLocations(locationDetails);
+      const locations = Array.from(locationMap.values()).sort(
+        (a, b) => new Date(a.nextAvailableDate) - new Date(b.nextAvailableDate)
+      );
+
+      setAvailableLocations(locations);
     } catch (error) {
       console.error('지역 로드 실패:', error);
       showToast('지역 정보를 불러오는데 실패했습니다.', 'error');
@@ -103,73 +116,49 @@ export function ConsultingProvider({ children }) {
     }
   };
 
-  // ⭐ 선택한 지역의 모든 날짜 로드 (마감 포함!)
+  // 날짜 로드
   const loadAvailableDates = async (location) => {
     try {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
 
-      // ✅ 모든 슬롯 가져오기 (마감 여부 상관없이)
-      const { data: slots } = await supabase
+      const { data: slots, error } = await supabase
         .from('consulting_slots')
-        .select('date, time, current_bookings, max_capacity')
+        .select('*')
         .eq('location', location)
         .gte('date', today)
-        .eq('is_available', true);
+        .eq('is_available', true)
+        .order('date', { ascending: true });
 
-      if (!slots || slots.length === 0) {
-        setAvailableDates([]);
-        return;
-      }
+      if (error) throw error;
 
-      // 날짜별로 그룹핑
-      const dateMap = {};
+      const dateMap = new Map();
+
       slots.forEach((slot) => {
-        if (!dateMap[slot.date]) {
-          dateMap[slot.date] = {
-            totalSlots: 0,
-            bookedSlots: 0,
-            availableSlots: 0,
-          };
-        }
-        dateMap[slot.date].totalSlots += slot.max_capacity;
-        dateMap[slot.date].bookedSlots += slot.current_bookings;
+        const availableSlots = slot.max_capacity - slot.current_bookings;
 
-        // 예약 가능한 슬롯 수 계산
-        if (slot.current_bookings < slot.max_capacity) {
-          dateMap[slot.date].availableSlots +=
-            slot.max_capacity - slot.current_bookings;
+        if (!dateMap.has(slot.date)) {
+          dateMap.set(slot.date, {
+            date: slot.date,
+            display: formatDateDisplay(slot.date),
+            dayOfWeek: getDayOfWeek(slot.date),
+            availableSlotCount: 0,
+          });
         }
+
+        const dateInfo = dateMap.get(slot.date);
+        dateInfo.availableSlotCount += availableSlots;
       });
 
-      // ✅ 모든 날짜를 배열로 변환 (마감된 날짜도 포함!)
-      const dates = Object.keys(dateMap)
-        .sort()
-        .slice(0, 6)
-        .map((date) => {
-          const dateObj = new Date(date);
-          const dayOfWeek = dateObj.getDay();
-          const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-
-          const remainingSlots = dateMap[date].availableSlots;
-
-          // ⭐ 상태 결정
-          let status = 'available'; // 기본: 예약 가능
-          if (remainingSlots === 0) {
-            status = 'full'; // 예약 마감
-          } else if (remainingSlots < 4) {
-            status = 'warning'; // 마감 임박 (4석 미만)
-          }
-
-          return {
-            date,
-            dayOfWeek: dayNames[dayOfWeek],
-            display: `${dateObj.getMonth() + 1}/${dateObj.getDate()}`,
-            availableSlotCount: remainingSlots,
-            totalSlots: dateMap[date].totalSlots,
-            status: status, // 'available', 'warning', 'full'
-          };
-        });
+      const dates = Array.from(dateMap.values()).map((dateInfo) => ({
+        ...dateInfo,
+        status:
+          dateInfo.availableSlotCount === 0
+            ? 'full'
+            : dateInfo.availableSlotCount < 4
+            ? 'warning'
+            : 'available',
+      }));
 
       setAvailableDates(dates);
     } catch (error) {
@@ -184,37 +173,53 @@ export function ConsultingProvider({ children }) {
   const loadTimeSlots = async (date, location) => {
     try {
       setLoading(true);
+      console.log('⏰ 시간 슬롯 로드 시작:', { date, location });
 
       const { data: slots, error } = await supabase
         .from('consulting_slots')
         .select('*')
         .eq('date', date)
         .eq('location', location)
+        .eq('is_available', true) // ⭐ 활성화된 슬롯만
         .order('time');
 
       if (error) throw error;
 
+      console.log('✅ 로드된 슬롯:', slots);
+
+      // ⭐ 모든 슬롯 표시 (마감 여부와 관계없이)
       const slotsWithAvailability = slots.map((slot) => ({
         ...slot,
         isAvailable: slot.current_bookings < slot.max_capacity,
         timeStr: slot.time.slice(0, 5),
       }));
 
-      setTimeSlots(slotsWithAvailability);
+      console.log('📋 전체 슬롯 (마감 포함):', slotsWithAvailability);
+
+      setTimeSlots(slotsWithAvailability); // ⭐ 마감된 슬롯도 포함
+
+      // 예약 가능한 슬롯이 하나도 없을 때만 경고
+      const hasAvailable = slotsWithAvailability.some(
+        (slot) => slot.isAvailable
+      );
+
+      if (!hasAvailable && slotsWithAvailability.length > 0) {
+        showToast('해당 날짜의 모든 시간이 마감되었습니다.', 'warning');
+      }
     } catch (error) {
-      console.error('시간 슬롯 로드 실패:', error);
+      console.error('❌ 시간 슬롯 로드 실패:', error);
       showToast('시간 정보를 불러오는데 실패했습니다.', 'error');
+      setTimeSlots([]); // 빈 배열로 설정
     } finally {
       setLoading(false);
     }
   };
 
-  // ⭐ 컨설팅 예약 생성 (RPC 함수 사용)
+  // 컨설팅 예약 생성 (RPC 함수 사용)
   const createConsultingReservation = async (reservationData) => {
     try {
       setLoading(true);
 
-      // RPC 함수 호출
       const { data, error } = await supabase.rpc(
         'create_consulting_reservation',
         {
@@ -233,7 +238,6 @@ export function ConsultingProvider({ children }) {
 
       if (error) throw error;
 
-      // 예약 정보와 슬롯 정보 조회
       const { data: reservation, error: fetchError } = await supabase
         .from('consulting_reservations')
         .select('*, consulting_slots(*)')
@@ -259,6 +263,175 @@ export function ConsultingProvider({ children }) {
     }
   };
 
+  // ========================================
+  // ⭐ 진단검사 예약 관련 함수들 (신규)
+  // ========================================
+
+  // 지점별 진단검사 방식 확인
+  const loadTestMethod = async (location) => {
+    try {
+      const { data, error } = await supabase
+        .from('test_methods')
+        .select('method')
+        .eq('location', location)
+        .single();
+
+      if (error) throw error;
+
+      setTestMethod(data?.method || 'home'); // 기본값: 가정 셀프테스트
+      return data?.method || 'home';
+    } catch (error) {
+      console.error('진단검사 방식 확인 실패:', error);
+      setTestMethod('home'); // 오류 시 기본값
+      return 'home';
+    }
+  };
+
+  // 진단검사 가능 날짜 로드 (컨설팅 날짜 전까지만)
+  const loadAvailableTestDates = async (location, consultingDate) => {
+    try {
+      setLoading(true);
+      const today = new Date().toISOString().split('T')[0];
+
+      const { data: slots, error } = await supabase
+        .from('test_slots')
+        .select('*')
+        .eq('location', location)
+        .gte('date', today)
+        .lt('date', consultingDate) // 컨설팅 날짜 전까지만
+        .eq('status', 'active')
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+
+      const dateMap = new Map();
+
+      slots.forEach((slot) => {
+        const availableSlots = slot.max_capacity - slot.current_bookings;
+
+        if (!dateMap.has(slot.date)) {
+          dateMap.set(slot.date, {
+            date: slot.date,
+            display: formatDateDisplay(slot.date),
+            dayOfWeek: getDayOfWeek(slot.date),
+            availableSlotCount: 0,
+          });
+        }
+
+        const dateInfo = dateMap.get(slot.date);
+        dateInfo.availableSlotCount += availableSlots;
+      });
+
+      const dates = Array.from(dateMap.values()).map((dateInfo) => ({
+        ...dateInfo,
+        status:
+          dateInfo.availableSlotCount === 0
+            ? 'full'
+            : dateInfo.availableSlotCount < 4
+            ? 'warning'
+            : 'available',
+      }));
+
+      setAvailableTestDates(dates);
+    } catch (error) {
+      console.error('진단검사 날짜 로드 실패:', error);
+      showToast('날짜 정보를 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 진단검사 시간 슬롯 로드
+  const loadTestTimeSlots = async (date, location) => {
+    try {
+      setLoading(true);
+
+      const { data: slots, error } = await supabase
+        .from('test_slots')
+        .select('*')
+        .eq('date', date)
+        .eq('location', location)
+        .eq('status', 'active')
+        .order('time', { ascending: true });
+
+      if (error) throw error;
+
+      const formattedSlots = slots.map((slot) => ({
+        ...slot,
+        timeDisplay: slot.time.slice(0, 5),
+        availableSeats: slot.max_capacity - slot.current_bookings,
+        isFull: slot.current_bookings >= slot.max_capacity,
+      }));
+
+      setTestTimeSlots(formattedSlots);
+    } catch (error) {
+      console.error('진단검사 시간 로드 실패:', error);
+      showToast('시간 정보를 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 진단검사 예약 생성 (RPC 함수 사용)
+  const createTestReservation = async (testData) => {
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase.rpc('create_test_reservation', {
+        p_slot_id: testData.slotId,
+        p_consulting_reservation_id: testData.consultingReservationId,
+        p_parent_phone: testData.parentPhone,
+        p_student_name: testData.studentName,
+        p_location: testData.location,
+        p_test_date: selectedTestDate,
+        p_test_time: selectedTestTime + ':00',
+      });
+
+      if (error) throw error;
+
+      // 생성된 예약 정보 조회
+      const { data: reservation, error: fetchError } = await supabase
+        .from('test_reservations')
+        .select('*, test_slots(*)')
+        .eq('id', data)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      showToast('진단검사 예약이 완료되었습니다!', 'success');
+      return reservation;
+    } catch (error) {
+      console.error('진단검사 예약 실패:', error);
+
+      const errorMessage =
+        error.message === 'Slot is full'
+          ? '해당 시간은 방금 다른 분이 예약하셨습니다. 다른 시간을 선택해주세요.'
+          : '예약 처리 중 오류가 발생했습니다.';
+
+      showToast(errorMessage, 'error', 5000);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ========================================
+  // 유틸리티 함수들
+  // ========================================
+
+  const formatDateDisplay = (dateStr) => {
+    const date = new Date(dateStr);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${month}/${day}`;
+  };
+
+  const getDayOfWeek = (dateStr) => {
+    const date = new Date(dateStr);
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    return days[date.getDay()];
+  };
+
   const showToast = (message, type = 'info', duration = 3000) => {
     setToast({ message, type, duration });
   };
@@ -273,6 +446,8 @@ export function ConsultingProvider({ children }) {
     toast,
     showToast,
     hideToast,
+
+    // 컨설팅 예약 관련
     availableLocations,
     loadAvailableLocations,
     selectedLocation,
@@ -286,6 +461,19 @@ export function ConsultingProvider({ children }) {
     selectedTime,
     setSelectedTime,
     createConsultingReservation,
+
+    // ⭐ 진단검사 예약 관련 (신규)
+    testMethod,
+    loadTestMethod,
+    availableTestDates,
+    loadAvailableTestDates,
+    selectedTestDate,
+    setSelectedTestDate,
+    testTimeSlots,
+    loadTestTimeSlots,
+    selectedTestTime,
+    setSelectedTestTime,
+    createTestReservation,
   };
 
   return (
