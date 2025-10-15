@@ -1,4 +1,4 @@
-// src/pages/ConsultingPage.jsx - 진단검사 플로우 통합 (수정본)
+// src/pages/ConsultingPage.jsx - 진단검사 플로우 통합 (완성본)
 import { useState } from 'react';
 import { useConsulting } from '../context/ConsultingContext';
 import PhoneVerification from '../components/consulting/PhoneVerification';
@@ -34,8 +34,9 @@ export default function ConsultingPage() {
     selectedTestDate,
     selectedTestTime,
     testTimeSlots,
+    loadTestTimeSlots,
     createTestReservation,
-    showToast, // ⭐ Toast 메시지용
+    showToast,
   } = useConsulting();
 
   // ========================================
@@ -108,26 +109,82 @@ export default function ConsultingPage() {
 
   // 진단검사 예약 시작 (컨설팅 완료 → 진단검사 날짜 선택)
   const handleStartTestReservation = async () => {
+    // 예약 정보가 있는지 확인
+    const reservation = completedReservation || checkedReservation;
+
+    if (!reservation) {
+      showToast('예약 정보를 찾을 수 없습니다.', 'error');
+      return;
+    }
+
+    const location = reservation.consulting_slots.location;
+    const consultingDate = reservation.consulting_slots.date;
+
+    // 사용자 정보 설정 (없는 경우)
+    if (!userInfo) {
+      setUserInfo({
+        studentName: reservation.student_name,
+        school: reservation.school,
+        grade: reservation.grade,
+        location: location,
+      });
+    }
+
+    // 전화번호 설정 (없는 경우)
+    if (!phone) {
+      setPhone(reservation.parent_phone);
+    }
+
+    // completedReservation 설정 (없는 경우)
+    if (!completedReservation) {
+      setCompletedReservation(reservation);
+    }
+
     // 컨설팅 날짜보다 이전 날짜만 로드
-    await loadAvailableTestDates(
-      selectedLocation,
-      completedReservation.consulting_slots.date
-    );
+    await loadAvailableTestDates(location, consultingDate);
     setStep('test-date');
   };
 
   // 진단검사 날짜 선택 완료
-  const handleTestDateNext = () => {
+  const handleTestDateNext = async () => {
+    // TestDateSelector에서 이미 loadTestTimeSlots를 호출했으므로
+    // 여기서는 그냥 step만 변경
     setStep('test-time');
   };
 
   // 진단검사 시간 선택 완료 → 예약 생성
   const handleTestTimeNext = async () => {
     try {
-      // ✅ 수정: timeDisplay를 사용해서 매칭
-      const selectedSlot = testTimeSlots.find(
-        (slot) => slot.timeDisplay === selectedTestTime
-      );
+      const reservation = completedReservation || checkedReservation;
+      const location = reservation.consulting_slots.location;
+
+      // ⭐ 이미 진단검사 예약이 있는지 확인
+      const { data: existingTest } = await supabase
+        .from('test_reservations')
+        .select('id')
+        .eq('consulting_reservation_id', reservation.id)
+        .eq('status', 'confirmed')
+        .maybeSingle();
+
+      if (existingTest) {
+        showToast('이미 진단검사 예약이 완료되었습니다.', 'warning');
+        // 기존 예약 정보 로드
+        const { data: testReservation } = await supabase
+          .from('test_reservations')
+          .select('*, test_slots(*)')
+          .eq('id', existingTest.id)
+          .single();
+
+        setCompletedTestReservation(testReservation);
+        setStep('test-complete');
+        return;
+      }
+
+      // ⭐ 선택한 시간의 슬롯 정보 찾기
+      const selectedSlot = testTimeSlots.find((slot) => {
+        const slotTime = slot.time.slice(0, 5);
+        return slotTime === selectedTestTime;
+      });
 
       if (!selectedSlot) {
         showToast('선택한 시간 슬롯을 찾을 수 없습니다.', 'error');
@@ -136,10 +193,10 @@ export default function ConsultingPage() {
 
       const testReservation = await createTestReservation({
         slotId: selectedSlot.id,
-        consultingReservationId: completedReservation.id,
+        consultingReservationId: reservation.id,
         parentPhone: phone,
         studentName: userInfo.studentName,
-        location: selectedLocation,
+        location: location,
       });
 
       const testReservationWithSlot = {
@@ -147,7 +204,7 @@ export default function ConsultingPage() {
         test_slots: {
           date: selectedTestDate,
           time: selectedTestTime + ':00',
-          location: selectedLocation,
+          location: location,
         },
       };
 
@@ -160,7 +217,7 @@ export default function ConsultingPage() {
   };
 
   // ========================================
-  // 유틸리티 함수들
+  // 공통 핸들러
   // ========================================
 
   const handleCheckResult = (reservation) => {
@@ -258,12 +315,11 @@ export default function ConsultingPage() {
           </div>
         )}
 
-        {/* 날짜 선택 */}
+        {/* 컨설팅 날짜 선택 */}
         {step === 'date' && (
           <div className="card">
             <h1 className="mb-6">컨설팅 예약하기</h1>
 
-            {/* 예약자 정보 표시 - 심플한 회색 박스 */}
             {userInfo?.isSeminarAttendee && (
               <div style={{ maxWidth: '800px', margin: '0 auto 1.5rem auto' }}>
                 <div className="bg-gray-100 rounded-lg p-4">
@@ -290,12 +346,11 @@ export default function ConsultingPage() {
           </div>
         )}
 
-        {/* 시간 선택 */}
+        {/* 컨설팅 시간 선택 */}
         {step === 'time' && (
           <div className="card">
             <h1>컨설팅 예약하기</h1>
 
-            {/* 예약 정보 요약 */}
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
               <div className="text-sm space-y-1">
                 <div>
@@ -320,7 +375,7 @@ export default function ConsultingPage() {
           </div>
         )}
 
-        {/* 예약 완료 */}
+        {/* 컨설팅 예약 완료 */}
         {step === 'complete' && (
           <div className="card">
             <ConsultingComplete
@@ -331,32 +386,40 @@ export default function ConsultingPage() {
           </div>
         )}
 
-        {/* ⭐ 진단검사 날짜 선택 (신규) */}
+        {/* ⭐ 진단검사 날짜 선택 */}
         {step === 'test-date' && (
           <div className="card">
             <h1 className="mb-6">진단검사 예약하기</h1>
 
             <TestDateSelector
-              consultingDate={completedReservation.consulting_slots.date}
+              consultingDate={
+                (completedReservation || checkedReservation)?.consulting_slots
+                  ?.date
+              }
+              location={
+                (completedReservation || checkedReservation)?.consulting_slots
+                  ?.location
+              }
               onNext={handleTestDateNext}
               onBack={() => setStep('complete')}
             />
           </div>
         )}
 
-        {/* ⭐ 진단검사 시간 선택 (신규) */}
+        {/* ⭐ 진단검사 시간 선택 */}
         {step === 'test-time' && (
           <div className="card">
             <h1 className="mb-6">진단검사 예약하기</h1>
 
-            {/* 예약 정보 요약 */}
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
               <div className="text-sm space-y-1">
                 <div>
                   <strong>학생명:</strong> {userInfo?.studentName}
                 </div>
                 <div>
-                  <strong>지역:</strong> {selectedLocation}
+                  <strong>지역:</strong>{' '}
+                  {(completedReservation || checkedReservation)
+                    ?.consulting_slots?.location || selectedLocation}
                 </div>
               </div>
             </div>
@@ -368,12 +431,12 @@ export default function ConsultingPage() {
           </div>
         )}
 
-        {/* ⭐ 진단검사 예약 완료 (신규) */}
+        {/* ⭐ 진단검사 예약 완료 */}
         {step === 'test-complete' && (
           <div className="card">
             <TestComplete
               testReservation={completedTestReservation}
-              consultingReservation={completedReservation}
+              consultingReservation={completedReservation || checkedReservation}
               onHome={handleHome}
             />
           </div>
@@ -399,6 +462,7 @@ export default function ConsultingPage() {
               reservation={checkedReservation}
               onBack={() => setStep('check')}
               onHome={handleHome}
+              onStartTestReservation={handleStartTestReservation}
             />
           </div>
         )}

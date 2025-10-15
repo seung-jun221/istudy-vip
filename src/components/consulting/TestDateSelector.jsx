@@ -1,22 +1,30 @@
 // src/components/consulting/TestDateSelector.jsx
-import { useEffect } from 'react';
 import { useConsulting } from '../../context/ConsultingContext';
 import './DateSelector.css'; // 기존 DateSelector CSS 재사용
 
-export default function TestDateSelector({ consultingDate, onNext, onBack }) {
+export default function TestDateSelector({
+  consultingDate,
+  location,
+  onNext,
+  onBack,
+}) {
   const {
     availableTestDates,
     selectedTestDate,
     setSelectedTestDate,
     loadTestTimeSlots,
-    selectedLocation,
   } = useConsulting();
 
-  // ⭐ 날짜 선택 시 바로 다음 단계로
+  // ⭐ 수정: 날짜를 직접 전달
   const handleDateSelect = async (date) => {
+    console.log('📅 선택한 날짜:', date);
+    console.log('📍 지역:', location);
+
     setSelectedTestDate(date);
-    await loadTestTimeSlots(date, selectedLocation);
-    // ⭐ 시간 슬롯 로딩 완료 후 자동으로 다음 화면으로
+
+    // ⭐ 중요: date를 직접 전달 (state 업데이트 전)
+    await loadTestTimeSlots(date, location);
+
     onNext();
   };
 
