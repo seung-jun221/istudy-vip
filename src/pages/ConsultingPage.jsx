@@ -1,5 +1,6 @@
 // src/pages/ConsultingPage.jsx - 진단검사 플로우 통합 (완성본)
 import { useState } from 'react';
+import { supabase } from '../utils/supabase'; // ⭐ 이 줄 추가!
 import { useConsulting } from '../context/ConsultingContext';
 import PhoneVerification from '../components/consulting/PhoneVerification';
 import ConsultingInfoForm from '../components/consulting/ConsultingInfoForm';

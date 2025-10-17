@@ -36,35 +36,68 @@ export default function ConsultingResult({
   // 진단검사 정보 로드
   // ========================================
   useEffect(() => {
+    console.log('🔄 ConsultingResult 마운트 - 진단검사 정보 로드');
     loadTestInfo();
-  }, [reservation.id]);
+
+    // ⭐ 컴포넌트가 다시 포커스될 때마다 갱신
+    return () => {
+      console.log('🔄 ConsultingResult 언마운트');
+    };
+  }, [reservation.id, location]); // location 추가
 
   const loadTestInfo = async () => {
+    console.log('📊 진단검사 정보 로딩 시작...');
     setLoadingTest(true);
 
     try {
       // 1) 지역별 진단검사 방식 확인
       const method = await loadTestMethod(location);
+      console.log('✅ 진단검사 방식:', method);
       setTestMethod(method);
 
       // 2) 역삼점: 진단검사 예약 확인
       if (method === 'onsite') {
+        console.log('🔍 역삼점 - 진단검사 예약 조회 중...');
+        console.log('조회 조건:', {
+          consulting_reservation_id: reservation.id,
+        });
+
+        // ⭐ 수정: test_slots 조인 제거 (별도 조회)
         const { data: testRes, error: testError } = await supabase
           .from('test_reservations')
-          .select('*, test_slots(*)')
+          .select('*')
           .eq('consulting_reservation_id', reservation.id)
-          .eq('status', 'confirmed')
-          .maybeSingle();
+          .in('status', ['예약', 'confirmed'])
+          .order('created_at', { ascending: false })
+          .limit(1);
 
-        if (testError && testError.code !== 'PGRST116') {
+        console.log('진단검사 예약 결과:', testRes);
+        console.log('에러:', testError);
+
+        if (testError) {
           console.error('진단검사 예약 조회 실패:', testError);
         }
 
-        setTestReservation(testRes);
+        // ⭐ slot 정보는 test_reservations에 이미 있음 (location, test_date, test_time)
+        const testReservation =
+          testRes && testRes.length > 0 ? testRes[0] : null;
+
+        // ⭐ test_slots 형식으로 변환 (기존 코드 호환성)
+        if (testReservation) {
+          testReservation.test_slots = {
+            location: testReservation.location,
+            date: testReservation.test_date,
+            time: testReservation.test_time,
+            id: testReservation.slot_id,
+          };
+        }
+
+        setTestReservation(testReservation);
       }
 
       // 3) 대치점: 시험지 다운로드 확인
       else if (method === 'home') {
+        console.log('🔍 대치점 - 시험지 다운로드 조회 중...');
         const { data: testApp, error: appError } = await supabase
           .from('test_applications')
           .select('*')
@@ -73,14 +106,18 @@ export default function ConsultingResult({
           .order('downloaded_at', { ascending: false })
           .limit(1);
 
+        console.log('시험지 다운로드 결과:', testApp);
+
         if (appError && appError.code !== 'PGRST116') {
           console.error('시험지 다운로드 조회 실패:', appError);
         }
 
         setTestApplication(testApp?.[0] || null);
       }
+
+      console.log('✅ 진단검사 정보 로딩 완료');
     } catch (error) {
-      console.error('진단검사 정보 로드 실패:', error);
+      console.error('❌ 진단검사 정보 로드 실패:', error);
     } finally {
       setLoadingTest(false);
     }
@@ -102,62 +139,148 @@ export default function ConsultingResult({
     setLoading(true);
 
     try {
+      console.log('🔄 취소 프로세스 시작');
+      console.log('예약 ID:', reservation.id);
+      console.log('진단검사 예약:', testReservation);
+
       // 1) 역삼점: 진단검사 예약도 함께 취소 (예약이 있는 경우에만)
       if (testReservation && testReservation.id) {
         try {
-          const { error: cancelError } = await supabase.rpc(
-            'cancel_test_reservation',
-            {
-              reservation_id: testReservation.id,
-            }
-          );
+          console.log('🗑️ 진단검사 취소 시도:', testReservation.id);
+
+          // ⭐ RPC 대신 직접 UPDATE (더 안정적)
+          const { data: cancelData, error: cancelError } = await supabase
+            .from('test_reservations')
+            .update({ status: '취소' })
+            .eq('id', testReservation.id)
+            .select();
+
+          console.log('진단검사 취소 결과:', { cancelData, cancelError });
 
           if (cancelError) {
-            console.error('진단검사 취소 실패:', cancelError);
-            // 진단검사 취소 실패해도 컨설팅은 계속 진행
+            console.error('⚠️ 진단검사 취소 실패:', cancelError);
+          } else {
+            // 성공 시 슬롯 current_bookings 감소
+            if (testReservation.slot_id) {
+              const { error: slotError } = await supabase.rpc(
+                'decrement_test_slot_bookings',
+                {
+                  slot_uuid: testReservation.slot_id,
+                }
+              );
+
+              // RPC 실패 시 직접 UPDATE
+              if (slotError) {
+                console.warn('⚠️ RPC 실패, 직접 업데이트:', slotError);
+
+                // 현재 값 조회
+                const { data: slotData } = await supabase
+                  .from('test_slots')
+                  .select('current_bookings')
+                  .eq('id', testReservation.slot_id)
+                  .single();
+
+                if (slotData) {
+                  const newCount = Math.max(
+                    (slotData.current_bookings || 1) - 1,
+                    0
+                  );
+                  await supabase
+                    .from('test_slots')
+                    .update({ current_bookings: newCount })
+                    .eq('id', testReservation.slot_id);
+                }
+              }
+            }
           }
         } catch (rpcError) {
-          console.error('RPC 호출 실패:', rpcError);
+          console.error('⚠️ 진단검사 취소 중 오류:', rpcError);
           // 에러가 나도 컨설팅 취소는 계속 진행
         }
       }
 
       // 2) 컨설팅 예약 취소
-      const { error: consultingError } = await supabase
+      console.log('💾 컨설팅 예약 취소 시도:', reservation.id);
+
+      const { data: cancelData, error: consultingError } = await supabase
         .from('consulting_reservations')
         .update({
           status: 'cancelled',
-          cancelled_at: new Date().toISOString(),
+          // cancelled_at: new Date().toISOString(), // 임시로 주석 처리
         })
-        .eq('id', reservation.id);
+        .eq('id', reservation.id)
+        .select();
 
-      if (consultingError) throw consultingError;
+      console.log('✅ 컨설팅 취소 결과:', { cancelData, consultingError });
+
+      if (consultingError) {
+        console.error('❌ 컨설팅 취소 오류:', consultingError);
+        console.error('에러 상세:', {
+          message: consultingError.message,
+          code: consultingError.code,
+          details: consultingError.details,
+          hint: consultingError.hint,
+        });
+        throw new Error(`컨설팅 취소 실패: ${consultingError.message}`);
+      }
 
       // 3) current_bookings 감소
-      const { error: updateError } = await supabase.rpc('decrement_bookings', {
-        slot_uuid: reservation.slot_id,
-      });
+      console.log('📊 슬롯 업데이트 시도:', reservation.slot_id);
+
+      const { data: updateData, error: updateError } = await supabase.rpc(
+        'decrement_bookings',
+        {
+          slot_uuid: reservation.slot_id,
+        }
+      );
+
+      console.log('슬롯 업데이트 결과:', { updateData, updateError });
 
       // RPC 실패 시 대체 방법
       if (updateError) {
-        console.error('RPC 실패, 대체 방법 사용:', updateError);
-        const { error: altError } = await supabase
-          .from('consulting_slots')
-          .update({
-            current_bookings: supabase.sql`GREATEST(current_bookings - 1, 0)`,
-          })
-          .eq('id', reservation.slot_id);
+        console.warn('⚠️ RPC 실패, 대체 방법 사용:', updateError);
 
-        if (altError) {
-          console.error('슬롯 업데이트 실패:', altError);
+        // 현재 값 조회 후 직접 감소
+        const { data: slotData } = await supabase
+          .from('consulting_slots')
+          .select('current_bookings')
+          .eq('id', reservation.slot_id)
+          .single();
+
+        if (slotData) {
+          const newCount = Math.max((slotData.current_bookings || 1) - 1, 0);
+          const { data: altData, error: altError } = await supabase
+            .from('consulting_slots')
+            .update({ current_bookings: newCount })
+            .eq('id', reservation.slot_id)
+            .select();
+
+          console.log('대체 방법 결과:', { altData, altError });
+
+          if (altError) {
+            console.error('⚠️ 슬롯 업데이트 실패:', altError);
+          }
         }
       }
 
+      console.log('✅ 취소 프로세스 완료');
       showToast('예약이 취소되었습니다.', 'success');
       onHome();
     } catch (error) {
-      console.error('예약 취소 실패:', error);
-      showToast('예약 취소 중 오류가 발생했습니다.', 'error');
+      console.error('❌ 예약 취소 실패:', error);
+      console.error('에러 상세:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+
+      showToast(
+        `예약 취소 중 오류가 발생했습니다.\n${
+          error.message || '알 수 없는 오류'
+        }`,
+        'error',
+        5000
+      );
     } finally {
       setLoading(false);
     }
@@ -190,11 +313,29 @@ export default function ConsultingResult({
     setLoading(true);
 
     try {
-      const { error } = await supabase.rpc('cancel_test_reservation', {
-        reservation_id: testReservation.id,
-      });
+      console.log('🗑️ 진단검사 취소 시작:', testReservation.id);
 
-      if (error) throw error;
+      const { data: cancelData, error } = await supabase.rpc(
+        'cancel_test_reservation',
+        {
+          reservation_id: testReservation.id,
+        }
+      );
+
+      console.log('진단검사 취소 결과:', { cancelData, error });
+
+      if (error) {
+        console.error('❌ RPC 오류:', error);
+        console.error('에러 상세:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
+        throw new Error(`진단검사 취소 실패: ${error.message}`);
+      }
+
+      console.log('✅ 진단검사 취소 완료');
 
       showToast(
         '진단검사 예약이 취소되었습니다.\n다른 날짜로 다시 예약해주세요.',
@@ -205,8 +346,18 @@ export default function ConsultingResult({
       // 상태 업데이트
       setTestReservation(null);
     } catch (error) {
-      console.error('진단검사 취소 실패:', error);
-      showToast('취소 중 오류가 발생했습니다.', 'error');
+      console.error('❌ 진단검사 취소 실패:', error);
+      console.error('에러 상세:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+
+      showToast(
+        `취소 중 오류가 발생했습니다.\n${error.message || '알 수 없는 오류'}`,
+        'error',
+        5000
+      );
     } finally {
       setLoading(false);
     }
@@ -220,6 +371,15 @@ export default function ConsultingResult({
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">예약 확인</h2>
         <p className="text-gray-600">예약 정보를 확인하세요</p>
+
+        {/* ⭐ 새로고침 버튼 추가 */}
+        <button
+          onClick={loadTestInfo}
+          disabled={loadingTest}
+          className="mt-3 px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all disabled:opacity-50"
+        >
+          {loadingTest ? '⏳ 확인 중...' : '🔄 최신 정보 다시 불러오기'}
+        </button>
       </div>
 
       {/* ========== 컨설팅 예약 정보 ========== */}
@@ -285,16 +445,15 @@ export default function ConsultingResult({
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">날짜</span>
                 <span className="font-semibold">
-                  {new Date(testReservation.test_slots.date).getMonth() + 1}월{' '}
-                  {new Date(testReservation.test_slots.date).getDate()}일 (
-                  {dayNames[new Date(testReservation.test_slots.date).getDay()]}
-                  )
+                  {new Date(testReservation.test_date).getMonth() + 1}월{' '}
+                  {new Date(testReservation.test_date).getDate()}일 (
+                  {dayNames[new Date(testReservation.test_date).getDay()]})
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">시간</span>
                 <span className="font-semibold">
-                  {testReservation.test_slots.time.slice(0, 5)}
+                  {testReservation.test_time.slice(0, 5)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
