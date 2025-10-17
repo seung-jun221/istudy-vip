@@ -1,0 +1,426 @@
+/* src/pages/TestGuidePage.css */
+
+/* ⭐ 모든 스타일을 .test-guide-container 안에서만 적용 */
+
+.test-guide-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.test-guide-container .test-guide-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 30px;
+}
+
+.test-guide-container .test-guide-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.test-guide-container .test-guide-header p {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.test-guide-container .card {
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.test-guide-container .step-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.test-guide-container .step {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.test-guide-container .step.active {
+  background: #667eea;
+  color: white;
+}
+
+.test-guide-container .step.completed {
+  background: #4caf50;
+  color: white;
+}
+
+.test-guide-container .step-line {
+  width: 60px;
+  height: 2px;
+  background: #e0e0e0;
+}
+
+.test-guide-container .step-line.completed {
+  background: #4caf50;
+}
+
+.test-guide-container .form-group {
+  margin-bottom: 20px;
+}
+
+.test-guide-container .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.test-guide-container .form-group input,
+.test-guide-container .form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: border-color 0.3s;
+}
+
+.test-guide-container .form-group input:focus,
+.test-guide-container .form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.test-guide-container .btn {
+  padding: 14px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  width: 100%;
+}
+
+.test-guide-container .btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.test-guide-container .btn-primary:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+}
+
+.test-guide-container .btn-secondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.test-guide-container .btn-secondary:hover {
+  background: #f5f7ff;
+}
+
+.test-guide-container .btn-back {
+  background: transparent;
+  color: #666;
+  border: 1px solid #ddd;
+  width: auto;
+  padding: 8px 16px;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.test-guide-container .divider {
+  text-align: center;
+  margin: 30px 0;
+  position: relative;
+}
+
+.test-guide-container .divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.test-guide-container .divider span {
+  background: white;
+  padding: 0 15px;
+  position: relative;
+  color: #999;
+  font-size: 14px;
+}
+
+.test-guide-container .info-display {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.test-guide-container .info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.test-guide-container .info-item:last-child {
+  border-bottom: none;
+}
+
+.test-guide-container .info-label {
+  color: #666;
+  font-size: 14px;
+}
+
+.test-guide-container .info-value {
+  font-weight: 600;
+  color: #333;
+}
+
+.test-guide-container .test-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.test-guide-container .test-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.test-guide-container .test-card:hover {
+  border-color: #667eea;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.2);
+}
+
+.test-guide-container .test-badge {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.test-guide-container .badge-recommended {
+  background: #4caf50;
+}
+
+.test-guide-container .badge-advanced {
+  background: #ff9800;
+}
+
+.test-guide-container .badge-highest {
+  background: #f44336;
+}
+
+.test-guide-container .badge-mock {
+  background: #2196f3;
+}
+
+.test-guide-container .test-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.test-guide-container .test-features {
+  margin-bottom: 15px;
+}
+
+.test-guide-container .feature-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.test-guide-container .feature-icon {
+  margin-right: 8px;
+}
+
+.test-guide-container .grade-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.test-guide-container .grade-btn {
+  padding: 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.test-guide-container .grade-btn:hover {
+  border-color: #667eea;
+  background: #f5f7ff;
+}
+
+.test-guide-container .grade-btn.selected {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.test-guide-container .warning-box {
+  background: #fff3e0;
+  border-left: 4px solid #ff9800;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.test-guide-container .info-box {
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.test-guide-container .checklist {
+  margin-top: 20px;
+}
+
+.test-guide-container .checklist-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.test-guide-container .checklist-item input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.test-guide-container .checklist-item label {
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+}
+
+.test-guide-container .download-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.test-guide-container .download-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.test-guide-container .download-btn {
+  display: inline-block;
+  padding: 14px 24px;
+  background: #4caf50;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.test-guide-container .download-btn:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+}
+
+.test-guide-container .download-btn.solution {
+  background: #2196f3;
+}
+
+.test-guide-container .download-btn.solution:hover {
+  background: #1976d2;
+}
+
+.test-guide-container .countdown-box {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.test-guide-container .countdown-number {
+  font-size: 48px;
+  font-weight: 700;
+  color: #667eea;
+  margin-top: 10px;
+}
+
+.test-guide-container .loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  color: white;
+}
+
+.test-guide-container .spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .test-guide-container .test-selection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .test-guide-container .grade-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

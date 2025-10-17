@@ -474,6 +474,7 @@ export function ConsultingProvider({ children }) {
     selectedTestTime,
     setSelectedTestTime,
     createTestReservation,
+    refreshTestTimeSlots: loadTestTimeSlots, // ⭐ 추가
   };
 
   return (

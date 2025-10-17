@@ -10,7 +10,8 @@ export default function ConsultingResult({
   onHome,
   onStartTestReservation,
 }) {
-  const { showToast, setLoading, loadTestMethod } = useConsulting();
+  const { showToast, setLoading, loadTestMethod, refreshTestTimeSlots } =
+    useConsulting();
 
   // 진단검사 관련 state
   const [testMethod, setTestMethod] = useState(null); // 'onsite' or 'home'
@@ -39,11 +40,10 @@ export default function ConsultingResult({
     console.log('🔄 ConsultingResult 마운트 - 진단검사 정보 로드');
     loadTestInfo();
 
-    // ⭐ 컴포넌트가 다시 포커스될 때마다 갱신
     return () => {
       console.log('🔄 ConsultingResult 언마운트');
     };
-  }, [reservation.id, location]); // location 추가
+  }, [reservation.id, location]);
 
   const loadTestInfo = async () => {
     console.log('📊 진단검사 정보 로딩 시작...');
@@ -62,7 +62,6 @@ export default function ConsultingResult({
           consulting_reservation_id: reservation.id,
         });
 
-        // ⭐ 수정: test_slots 조인 제거 (별도 조회)
         const { data: testRes, error: testError } = await supabase
           .from('test_reservations')
           .select('*')
@@ -78,11 +77,10 @@ export default function ConsultingResult({
           console.error('진단검사 예약 조회 실패:', testError);
         }
 
-        // ⭐ slot 정보는 test_reservations에 이미 있음 (location, test_date, test_time)
         const testReservation =
           testRes && testRes.length > 0 ? testRes[0] : null;
 
-        // ⭐ test_slots 형식으로 변환 (기존 코드 호환성)
+        // test_slots 형식으로 변환 (기존 코드 호환성)
         if (testReservation) {
           testReservation.test_slots = {
             location: testReservation.location,
@@ -148,50 +146,23 @@ export default function ConsultingResult({
         try {
           console.log('🗑️ 진단검사 취소 시도:', testReservation.id);
 
-          // ⭐ RPC 대신 직접 UPDATE (더 안정적)
-          const { data: cancelData, error: cancelError } = await supabase
-            .from('test_reservations')
-            .update({ status: '취소' })
-            .eq('id', testReservation.id)
-            .select();
+          // ✅ RPC 함수 사용 (슬롯 감소 포함)
+          const { data: cancelData, error: cancelError } = await supabase.rpc(
+            'cancel_test_reservation',
+            {
+              reservation_id: testReservation.id,
+            }
+          );
 
           console.log('진단검사 취소 결과:', { cancelData, cancelError });
 
           if (cancelError) {
             console.error('⚠️ 진단검사 취소 실패:', cancelError);
+            // 에러가 나도 컨설팅 취소는 계속 진행
+          } else if (cancelData && !cancelData.success) {
+            console.warn('⚠️ 진단검사 취소 경고:', cancelData.message);
           } else {
-            // 성공 시 슬롯 current_bookings 감소
-            if (testReservation.slot_id) {
-              const { error: slotError } = await supabase.rpc(
-                'decrement_test_slot_bookings',
-                {
-                  slot_uuid: testReservation.slot_id,
-                }
-              );
-
-              // RPC 실패 시 직접 UPDATE
-              if (slotError) {
-                console.warn('⚠️ RPC 실패, 직접 업데이트:', slotError);
-
-                // 현재 값 조회
-                const { data: slotData } = await supabase
-                  .from('test_slots')
-                  .select('current_bookings')
-                  .eq('id', testReservation.slot_id)
-                  .single();
-
-                if (slotData) {
-                  const newCount = Math.max(
-                    (slotData.current_bookings || 1) - 1,
-                    0
-                  );
-                  await supabase
-                    .from('test_slots')
-                    .update({ current_bookings: newCount })
-                    .eq('id', testReservation.slot_id);
-                }
-              }
-            }
+            console.log('✅ 진단검사 취소 성공');
           }
         } catch (rpcError) {
           console.error('⚠️ 진단검사 취소 중 오류:', rpcError);
@@ -206,7 +177,6 @@ export default function ConsultingResult({
         .from('consulting_reservations')
         .update({
           status: 'cancelled',
-          // cancelled_at: new Date().toISOString(), // 임시로 주석 처리
         })
         .eq('id', reservation.id)
         .select();
@@ -240,7 +210,6 @@ export default function ConsultingResult({
       if (updateError) {
         console.warn('⚠️ RPC 실패, 대체 방법 사용:', updateError);
 
-        // 현재 값 조회 후 직접 감소
         const { data: slotData } = await supabase
           .from('consulting_slots')
           .select('current_bookings')
@@ -292,7 +261,6 @@ export default function ConsultingResult({
   const handleCancelTest = async () => {
     if (!testReservation) return;
 
-    // 컨설팅 날짜 정보
     const consultingDateStr = `${
       dateObj.getMonth() + 1
     }월 ${dateObj.getDate()}일`;
@@ -314,6 +282,10 @@ export default function ConsultingResult({
 
     try {
       console.log('🗑️ 진단검사 취소 시작:', testReservation.id);
+
+      // ⭐⭐⭐ 중요: null로 만들기 전에 날짜를 저장!
+      const savedTestDate = testReservation.test_date;
+      const savedLocation = location;
 
       const { data: cancelData, error } = await supabase.rpc(
         'cancel_test_reservation',
@@ -337,14 +309,24 @@ export default function ConsultingResult({
 
       console.log('✅ 진단검사 취소 완료');
 
-      showToast(
-        '진단검사 예약이 취소되었습니다.\n다른 날짜로 다시 예약해주세요.',
-        'warning',
-        5000
-      );
+      showToast('진단검사 예약이 취소되었습니다.', 'success', 3000);
 
       // 상태 업데이트
       setTestReservation(null);
+
+      // 진단검사 정보 다시 로드 (잔여석 갱신을 위해)
+      console.log('🔄 진단검사 정보 다시 로드 중...');
+      await loadTestInfo();
+
+      // ⭐⭐⭐ 수정: 저장해둔 날짜 사용
+      if (refreshTestTimeSlots && savedTestDate) {
+        console.log('🔄 시간 슬롯 정보 다시 로드 중...');
+        console.log('날짜:', savedTestDate, '지역:', savedLocation);
+        await refreshTestTimeSlots(savedTestDate, savedLocation);
+        console.log('✅ 시간 슬롯 다시 로드 완료');
+      }
+
+      console.log('✅ 정보 다시 로드 완료');
     } catch (error) {
       console.error('❌ 진단검사 취소 실패:', error);
       console.error('에러 상세:', {
@@ -372,7 +354,6 @@ export default function ConsultingResult({
         <h2 className="text-2xl font-bold mb-2">예약 확인</h2>
         <p className="text-gray-600">예약 정보를 확인하세요</p>
 
-        {/* ⭐ 새로고침 버튼 추가 */}
         <button
           onClick={loadTestInfo}
           disabled={loadingTest}
@@ -427,9 +408,7 @@ export default function ConsultingResult({
           <p className="text-gray-600">진단검사 정보 확인 중...</p>
         </div>
       ) : testMethod === 'onsite' ? (
-        // 역삼점: 학원 방문 응시
         testReservation ? (
-          // 진단검사 예약 완료
           <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
             <h3 className="text-lg font-bold text-green-800 mb-4 flex items-center">
               📗 진단검사 예약 (학원 방문)
@@ -470,7 +449,6 @@ export default function ConsultingResult({
             </button>
           </div>
         ) : (
-          // 진단검사 미예약
           <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6">
             <h3 className="text-lg font-bold text-yellow-800 mb-3 flex items-center">
               ⚠️ 진단검사 예약 필요
@@ -497,9 +475,7 @@ export default function ConsultingResult({
           </div>
         )
       ) : testMethod === 'home' ? (
-        // 대치점: 가정 셀프 응시
         testApplication ? (
-          // 시험지 다운로드 완료
           <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
             <h3 className="text-lg font-bold text-green-800 mb-4 flex items-center">
               ✅ 진단검사 (가정 응시)
@@ -539,7 +515,6 @@ export default function ConsultingResult({
             </div>
           </div>
         ) : (
-          // 시험지 미다운로드
           <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6">
             <h3 className="text-lg font-bold text-yellow-800 mb-3 flex items-center">
               ⚠️ 진단검사 시험지 다운로드 필요
@@ -549,7 +524,14 @@ export default function ConsultingResult({
               컨설팅을 위해 <strong>시험지 다운로드</strong>가 필요합니다.
             </p>
 
-            <a href="/test-guide" className="block">
+            <a
+              href={`/test-guide?phone=${encodeURIComponent(
+                reservation.parent_phone
+              )}&name=${encodeURIComponent(
+                reservation.student_name
+              )}&verified=true`}
+              className="block"
+            >
               <button className="w-full py-2.5 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all">
                 시험지 다운로드하러 가기 →
               </button>

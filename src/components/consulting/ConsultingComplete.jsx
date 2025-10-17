@@ -208,7 +208,14 @@ export default function ConsultingComplete({
           </ol>
 
           {/* 시험지 다운로드 버튼 */}
-          <a href="/test-guide" className="block mb-3">
+          <a
+            href={`/test-guide?phone=${encodeURIComponent(
+              reservation.parent_phone
+            )}&name=${encodeURIComponent(
+              reservation.student_name
+            )}&verified=true`}
+            className="block mb-3"
+          >
             <button className="w-full py-3 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all">
               시험지 다운로드하러 가기 →
             </button>

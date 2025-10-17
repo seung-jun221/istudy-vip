@@ -1,3 +1,4 @@
+// src/App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import {
   ReservationProvider,
@@ -6,6 +7,7 @@ import {
 import { ConsultingProvider, useConsulting } from './context/ConsultingContext';
 import ReservationPage from './pages/ReservationPage';
 import ConsultingPage from './pages/ConsultingPage';
+import TestGuidePage from './pages/TestGuidePage'; // ⭐ 추가
 import Loading from './components/common/Loading';
 import Toast from './components/common/Toast';
 
@@ -27,6 +29,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<ReservationPage />} />
         <Route path="/consulting" element={<ConsultingPage />} />
+        <Route path="/test-guide" element={<TestGuidePage />} /> {/* ⭐ 추가 */}
       </Routes>
 
       {/* 공통 컴포넌트 */}
