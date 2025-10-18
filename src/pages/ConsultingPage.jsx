@@ -83,6 +83,7 @@ export default function ConsultingPage() {
         studentName: userInfo.studentName,
         school: userInfo.school,
         grade: userInfo.grade,
+        mathLevel: userInfo.mathLevel, // ⭐ 이 줄 추가!
         isSeminarAttendee: userInfo.isSeminarAttendee || false,
         linkedSeminarId: userInfo.linkedSeminarId || null,
         privacyConsent: userInfo.isSeminarAttendee ? null : 'Y',

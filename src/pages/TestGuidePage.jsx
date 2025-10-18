@@ -91,23 +91,14 @@ export default function TestGuidePage() {
       if (consultingReservations && consultingReservations.length > 0) {
         const userData = consultingReservations[0];
 
-        // ⭐ reservations 테이블에서 math_level 가져오기
-        const { data: reservation, error: reservationError } = await supabase
-          .from('reservations')
-          .select('math_level')
-          .eq('parent_phone', phone)
-          .not('math_level', 'is', null)
-          .order('id', { ascending: false }) // ⭐ created_at → id로 수정
-          .limit(1);
+        // ✅ consulting_reservations에서 직접 math_level 사용
+        // (컨설팅 예약 시 필수 입력이므로 항상 존재)
+        const mathLevel = userData.math_level || '상담 시 확인';
 
-        // ⭐ 디버깅 로그
-        console.log('🔍 Reservation query result:', reservation);
-        console.log('🔍 Reservation query error:', reservationError);
-        console.log('🔍 Math level value:', reservation?.[0]?.math_level);
-
-        const mathLevel = reservation?.[0]?.math_level || '상담 시 확인';
-
-        console.log('🔍 Final math level:', mathLevel);
+        console.log('✅ 컨설팅 예약 정보:', {
+          student_name: userData.student_name,
+          math_level: mathLevel,
+        });
 
         setCurrentUser({
           student_name: userData.student_name,
@@ -117,11 +108,9 @@ export default function TestGuidePage() {
           math_level: mathLevel,
         });
 
-        console.log('🔍 Current user math_level:', mathLevel);
-
         setStep('testSelect');
       } else {
-        showToast('예약 정보를 찾을 수 없습니다.');
+        showToast('컨설팅 예약 정보를 찾을 수 없습니다.');
         setStep('phone');
       }
     } catch (error) {
