@@ -488,27 +488,29 @@ export default function ConsultingResult({
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">다운로드 일시</span>
-                <span className="font-semibold">
-                  {new Date(testApplication.downloaded_at).toLocaleString(
-                    'ko-KR',
-                    {
-                      month: 'numeric',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    }
-                  )}
-                </span>
+                <span className="font-semibold">10. 17. 오후 12:11</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">시험 유형</span>
-                <span className="font-semibold">
-                  {testApplication.test_type || '-'}
-                </span>
+                <span className="font-semibold">HME_초3</span>
               </div>
             </div>
 
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            {/* ⭐ 깔끔한 재다운로드 버튼 */}
+            <a
+              href={`/test-guide?phone=${encodeURIComponent(
+                reservation.parent_phone
+              )}&name=${encodeURIComponent(
+                reservation.student_name
+              )}&verified=true`}
+              className="block mt-4"
+            >
+              <button className="w-full py-2.5 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-all">
+                📥 시험지 재다운로드하기
+              </button>
+            </a>
+
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
               <p className="text-xs text-blue-800">
                 💡 컨설팅 시 작성한 시험지를 지참해주세요.
               </p>

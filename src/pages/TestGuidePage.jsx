@@ -28,6 +28,111 @@ export default function TestGuidePage() {
     loadSeminars();
   }, []);
 
+  // ⭐ URL 파라미터로 자동 인증
+  useEffect(() => {
+    const verifiedParam = searchParams.get('verified');
+    const phoneParam = searchParams.get('phone');
+    const nameParam = searchParams.get('name');
+
+    if (verifiedParam === 'true' && phoneParam && nameParam) {
+      handleAutoVerify(phoneParam, nameParam);
+    }
+  }, [searchParams]);
+
+  // ⭐ 자동 인증 함수
+  const handleAutoVerify = async (phone, name) => {
+    setLoading(true);
+
+    try {
+      // ⭐ 1. 기존 다운로드 이력 먼저 확인
+      const { data: existingTest } = await supabase
+        .from('test_applications')
+        .select('*')
+        .eq('parent_phone', phone)
+        .order('id', { ascending: false })
+        .limit(1);
+
+      if (existingTest && existingTest.length > 0) {
+        const testInfo = existingTest[0];
+        const downloadDate = new Date(
+          testInfo.downloaded_at
+        ).toLocaleDateString('ko-KR');
+
+        if (
+          window.confirm(
+            `📌 이미 진단검사를 다운로드하신 이력이 있습니다.\n\n` +
+              `학생명: ${testInfo.student_name}\n` +
+              `다운로드 날짜: ${downloadDate}\n` +
+              `검사 유형: ${testInfo.test_type}\n\n` +
+              `다시 다운로드하시겠습니까?`
+          )
+        ) {
+          setCurrentUser(testInfo);
+          setStep('infoConfirm');
+        }
+        setLoading(false);
+        return;
+      }
+
+      // ⭐ 2. 다운로드 이력이 없으면 컨설팅 예약 정보로 진행
+      const { data: consultingReservations, error } = await supabase
+        .from('consulting_reservations')
+        .select('*')
+        .eq('parent_phone', phone)
+        .eq('student_name', name)
+        .eq('status', 'confirmed')
+        .order('id', { ascending: false }) // ⭐ created_at → id로 수정
+        .limit(1);
+
+      if (error) {
+        console.warn('조회 중 오류:', error);
+      }
+
+      if (consultingReservations && consultingReservations.length > 0) {
+        const userData = consultingReservations[0];
+
+        // ⭐ reservations 테이블에서 math_level 가져오기
+        const { data: reservation, error: reservationError } = await supabase
+          .from('reservations')
+          .select('math_level')
+          .eq('parent_phone', phone)
+          .not('math_level', 'is', null)
+          .order('id', { ascending: false }) // ⭐ created_at → id로 수정
+          .limit(1);
+
+        // ⭐ 디버깅 로그
+        console.log('🔍 Reservation query result:', reservation);
+        console.log('🔍 Reservation query error:', reservationError);
+        console.log('🔍 Math level value:', reservation?.[0]?.math_level);
+
+        const mathLevel = reservation?.[0]?.math_level || '상담 시 확인';
+
+        console.log('🔍 Final math level:', mathLevel);
+
+        setCurrentUser({
+          student_name: userData.student_name,
+          parent_phone: phone,
+          school: userData.school,
+          grade: userData.grade,
+          math_level: mathLevel,
+        });
+
+        console.log('🔍 Current user math_level:', mathLevel);
+
+        setStep('testSelect');
+      } else {
+        showToast('예약 정보를 찾을 수 없습니다.');
+        setStep('phone');
+      }
+    } catch (error) {
+      console.error('자동 인증 실패:', error);
+      showToast('인증 중 오류가 발생했습니다.');
+      setStep('phone');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadSeminars = async () => {
     try {
       const { data, error } = await supabase
@@ -220,53 +325,46 @@ export default function TestGuidePage() {
     if (!currentUser) return;
 
     try {
-      const kstOffset = 9 * 60 * 60 * 1000;
-      const kstTime = new Date(Date.now() + kstOffset);
-      const downloadTime = kstTime.toISOString().replace('Z', '+09:00');
-
+      // ⭐ test_type 값 결정 (HME일 경우 학년 포함)
       const testTypeValue =
         selectedTest === 'HME' && selectedHMEGrade
-          ? `${selectedTest}_${selectedHMEGrade}`
-          : selectedTest;
+          ? `${selectedTest}_${selectedHMEGrade}` // 예: "HME_중2"
+          : selectedTest; // 예: "MONO", "TRI", "MOCK"
 
-      // 기존 레코드 확인
-      const { data: existing } = await supabase
+      // ⭐ 1. 기존 레코드 확인
+      const { data: existingRecords } = await supabase
         .from('test_applications')
-        .select('*')
+        .select('id')
         .eq('parent_phone', currentUser.parent_phone)
-        .is('downloaded_at', null)
-        .single();
+        .eq('test_type', testTypeValue);
 
-      if (existing) {
-        // UPDATE
-        await supabase
+      const insertData = {
+        parent_phone: currentUser.parent_phone,
+        student_name: currentUser.student_name,
+        school: currentUser.school || '미입력',
+        grade: currentUser.grade || '미입력',
+        math_level: currentUser.math_level || '미입력',
+        test_type: testTypeValue, // ⭐ 합쳐진 값
+        downloaded_at: new Date().toISOString(),
+      };
+
+      // ⭐ 2. 이미 같은 시험을 다운로드한 이력이 있으면 UPDATE
+      if (existingRecords && existingRecords.length > 0) {
+        const { error } = await supabase
           .from('test_applications')
           .update({
-            test_type: testTypeValue,
-            hme_grade: selectedHMEGrade,
-            downloaded_at: downloadTime,
+            downloaded_at: new Date().toISOString(),
           })
-          .eq('id', existing.id);
-      } else {
-        // INSERT (이미 있는 경우)
-        const { data: checkExisting } = await supabase
-          .from('test_applications')
-          .select('id')
-          .eq('parent_phone', currentUser.parent_phone)
-          .not('downloaded_at', 'is', null)
-          .single();
+          .eq('id', existingRecords[0].id);
 
-        if (checkExisting) {
-          // 새로운 레코드 추가
-          await supabase.from('test_applications').insert([
-            {
-              ...currentUser,
-              test_type: testTypeValue,
-              hme_grade: selectedHMEGrade,
-              downloaded_at: downloadTime,
-            },
-          ]);
-        }
+        if (error) throw error;
+      } else {
+        // ⭐ 3. 없으면 INSERT
+        const { error } = await supabase
+          .from('test_applications')
+          .insert([insertData]);
+
+        if (error) throw error;
       }
 
       showToast('다운로드가 완료되었습니다!', 'success');
