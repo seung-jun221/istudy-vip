@@ -1,0 +1,192 @@
+/* 탭 공통 스타일 */
+.tab-container {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 필터 바 */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filter-select {
+  min-width: 160px;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* 테이블 */
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.data-table thead {
+  background: #f7fafc;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.data-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #2d3748;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f7fafc;
+  color: #4a5568;
+}
+
+.data-table tbody tr:hover {
+  background: #f7fafc;
+}
+
+.highlight-cell {
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.empty-cell {
+  text-align: center;
+  padding: 60px 20px;
+  color: #a0aec0;
+}
+
+.empty-text {
+  color: #cbd5e0;
+}
+
+.notes-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 상태 배지 */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 예약 상태 */
+.status-예약 {
+  background: #bee3f8;
+  color: #2c5282;
+}
+
+.status-참석 {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.status-불참 {
+  background: #feebc8;
+  color: #7c2d12;
+}
+
+.status-취소 {
+  background: #fed7d7;
+  color: #742a2a;
+}
+
+.status-confirmed {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.status-active {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.status-inactive {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+/* 등록 상태 */
+.enrollment-미정 {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.enrollment-확정 {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.enrollment-불가 {
+  background: #fed7d7;
+  color: #742a2a;
+}
+
+/* 액션 버튼 */
+.btn-action {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: #667eea;
+  color: white;
+  transition: all 0.2s;
+}
+
+.btn-action:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+}
+
+/* 요약 바 */
+.summary-bar {
+  padding: 12px 0;
+  font-size: 14px;
+  color: #718096;
+  font-weight: 500;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 12px;
+}
