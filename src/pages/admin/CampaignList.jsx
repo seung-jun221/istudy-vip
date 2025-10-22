@@ -80,7 +80,7 @@ export default function CampaignList() {
             {campaigns.map((campaign) => (
               <div
                 key={campaign.id}
-                className="campaign-card"
+                className={`campaign-card ${campaign.status === 'inactive' ? 'campaign-card-inactive' : ''}`}
                 onClick={() => navigate(`/admin/campaigns/${campaign.id}`)}
               >
                 <div className="campaign-card-header">

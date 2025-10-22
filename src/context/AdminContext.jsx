@@ -62,9 +62,7 @@ export function AdminProvider({ children }) {
       setLoading(true);
       const { data, error } = await supabase
         .from('seminars')
-        .select('*')
-        .order('date', { ascending: false })
-        .order('time', { ascending: false });
+        .select('*');
 
       if (error) throw error;
 
@@ -119,7 +117,22 @@ export function AdminProvider({ children }) {
         })
       );
 
-      return campaignsWithStats;
+      // 캠페인 정렬: active 먼저 + 날짜 오름차순, inactive는 맨 뒤 + 날짜 오름차순
+      const sortedCampaigns = campaignsWithStats.sort((a, b) => {
+        // 1. status 우선 정렬 (active < inactive)
+        if (a.status !== b.status) {
+          return a.status === 'active' ? -1 : 1;
+        }
+
+        // 2. 같은 status 내에서 날짜 오름차순
+        const dateCompare = new Date(a.date) - new Date(b.date);
+        if (dateCompare !== 0) return dateCompare;
+
+        // 3. 같은 날짜면 시간 오름차순
+        return a.time.localeCompare(b.time);
+      });
+
+      return sortedCampaigns;
     } catch (error) {
       console.error('캠페인 로드 실패:', error);
       showToast('캠페인을 불러오는데 실패했습니다.', 'error');
