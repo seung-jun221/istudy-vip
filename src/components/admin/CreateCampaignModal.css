@@ -1,0 +1,126 @@
+/* 캠페인 생성 모달 추가 스타일 */
+.create-campaign-modal {
+  max-width: 700px;
+  max-height: 85vh;
+}
+
+.step-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.step-description {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+.form-row .form-group {
+  margin-bottom: 24px;
+}
+
+.mb-3 {
+  margin-bottom: 16px;
+}
+
+/* 슬롯 리스트 */
+.slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.slot-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fafafa;
+}
+
+.slot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.slot-number {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a73e8;
+}
+
+.btn-remove {
+  padding: 4px 12px;
+  background: #ffebee;
+  color: #f44336;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-remove:hover {
+  background: #f44336;
+  color: white;
+}
+
+.day-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 10px;
+  background: #e3f2fd;
+  color: #1a73e8;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.empty-slots {
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  background: white;
+  border: 1px dashed #ddd;
+  border-radius: 8px;
+}
+
+.info-box {
+  padding: 16px;
+  background: #f0f7ff;
+  border-left: 4px solid #1a73e8;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.info-box p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* 모달 푸터 버튼 배치 */
+.modal-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}

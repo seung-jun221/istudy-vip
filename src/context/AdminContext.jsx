@@ -308,6 +308,8 @@ export function AdminProvider({ children }) {
       // ID 생성 (날짜 기반)
       const id = `seminar_${Date.now()}`;
 
+      console.log('📝 캠페인 생성 시작:', { id, ...campaignData });
+
       const { error } = await supabase.from('seminars').insert({
         id,
         title: campaignData.title,
@@ -319,13 +321,94 @@ export function AdminProvider({ children }) {
         status: campaignData.status || 'active',
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ 캠페인 생성 DB 오류:', error);
+        throw error;
+      }
+
+      console.log('✅ 캠페인 기본 정보 생성 완료');
+
+      // 컨설팅 슬롯 생성
+      if (campaignData.consultingSlots && campaignData.consultingSlots.length > 0) {
+        console.log('📅 컨설팅 슬롯 생성 중:', campaignData.consultingSlots.length + '개');
+
+        const slotsToInsert = campaignData.consultingSlots.map(slot => ({
+          date: slot.date,
+          time: slot.time,
+          day_of_week: slot.dayOfWeek,
+          location: slot.location,
+          max_capacity: slot.capacity || 1,
+          current_bookings: 0,
+          is_available: true,
+          linked_seminar_id: id,
+        }));
+
+        const { error: slotsError } = await supabase
+          .from('consulting_slots')
+          .insert(slotsToInsert);
+
+        if (slotsError) {
+          console.error('❌ 컨설팅 슬롯 생성 실패:', slotsError);
+          throw slotsError;
+        }
+
+        console.log('✅ 컨설팅 슬롯 생성 완료');
+      }
+
+      // 진단검사 방식 저장
+      if (campaignData.testMethod) {
+        console.log('🧪 진단검사 방식 저장:', campaignData.testMethod);
+
+        const { error: methodError } = await supabase
+          .from('test_methods')
+          .insert({
+            location: campaignData.location,
+            method: campaignData.testMethod, // 'home' or 'onsite'
+            description: campaignData.testMethod === 'home' ? '가정 셀프 테스트' : '방문 진단검사',
+          });
+
+        if (methodError && methodError.code !== '23505') { // 중복 키 에러는 무시 (이미 존재)
+          console.error('❌ 진단검사 방식 저장 실패:', methodError);
+          // 진단검사 방식은 실패해도 캠페인은 생성됨
+        }
+      }
+
+      // 방문 진단검사 슬롯 생성
+      if (campaignData.testMethod === 'onsite' && campaignData.testSlots && campaignData.testSlots.length > 0) {
+        console.log('🧪 진단검사 슬롯 생성 중:', campaignData.testSlots.length + '개');
+
+        const testSlotsToInsert = campaignData.testSlots.map(slot => ({
+          date: slot.date,
+          time: slot.time,
+          location: campaignData.location,
+          max_capacity: slot.capacity || 1,
+          current_bookings: 0,
+          status: 'active',
+        }));
+
+        const { error: testSlotsError } = await supabase
+          .from('test_slots')
+          .insert(testSlotsToInsert);
+
+        if (testSlotsError) {
+          console.error('❌ 진단검사 슬롯 생성 실패:', testSlotsError);
+          // 진단검사 슬롯은 실패해도 캠페인은 생성됨
+        } else {
+          console.log('✅ 진단검사 슬롯 생성 완료');
+        }
+      }
 
       showToast('새 캠페인이 생성되었습니다!', 'success');
       return true;
     } catch (error) {
-      console.error('캠페인 생성 실패:', error);
-      showToast('캠페인 생성에 실패했습니다.', 'error');
+      console.error('💥 캠페인 생성 실패:', error);
+      console.error('에러 상세:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      showToast(`캠페인 생성에 실패했습니다: ${error.message}`, 'error');
       return false;
     } finally {
       setLoading(false);
