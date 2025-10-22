@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import './AdminTabs.css';
 import './SettingsTab.css';
@@ -13,6 +13,15 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
   } = useAdmin();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // localStorage에서 auto_open_threshold 읽기
+  const [autoOpenThreshold, setAutoOpenThreshold] = useState(0);
+
+  useEffect(() => {
+    const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
+    const threshold = settings[campaign.id]?.auto_open_threshold || 0;
+    setAutoOpenThreshold(threshold);
+  }, [campaign.id]);
 
   const [formData, setFormData] = useState({
     title: campaign.title || '',
@@ -54,6 +63,15 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
 
     const success = await updateCampaign(campaign.id, formData);
 
+    // auto_open_threshold를 localStorage에 저장
+    if (success) {
+      const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
+      settings[campaign.id] = {
+        auto_open_threshold: autoOpenThreshold,
+      };
+      localStorage.setItem('campaign_settings', JSON.stringify(settings));
+    }
+
     setSaving(false);
 
     if (success) {
@@ -72,6 +90,10 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
       display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
       status: campaign.status || 'active',
     });
+    // autoOpenThreshold도 원래 값으로 되돌리기
+    const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
+    const threshold = settings[campaign.id]?.auto_open_threshold || 0;
+    setAutoOpenThreshold(threshold);
     setEditing(false);
   };
 
@@ -316,6 +338,26 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
               </span>
             </div>
           )}
+        </div>
+
+        {/* 자동 슬롯 오픈 임계값 */}
+        <div className="form-group">
+          <label className="form-label">자동 슬롯 오픈 임계값</label>
+          {editing ? (
+            <input
+              type="number"
+              className="form-input"
+              value={autoOpenThreshold}
+              onChange={(e) => setAutoOpenThreshold(parseInt(e.target.value) || 0)}
+              min="0"
+            />
+          ) : (
+            <div className="form-value">{autoOpenThreshold}개</div>
+          )}
+          <div className="form-hint">
+            잔여 예약 가능 슬롯 수가 이 값 이하가 되면 다음 날짜의 슬롯이 자동으로
+            오픈됩니다. 0으로 설정하면 자동 오픈이 비활성화됩니다.
+          </div>
         </div>
 
         {/* 버튼 영역 */}
