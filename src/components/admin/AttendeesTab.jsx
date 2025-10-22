@@ -69,7 +69,7 @@ export default function AttendeesTab({ attendees }) {
             ) : (
               filteredAttendees.map((attendee) => (
                 <tr key={attendee.id}>
-                  <td>{formatDate(attendee.created_at)}</td>
+                  <td>{formatDate(attendee.registered_at)}</td>
                   <td className="highlight-cell">{attendee.student_name}</td>
                   <td>{attendee.grade || '-'}</td>
                   <td>{attendee.school || '-'}</td>

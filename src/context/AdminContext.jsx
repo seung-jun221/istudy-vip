@@ -84,11 +84,20 @@ export function AdminProvider({ children }) {
             .select('*', { count: 'exact', head: true })
             .eq('linked_seminar_id', campaign.id);
 
-          // 진단검사 예약 수
-          const { count: testCount } = await supabase
-            .from('test_reservations')
-            .select('*', { count: 'exact', head: true })
-            .eq('seminar_id', campaign.id);
+          // 진단검사 예약 수 (consulting_reservations를 통해 간접적으로 조회)
+          const { data: consultingIds } = await supabase
+            .from('consulting_reservations')
+            .select('id')
+            .eq('linked_seminar_id', campaign.id);
+
+          const consultingIdList = consultingIds?.map(c => c.id) || [];
+
+          const { count: testCount } = consultingIdList.length > 0
+            ? await supabase
+                .from('test_reservations')
+                .select('*', { count: 'exact', head: true })
+                .in('consulting_reservation_id', consultingIdList)
+            : { count: 0 };
 
           // 최종 등록 수 (등록여부가 '확정'인 경우)
           const { count: enrolledCount } = await supabase
@@ -182,21 +191,30 @@ export function AdminProvider({ children }) {
         })
       );
 
-      // 4. 진단검사 예약 목록
+      // 4. 진단검사 예약 목록 (consulting_reservations를 통해 간접 조회)
       console.log('4️⃣ 진단검사 예약 조회...');
-      const { data: tests, error: testsError } = await supabase
-        .from('test_reservations')
-        .select('*')
-        .eq('seminar_id', campaignId)
-        .order('id', { ascending: false });
 
-      if (testsError) {
-        console.error('❌ 진단검사 조회 실패:', testsError);
-        throw testsError;
+      // 4-1. 해당 캠페인의 컨설팅 예약 ID 목록 조회
+      const consultingIdList = consultingsWithSlots?.map(c => c.id) || [];
+
+      let tests = [];
+      if (consultingIdList.length > 0) {
+        const { data: testsData, error: testsError } = await supabase
+          .from('test_reservations')
+          .select('*')
+          .in('consulting_reservation_id', consultingIdList)
+          .order('id', { ascending: false });
+
+        if (testsError) {
+          console.error('❌ 진단검사 조회 실패:', testsError);
+          throw testsError;
+        }
+        tests = testsData || [];
       }
+
       console.log('✅ 진단검사 예약 수:', tests?.length || 0);
 
-      // 4-1. 진단검사 슬롯 정보 추가
+      // 4-2. 진단검사 슬롯 정보 추가
       const testsWithSlots = await Promise.all(
         (tests || []).map(async (test) => {
           if (test.slot_id) {
@@ -244,9 +262,9 @@ export function AdminProvider({ children }) {
       const { error } = await supabase
         .from('consulting_reservations')
         .update({
-          consultant_notes: resultData.notes,
+          consultation_memo: resultData.notes,
           enrollment_status: resultData.enrollmentStatus, // 미정/확정/불가
-          result_written_at: new Date().toISOString(),
+          consulted_at: new Date().toISOString(),
         })
         .eq('id', consultingId);
 

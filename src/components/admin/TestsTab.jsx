@@ -20,10 +20,10 @@ export default function TestsTab({ tests }) {
     return `${date.getMonth() + 1}/${date.getDate()} ${time}`;
   };
 
-  const formatDate = (dateStr) => {
+  const formatTestDate = (dateStr) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
-    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+    return `${date.getMonth() + 1}/${date.getDate()}`;
   };
 
   return (
@@ -44,36 +44,30 @@ export default function TestsTab({ tests }) {
         <table className="data-table">
           <thead>
             <tr>
-              <th>예약일시</th>
               <th>학생명</th>
               <th>학부모 연락처</th>
-              <th>진단검사 일시</th>
+              <th>진단검사 날짜</th>
+              <th>진단검사 시간</th>
               <th>지점</th>
-              <th>상태</th>
             </tr>
           </thead>
           <tbody>
             {filteredTests.length === 0 ? (
               <tr>
-                <td colSpan="6" className="empty-cell">
+                <td colSpan="5" className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
             ) : (
               filteredTests.map((test) => (
                 <tr key={test.id}>
-                  <td>{formatDate(test.created_at)}</td>
                   <td className="highlight-cell">{test.student_name}</td>
                   <td>{test.parent_phone}</td>
+                  <td>{formatTestDate(test.test_date)}</td>
                   <td>
-                    {formatDateTime(test.test_slots?.date, test.test_slots?.time)}
+                    {test.test_slots?.time ? test.test_slots.time.slice(0, 5) : '-'}
                   </td>
                   <td>{test.location || '-'}</td>
-                  <td>
-                    <span className={`status-badge status-${test.status || 'confirmed'}`}>
-                      {test.status || 'confirmed'}
-                    </span>
-                  </td>
                 </tr>
               ))
             )}

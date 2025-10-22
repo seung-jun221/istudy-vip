@@ -4,7 +4,7 @@ import './ConsultingResultModal.css';
 
 export default function ConsultingResultModal({ consulting, onClose }) {
   const { updateConsultingResult } = useAdmin();
-  const [notes, setNotes] = useState(consulting.consultant_notes || '');
+  const [notes, setNotes] = useState(consulting.consultation_memo || '');
   const [enrollmentStatus, setEnrollmentStatus] = useState(
     consulting.enrollment_status || '미정'
   );

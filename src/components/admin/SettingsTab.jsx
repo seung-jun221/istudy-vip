@@ -14,7 +14,7 @@ export default function SettingsTab({ campaign, onUpdate }) {
     time: campaign.time || '',
     location: campaign.location || '',
     max_capacity: campaign.max_capacity || 0,
-    internal_capacity: campaign.internal_capacity || campaign.max_capacity || 0,
+    display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
     status: campaign.status || 'active',
   });
 
@@ -46,7 +46,7 @@ export default function SettingsTab({ campaign, onUpdate }) {
       time: campaign.time || '',
       location: campaign.location || '',
       max_capacity: campaign.max_capacity || 0,
-      internal_capacity: campaign.internal_capacity || campaign.max_capacity || 0,
+      display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
       status: campaign.status || 'active',
     });
     setEditing(false);
@@ -130,9 +130,9 @@ export default function SettingsTab({ campaign, onUpdate }) {
           )}
         </div>
 
-        {/* 정원 (노출용) */}
+        {/* 정원 (실제 수용 인원) */}
         <div className="form-group">
-          <label className="form-label">정원 (노출용)</label>
+          <label className="form-label">정원 (실제 수용 인원)</label>
           {editing ? (
             <input
               type="number"
@@ -145,28 +145,28 @@ export default function SettingsTab({ campaign, onUpdate }) {
           ) : (
             <div className="form-value">{campaign.max_capacity}명</div>
           )}
-          <div className="form-hint">고객에게 보여지는 정원 수입니다.</div>
+          <div className="form-hint">실제로 수용 가능한 최대 인원 수입니다.</div>
         </div>
 
-        {/* 정원 (내부용) */}
+        {/* 정원 (노출용) */}
         <div className="form-group">
-          <label className="form-label">정원 (내부용)</label>
+          <label className="form-label">정원 (노출용)</label>
           {editing ? (
             <input
               type="number"
-              name="internal_capacity"
+              name="display_capacity"
               className="form-input"
-              value={formData.internal_capacity}
+              value={formData.display_capacity}
               onChange={handleChange}
               min="0"
             />
           ) : (
             <div className="form-value">
-              {campaign.internal_capacity || campaign.max_capacity}명
+              {campaign.display_capacity || campaign.max_capacity}명
             </div>
           )}
           <div className="form-hint">
-            실제 수용 가능 인원입니다. 노출용보다 크게 설정 가능합니다.
+            고객에게 보여지는 정원 수입니다. 실제보다 작게 설정 가능합니다.
           </div>
         </div>
 

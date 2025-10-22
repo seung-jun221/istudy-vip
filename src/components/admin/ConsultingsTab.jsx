@@ -113,11 +113,11 @@ export default function ConsultingsTab({ consultings, onUpdate }) {
                     </span>
                   </td>
                   <td className="notes-cell">
-                    {consulting.consultant_notes ? (
-                      <span title={consulting.consultant_notes}>
-                        {consulting.consultant_notes.length > 20
-                          ? consulting.consultant_notes.slice(0, 20) + '...'
-                          : consulting.consultant_notes}
+                    {consulting.consultation_memo ? (
+                      <span title={consulting.consultation_memo}>
+                        {consulting.consultation_memo.length > 20
+                          ? consulting.consultation_memo.slice(0, 20) + '...'
+                          : consulting.consultation_memo}
                       </span>
                     ) : (
                       <span className="empty-text">-</span>
@@ -128,7 +128,7 @@ export default function ConsultingsTab({ consultings, onUpdate }) {
                       className="btn-action"
                       onClick={() => handleWriteResult(consulting)}
                     >
-                      {consulting.result_written_at ? '결과 수정' : '결과 작성'}
+                      {consulting.consulted_at ? '결과 수정' : '결과 작성'}
                     </button>
                   </td>
                 </tr>
