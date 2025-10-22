@@ -145,7 +145,7 @@ export function AdminProvider({ children }) {
         .from('reservations')
         .select('*')
         .eq('seminar_id', campaignId)
-        .order('created_at', { ascending: false });
+        .order('id', { ascending: false });
 
       if (attendeesError) {
         console.error('❌ 참석자 조회 실패:', attendeesError);
@@ -159,7 +159,7 @@ export function AdminProvider({ children }) {
         .from('consulting_reservations')
         .select('*')
         .eq('linked_seminar_id', campaignId)
-        .order('created_at', { ascending: false });
+        .order('id', { ascending: false });
 
       if (consultingsError) {
         console.error('❌ 컨설팅 조회 실패:', consultingsError);
@@ -188,7 +188,7 @@ export function AdminProvider({ children }) {
         .from('test_reservations')
         .select('*')
         .eq('seminar_id', campaignId)
-        .order('created_at', { ascending: false });
+        .order('id', { ascending: false });
 
       if (testsError) {
         console.error('❌ 진단검사 조회 실패:', testsError);
