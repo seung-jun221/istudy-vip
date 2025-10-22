@@ -321,28 +321,30 @@ export function AdminProvider({ children }) {
     try {
       setLoading(true);
 
-      // ID 생성 (날짜 기반)
-      const id = `seminar_${Date.now()}`;
+      console.log('📝 캠페인 생성 시작:', campaignData);
 
-      console.log('📝 캠페인 생성 시작:', { id, ...campaignData });
-
-      const { error } = await supabase.from('seminars').insert({
-        id,
-        title: campaignData.title,
-        date: campaignData.date,
-        time: campaignData.time,
-        location: campaignData.location,
-        max_capacity: campaignData.max_capacity || 100,
-        display_capacity: campaignData.display_capacity || campaignData.max_capacity || 100,
-        status: campaignData.status || 'active',
-      });
+      // seminars 테이블에 삽입하고 생성된 ID를 반환받음
+      const { data: campaignRecord, error } = await supabase
+        .from('seminars')
+        .insert({
+          title: campaignData.title,
+          date: campaignData.date,
+          time: campaignData.time,
+          location: campaignData.location,
+          max_capacity: campaignData.max_capacity || 100,
+          display_capacity: campaignData.display_capacity || campaignData.max_capacity || 100,
+          status: campaignData.status || 'active',
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error('❌ 캠페인 생성 DB 오류:', error);
         throw error;
       }
 
-      console.log('✅ 캠페인 기본 정보 생성 완료');
+      const id = campaignRecord.id; // Supabase가 자동 생성한 UUID 사용
+      console.log('✅ 캠페인 기본 정보 생성 완료, ID:', id);
 
       // 컨설팅 슬롯 생성
       if (campaignData.consultingSlots && campaignData.consultingSlots.length > 0) {
