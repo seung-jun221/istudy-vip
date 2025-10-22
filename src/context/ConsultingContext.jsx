@@ -187,7 +187,7 @@ export function ConsultingProvider({ children }) {
           locationMap.set(slot.location, {
             location: slot.location,
             nextAvailableDate: slot.date,
-            availableDateCount: 0,
+            availableDates: new Set(), // 고유한 날짜를 Set으로 수집
           });
         }
 
@@ -195,16 +195,18 @@ export function ConsultingProvider({ children }) {
         if (slot.date < locInfo.nextAvailableDate) {
           locInfo.nextAvailableDate = slot.date;
         }
+        // 날짜를 Set에 추가 (자동으로 중복 제거)
+        locInfo.availableDates.add(slot.date);
       });
 
-      bookableSlots.forEach((slot) => {
-        const locInfo = locationMap.get(slot.location);
-        locInfo.availableDateCount++;
-      });
-
-      const locations = Array.from(locationMap.values()).sort(
-        (a, b) => new Date(a.nextAvailableDate) - new Date(b.nextAvailableDate)
-      );
+      // Set 크기를 날짜 개수로 변환
+      const locations = Array.from(locationMap.values())
+        .map((loc) => ({
+          location: loc.location,
+          nextAvailableDate: loc.nextAvailableDate,
+          availableDateCount: loc.availableDates.size, // Set 크기 = 고유한 날짜 개수
+        }))
+        .sort((a, b) => new Date(a.nextAvailableDate) - new Date(b.nextAvailableDate));
 
       setAvailableLocations(locations);
     } catch (error) {
