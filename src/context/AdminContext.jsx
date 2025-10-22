@@ -157,7 +157,7 @@ export function AdminProvider({ children }) {
       console.log('3️⃣ 컨설팅 예약 조회...');
       const { data: consultings, error: consultingsError } = await supabase
         .from('consulting_reservations')
-        .select('*, consulting_slots(*)')
+        .select('*')
         .eq('linked_seminar_id', campaignId)
         .order('created_at', { ascending: false });
 
@@ -167,11 +167,26 @@ export function AdminProvider({ children }) {
       }
       console.log('✅ 컨설팅 예약 수:', consultings?.length || 0);
 
+      // 3-1. 컨설팅 슬롯 정보 추가
+      const consultingsWithSlots = await Promise.all(
+        (consultings || []).map(async (consulting) => {
+          if (consulting.slot_id) {
+            const { data: slot } = await supabase
+              .from('consulting_slots')
+              .select('*')
+              .eq('id', consulting.slot_id)
+              .single();
+            return { ...consulting, consulting_slots: slot };
+          }
+          return consulting;
+        })
+      );
+
       // 4. 진단검사 예약 목록
       console.log('4️⃣ 진단검사 예약 조회...');
       const { data: tests, error: testsError } = await supabase
         .from('test_reservations')
-        .select('*, test_slots(*)')
+        .select('*')
         .eq('seminar_id', campaignId)
         .order('created_at', { ascending: false });
 
@@ -181,12 +196,27 @@ export function AdminProvider({ children }) {
       }
       console.log('✅ 진단검사 예약 수:', tests?.length || 0);
 
+      // 4-1. 진단검사 슬롯 정보 추가
+      const testsWithSlots = await Promise.all(
+        (tests || []).map(async (test) => {
+          if (test.slot_id) {
+            const { data: slot } = await supabase
+              .from('test_slots')
+              .select('*')
+              .eq('id', test.slot_id)
+              .single();
+            return { ...test, test_slots: slot };
+          }
+          return test;
+        })
+      );
+
       console.log('🎉 캠페인 상세 조회 완료!');
       return {
         campaign,
         attendees: attendees || [],
-        consultings: consultings || [],
-        tests: tests || [],
+        consultings: consultingsWithSlots || [],
+        tests: testsWithSlots || [],
       };
     } catch (error) {
       console.error('💥 캠페인 상세 조회 실패:', error);
