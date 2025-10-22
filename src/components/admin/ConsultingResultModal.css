@@ -97,6 +97,33 @@
   margin-bottom: 12px;
 }
 
+.modal-content .required {
+  color: #f44336;
+  margin-left: 4px;
+}
+
+.modal-content .form-input,
+.modal-content .form-select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.modal-content .form-input:focus,
+.modal-content .form-select:focus {
+  outline: none;
+  border-color: #1a73e8;
+}
+
+.modal-content .form-hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 6px;
+}
+
 .radio-group {
   display: flex;
   gap: 12px;

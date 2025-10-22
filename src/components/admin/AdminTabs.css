@@ -188,3 +188,185 @@
   border-top: 1px solid #e0e0e0;
   margin-top: 12px;
 }
+
+/* 날짜 탭 */
+.date-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.date-tab {
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.date-tab:hover {
+  border-color: #1a73e8;
+  background: #f0f7ff;
+}
+
+.date-tab.active {
+  border-color: #1a73e8;
+  background: #1a73e8;
+  color: white;
+}
+
+.date-tab.active .date-count {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.date-count {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+}
+
+/* 슬롯 컨테이너 */
+.slots-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 시간대 블록 */
+.time-slot-block {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fafafa;
+  transition: all 0.3s;
+}
+
+.time-slot-block:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.slot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.slot-time {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.time-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.capacity-badge {
+  padding: 4px 10px;
+  background: #1a73e8;
+  color: white;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.slot-location {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* 빈 슬롯 */
+.empty-slot {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  background: white;
+  border-radius: 8px;
+  border: 1px dashed #ddd;
+}
+
+/* 예약 리스트 */
+.reservations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reservation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s;
+}
+
+.reservation-item:hover {
+  border-color: #1a73e8;
+  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.1);
+}
+
+.reservation-info {
+  flex: 1;
+}
+
+.student-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.student-details {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.math-level {
+  font-size: 12px;
+  color: #1a73e8;
+  font-weight: 500;
+}
+
+.reservation-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 빈 상태 */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: #999;
+}
+
+.empty-state p {
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.empty-hint {
+  font-size: 13px;
+  color: #bbb;
+}

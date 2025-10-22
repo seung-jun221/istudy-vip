@@ -162,12 +162,13 @@ export function AdminProvider({ children }) {
       }
       console.log('✅ 참석자 수:', attendees?.length || 0);
 
-      // 3. 컨설팅 예약 목록
+      // 3. 컨설팅 예약 목록 (취소된 예약 제외)
       console.log('3️⃣ 컨설팅 예약 조회...');
       const { data: consultings, error: consultingsError } = await supabase
         .from('consulting_reservations')
         .select('*')
         .eq('linked_seminar_id', campaignId)
+        .neq('status', 'cancelled') // 취소된 예약 제외
         .order('id', { ascending: false });
 
       if (consultingsError) {
@@ -190,6 +191,20 @@ export function AdminProvider({ children }) {
           return consulting;
         })
       );
+
+      // 3-2. 해당 캠페인의 모든 컨설팅 슬롯 조회 (빈 슬롯 표시용)
+      console.log('3️⃣-2 모든 컨설팅 슬롯 조회...');
+      const { data: allConsultingSlots, error: slotsError } = await supabase
+        .from('consulting_slots')
+        .select('*')
+        .eq('linked_seminar_id', campaignId)
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      if (slotsError) {
+        console.error('❌ 컨설팅 슬롯 조회 실패:', slotsError);
+      }
+      console.log('✅ 컨설팅 슬롯 수:', allConsultingSlots?.length || 0);
 
       // 4. 진단검사 예약 목록 (consulting_reservations를 통해 간접 조회)
       console.log('4️⃣ 진단검사 예약 조회...');
@@ -234,6 +249,7 @@ export function AdminProvider({ children }) {
         campaign,
         attendees: attendees || [],
         consultings: consultingsWithSlots || [],
+        consultingSlots: allConsultingSlots || [],
         tests: testsWithSlots || [],
       };
     } catch (error) {
@@ -285,6 +301,37 @@ export function AdminProvider({ children }) {
   // 캠페인 설정 관리
   // ========================================
 
+  const createCampaign = async (campaignData) => {
+    try {
+      setLoading(true);
+
+      // ID 생성 (날짜 기반)
+      const id = `seminar_${Date.now()}`;
+
+      const { error } = await supabase.from('seminars').insert({
+        id,
+        title: campaignData.title,
+        date: campaignData.date,
+        time: campaignData.time,
+        location: campaignData.location,
+        max_capacity: campaignData.max_capacity || 100,
+        display_capacity: campaignData.display_capacity || campaignData.max_capacity || 100,
+        status: campaignData.status || 'active',
+      });
+
+      if (error) throw error;
+
+      showToast('새 캠페인이 생성되었습니다!', 'success');
+      return true;
+    } catch (error) {
+      console.error('캠페인 생성 실패:', error);
+      showToast('캠페인 생성에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updateCampaign = async (campaignId, campaignData) => {
     try {
       setLoading(true);
@@ -302,29 +349,6 @@ export function AdminProvider({ children }) {
       console.error('캠페인 업데이트 실패:', error);
       showToast('업데이트에 실패했습니다.', 'error');
       return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createCampaign = async (campaignData) => {
-    try {
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from('seminars')
-        .insert([campaignData])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      showToast('새 캠페인이 생성되었습니다.', 'success');
-      return data;
-    } catch (error) {
-      console.error('캠페인 생성 실패:', error);
-      showToast('캠페인 생성에 실패했습니다.', 'error');
-      return null;
     } finally {
       setLoading(false);
     }

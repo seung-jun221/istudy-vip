@@ -59,7 +59,7 @@ export default function CampaignDetail() {
     );
   }
 
-  const { campaign, attendees, consultings, tests } = campaignData;
+  const { campaign, attendees, consultings, consultingSlots, tests } = campaignData;
 
   // 통계 계산
   const stats = {
@@ -148,7 +148,11 @@ export default function CampaignDetail() {
       <div className="tab-content">
         {activeTab === 'attendees' && <AttendeesTab attendees={attendees} />}
         {activeTab === 'consultings' && (
-          <ConsultingsTab consultings={consultings} onUpdate={fetchCampaignDetail} />
+          <ConsultingsTab
+            consultings={consultings}
+            consultingSlots={consultingSlots}
+            onUpdate={fetchCampaignDetail}
+          />
         )}
         {activeTab === 'tests' && <TestsTab tests={tests} />}
         {activeTab === 'settings' && (

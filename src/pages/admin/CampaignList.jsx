@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
+import CreateCampaignModal from '../../components/admin/CreateCampaignModal';
 import './CampaignList.css';
 
 export default function CampaignList() {
@@ -8,6 +9,7 @@ export default function CampaignList() {
   const { logout, loadCampaigns } = useAdmin();
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     fetchCampaigns();
@@ -27,6 +29,13 @@ export default function CampaignList() {
     }
   };
 
+  const handleCloseModal = (updated) => {
+    setShowCreateModal(false);
+    if (updated) {
+      fetchCampaigns(); // 캠페인 목록 새로고침
+    }
+  };
+
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
     return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
@@ -43,6 +52,9 @@ export default function CampaignList() {
         <div className="admin-header-content">
           <h1>캠페인 관리</h1>
           <div className="admin-header-actions">
+            <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
+              + 신규 캠페인 추가
+            </button>
             <button className="btn btn-secondary" onClick={fetchCampaigns}>
               새로고침
             </button>
@@ -124,6 +136,9 @@ export default function CampaignList() {
           </div>
         )}
       </div>
+
+      {/* 신규 캠페인 생성 모달 */}
+      {showCreateModal && <CreateCampaignModal onClose={handleCloseModal} />}
     </div>
   );
 }
