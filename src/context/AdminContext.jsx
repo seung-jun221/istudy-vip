@@ -245,18 +245,19 @@ export function AdminProvider({ children }) {
       );
 
       // 4-3. 해당 캠페인의 모든 진단검사 슬롯 조회 (슬롯 관리용)
+      // 주의: test_slots는 location 기반으로 작동 (캠페인이 아닌 장소별로 관리됨)
       console.log('4️⃣-3 모든 진단검사 슬롯 조회...');
       const { data: allTestSlots, error: testSlotsError } = await supabase
         .from('test_slots')
         .select('*')
-        .eq('linked_seminar_id', campaignId)
+        .eq('location', campaign.location)
         .order('date', { ascending: true })
         .order('time', { ascending: true });
 
       if (testSlotsError) {
         console.error('❌ 진단검사 슬롯 조회 실패:', testSlotsError);
       }
-      console.log('✅ 진단검사 슬롯 수:', allTestSlots?.length || 0);
+      console.log('✅ 진단검사 슬롯 수 (location 기준):', allTestSlots?.length || 0);
 
       console.log('🎉 캠페인 상세 조회 완료!');
       return {
@@ -557,16 +558,18 @@ export function AdminProvider({ children }) {
   };
 
   // 진단검사 슬롯 생성 (배치)
+  // 주의: test_slots는 linked_seminar_id를 사용하지 않고 location 기반으로 작동
   const createTestSlots = async (campaignId, slots) => {
     try {
       setLoading(true);
 
       const slotsToInsert = slots.map((slot) => ({
-        linked_seminar_id: campaignId,
         date: slot.date,
         time: slot.time,
         location: slot.location,
         max_capacity: slot.capacity,
+        current_bookings: 0,
+        status: 'active',
       }));
 
       const { error } = await supabase.from('test_slots').insert(slotsToInsert);
