@@ -469,82 +469,172 @@ export function AdminProvider({ children }) {
     try {
       setLoading(true);
       console.log('🗑️ 캠페인 삭제 시작:', campaignId);
+      console.log('📊 캠페인 ID 타입:', typeof campaignId, campaignId);
+
+      // 0. 캠페인 정보 조회 (location 정보 필요)
+      console.log('0️⃣ 캠페인 정보 조회 중...');
+      const { data: campaign, error: campaignFetchError } = await supabase
+        .from('seminars')
+        .select('*')
+        .eq('id', campaignId)
+        .single();
+
+      if (campaignFetchError) {
+        console.error('❌ 캠페인 정보 조회 실패:', campaignFetchError);
+        throw campaignFetchError;
+      }
+
+      console.log('✅ 캠페인 정보:', campaign);
+      const campaignLocation = campaign.location;
 
       // 1. 컨설팅 예약 조회 (test_reservations 삭제를 위해)
+      console.log('1️⃣ 컨설팅 예약 조회 중...');
       const { data: consultings } = await supabase
         .from('consulting_reservations')
         .select('id')
         .eq('linked_seminar_id', campaignId);
 
       const consultingIds = consultings?.map(c => c.id) || [];
-      console.log('📋 컨설팅 예약 ID 목록:', consultingIds);
+      console.log('📋 컨설팅 예약 ID 목록:', consultingIds.length + '개');
 
       // 2. 진단검사 예약 삭제 (컨설팅 예약을 참조하므로 먼저 삭제)
       if (consultingIds.length > 0) {
-        const { error: testReservationsError } = await supabase
+        console.log('2️⃣ 진단검사 예약 삭제 중...');
+        const { error: testReservationsError, count: testResCount } = await supabase
           .from('test_reservations')
-          .delete()
+          .delete({ count: 'exact' })
           .in('consulting_reservation_id', consultingIds);
 
         if (testReservationsError) {
           console.error('❌ 진단검사 예약 삭제 실패:', testReservationsError);
           throw testReservationsError;
         }
-        console.log('✅ 진단검사 예약 삭제 완료');
+        console.log('✅ 진단검사 예약 삭제 완료:', testResCount + '개');
+      } else {
+        console.log('⏭️ 진단검사 예약이 없습니다.');
       }
 
       // 3. 컨설팅 예약 삭제
-      const { error: consultingsError } = await supabase
+      console.log('3️⃣ 컨설팅 예약 삭제 중...');
+      const { error: consultingsError, count: consultingCount } = await supabase
         .from('consulting_reservations')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('linked_seminar_id', campaignId);
 
       if (consultingsError) {
         console.error('❌ 컨설팅 예약 삭제 실패:', consultingsError);
         throw consultingsError;
       }
-      console.log('✅ 컨설팅 예약 삭제 완료');
+      console.log('✅ 컨설팅 예약 삭제 완료:', consultingCount + '개');
 
       // 4. 컨설팅 슬롯 삭제
-      const { error: slotsError } = await supabase
+      console.log('4️⃣ 컨설팅 슬롯 삭제 중...');
+      const { error: slotsError, count: slotsCount } = await supabase
         .from('consulting_slots')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('linked_seminar_id', campaignId);
 
       if (slotsError) {
         console.error('❌ 컨설팅 슬롯 삭제 실패:', slotsError);
         throw slotsError;
       }
-      console.log('✅ 컨설팅 슬롯 삭제 완료');
+      console.log('✅ 컨설팅 슬롯 삭제 완료:', slotsCount + '개');
 
       // 5. 설명회 참석자 삭제
-      const { error: attendeesError } = await supabase
+      console.log('5️⃣ 설명회 참석자 삭제 중...');
+      const { error: attendeesError, count: attendeesCount } = await supabase
         .from('reservations')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('seminar_id', campaignId);
 
       if (attendeesError) {
         console.error('❌ 설명회 참석자 삭제 실패:', attendeesError);
         throw attendeesError;
       }
-      console.log('✅ 설명회 참석자 삭제 완료');
+      console.log('✅ 설명회 참석자 삭제 완료:', attendeesCount + '개');
 
-      // 6. 캠페인 삭제
-      const { error } = await supabase
+      // 6. 진단검사 방식 삭제 (location 기반 - 다른 캠페인도 같은 location을 사용할 수 있으므로 주의)
+      console.log('6️⃣ 진단검사 방식 확인 중 (location: ' + campaignLocation + ')...');
+
+      // 같은 location을 사용하는 다른 캠페인이 있는지 확인
+      const { data: otherCampaigns, error: otherCampaignsError } = await supabase
         .from('seminars')
-        .delete()
-        .eq('id', campaignId);
+        .select('id')
+        .eq('location', campaignLocation)
+        .neq('id', campaignId);
 
-      if (error) {
-        console.error('❌ 캠페인 삭제 실패:', error);
-        throw error;
+      if (otherCampaignsError) {
+        console.error('❌ 다른 캠페인 확인 실패:', otherCampaignsError);
+      } else if (otherCampaigns && otherCampaigns.length > 0) {
+        console.log('⚠️ 같은 location을 사용하는 다른 캠페인이 있어 test_methods는 유지합니다:', otherCampaigns.length + '개');
+      } else {
+        console.log('🗑️ 같은 location을 사용하는 다른 캠페인이 없으므로 test_methods 삭제...');
+        const { error: testMethodsError } = await supabase
+          .from('test_methods')
+          .delete()
+          .eq('location', campaignLocation);
+
+        if (testMethodsError) {
+          console.error('⚠️ test_methods 삭제 실패 (무시):', testMethodsError);
+          // test_methods 삭제 실패는 무시하고 계속 진행
+        } else {
+          console.log('✅ test_methods 삭제 완료');
+        }
+      }
+
+      // 7. 캠페인 자체 삭제
+      console.log('7️⃣ 캠페인 자체 삭제 중...');
+      console.log('📍 삭제 대상 ID:', campaignId, '(타입:', typeof campaignId + ')');
+
+      const { data: deleteResult, error: deleteError, count: deleteCount } = await supabase
+        .from('seminars')
+        .delete({ count: 'exact' })
+        .eq('id', campaignId)
+        .select();
+
+      if (deleteError) {
+        console.error('❌ 캠페인 삭제 실패 - 전체 에러 객체:', deleteError);
+        console.error('에러 코드:', deleteError.code);
+        console.error('에러 메시지:', deleteError.message);
+        console.error('에러 details:', deleteError.details);
+        console.error('에러 hint:', deleteError.hint);
+        throw deleteError;
+      }
+
+      console.log('📊 삭제 결과 count:', deleteCount);
+      console.log('📊 삭제된 데이터:', deleteResult);
+
+      if (!deleteCount || deleteCount === 0) {
+        console.error('⚠️ 캠페인이 삭제되지 않았습니다! (count: ' + deleteCount + ')');
+        console.error('캠페인 ID가 존재하지 않거나 이미 삭제되었을 수 있습니다.');
+
+        // 실제로 레코드가 남아있는지 재확인
+        const { data: verifyData, error: verifyError } = await supabase
+          .from('seminars')
+          .select('*')
+          .eq('id', campaignId)
+          .single();
+
+        if (verifyError && verifyError.code === 'PGRST116') {
+          console.log('✅ 캠페인이 존재하지 않음 - 삭제된 것으로 간주');
+        } else if (verifyData) {
+          console.error('❌ 캠페인이 여전히 존재합니다!', verifyData);
+          throw new Error('캠페인 삭제가 실행되었으나 레코드가 남아있습니다.');
+        }
       }
 
       console.log('🎉 캠페인 삭제 완료!');
+
+      // localStorage에서도 설정 제거
+      const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
+      delete settings[campaignId];
+      localStorage.setItem('campaign_settings', JSON.stringify(settings));
+
       showToast('캠페인이 삭제되었습니다.', 'success');
       return true;
     } catch (error) {
       console.error('💥 캠페인 삭제 실패:', error);
+      console.error('전체 에러:', JSON.stringify(error, null, 2));
       showToast(`삭제에 실패했습니다: ${error.message}`, 'error');
       return false;
     } finally {
