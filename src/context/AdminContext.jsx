@@ -448,18 +448,29 @@ export function AdminProvider({ children }) {
     try {
       setLoading(true);
 
-      const { error } = await supabase
+      console.log('📝 캠페인 업데이트 시작:', campaignId);
+      console.log('📊 업데이트할 데이터:', campaignData);
+
+      const { data, error } = await supabase
         .from('seminars')
         .update(campaignData)
-        .eq('id', campaignId);
+        .eq('id', campaignId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ 업데이트 DB 오류:', error);
+        console.error('에러 코드:', error.code);
+        console.error('에러 메시지:', error.message);
+        console.error('에러 details:', error.details);
+        throw error;
+      }
 
+      console.log('✅ 업데이트 성공:', data);
       showToast('캠페인 정보가 업데이트되었습니다.', 'success');
       return true;
     } catch (error) {
-      console.error('캠페인 업데이트 실패:', error);
-      showToast('업데이트에 실패했습니다.', 'error');
+      console.error('💥 캠페인 업데이트 실패:', error);
+      showToast(`업데이트에 실패했습니다: ${error.message}`, 'error');
       return false;
     } finally {
       setLoading(false);
