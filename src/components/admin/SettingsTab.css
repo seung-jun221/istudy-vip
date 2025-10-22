@@ -16,6 +16,13 @@
   color: #333;
 }
 
+/* 헤더 버튼 크기 조정 */
+.settings-header .btn {
+  flex: none;
+  padding: 10px 24px;
+  font-size: 14px;
+}
+
 .settings-form {
   background: white;
   border-radius: 12px;

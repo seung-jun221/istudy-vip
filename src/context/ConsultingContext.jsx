@@ -1,6 +1,7 @@
 // src/context/ConsultingContext.jsx - 진단검사 기능 추가
 import { createContext, useContext, useState } from 'react';
 import { supabase } from '../utils/supabase';
+import { useAdmin } from './AdminContext';
 
 const ConsultingContext = createContext();
 
@@ -15,6 +16,10 @@ export function useConsulting() {
 export function ConsultingProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // AdminContext에서 자동 슬롯 오픈 함수 가져오기
+  const adminContext = useAdmin();
+  const checkAndOpenNextSlots = adminContext?.checkAndOpenNextSlots;
 
   // 컨설팅 예약 관련
   const [availableLocations, setAvailableLocations] = useState([]);
@@ -246,6 +251,13 @@ export function ConsultingProvider({ children }) {
         .single();
 
       if (fetchError) throw fetchError;
+
+      // 자동 슬롯 오픈 체크 (비동기로 실행, 실패해도 예약은 성공)
+      if (checkAndOpenNextSlots && reservationData.linkedSeminarId) {
+        checkAndOpenNextSlots(reservationData.linkedSeminarId).catch((err) =>
+          console.error('자동 슬롯 오픈 체크 중 오류:', err)
+        );
+      }
 
       showToast('예약이 완료되었습니다!', 'success');
       return reservation;
