@@ -1,10 +1,11 @@
+/* 컨설팅 결과 모달 - 기존 사이트 스타일 적용 */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,17 +15,17 @@
 
 .modal-content {
   background: white;
-  border-radius: 16px;
+  border-radius: 12px;
   width: 100%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .modal-header {
   padding: 24px 24px 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e0e0e0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -33,14 +34,14 @@
 .modal-header h2 {
   font-size: 20px;
   font-weight: 700;
-  color: #1a202c;
+  color: #333;
 }
 
 .modal-close {
   background: none;
   border: none;
   font-size: 28px;
-  color: #a0aec0;
+  color: #999;
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -52,8 +53,8 @@
 }
 
 .modal-close:hover {
-  background: #f7fafc;
-  color: #2d3748;
+  background: #f5f5f5;
+  color: #666;
 }
 
 .modal-body {
@@ -61,38 +62,38 @@
 }
 
 .student-info-box {
-  background: #f7fafc;
+  background: #f5f5f5;
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 24px;
 }
 
-.info-row {
+.modal-content .info-row {
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
   font-size: 14px;
 }
 
-.info-label {
-  color: #718096;
+.modal-content .info-label {
+  color: #666;
   font-weight: 500;
 }
 
-.info-value {
-  color: #2d3748;
+.modal-content .info-value {
+  color: #333;
   font-weight: 600;
 }
 
-.form-group {
+.modal-content .form-group {
   margin-bottom: 24px;
 }
 
-.form-label {
+.modal-content .form-label {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #2d3748;
+  color: #555;
   margin-bottom: 12px;
 }
 
@@ -113,94 +114,92 @@
 .radio-text {
   display: block;
   padding: 12px 16px;
-  border: 2px solid #e2e8f0;
+  border: 1px solid #ddd;
   border-radius: 8px;
   text-align: center;
   font-size: 14px;
   font-weight: 600;
-  color: #718096;
-  transition: all 0.2s;
+  color: #666;
+  transition: all 0.3s;
 }
 
 .radio-text:hover {
-  border-color: #cbd5e0;
-  background: #f7fafc;
+  border-color: #ccc;
+  background: #fafafa;
 }
 
 .radio-text.active {
-  border-color: #a0aec0;
-  background: #edf2f7;
-  color: #2d3748;
+  border-color: #999;
+  background: #f5f5f5;
+  color: #333;
 }
 
 .radio-text.success.active {
-  border-color: #48bb78;
-  background: #c6f6d5;
-  color: #22543d;
+  border-color: #4caf50;
+  background: #e8f5e9;
+  color: #2e7d32;
 }
 
 .radio-text.danger.active {
-  border-color: #f56565;
-  background: #fed7d7;
-  color: #742a2a;
+  border-color: #f44336;
+  background: #ffebee;
+  color: #c62828;
 }
 
-.form-textarea {
+.modal-content .form-textarea {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
+  padding: 12px;
+  border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 14px;
   line-height: 1.6;
   font-family: inherit;
   resize: vertical;
-  transition: all 0.2s;
+  transition: all 0.3s;
 }
 
-.form-textarea:focus {
+.modal-content .form-textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #1a73e8;
 }
 
 .modal-footer {
   padding: 16px 24px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #e0e0e0;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
-.btn {
+.modal-content .btn {
   padding: 10px 24px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.2s;
+  transition: all 0.3s;
 }
 
-.btn:disabled {
+.modal-content .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.btn-secondary {
-  background: #edf2f7;
-  color: #2d3748;
+.modal-content .btn-secondary {
+  background: #f5f5f5;
+  color: #333;
 }
 
-.btn-secondary:hover:not(:disabled) {
-  background: #e2e8f0;
+.modal-content .btn-secondary:hover:not(:disabled) {
+  background: #e0e0e0;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.modal-content .btn-primary {
+  background: #1a73e8;
   color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+.modal-content .btn-primary:hover:not(:disabled) {
+  background: #1557b0;
 }
