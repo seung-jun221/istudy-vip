@@ -496,6 +496,7 @@ export function AdminProvider({ children }) {
         time: slot.time,
         location: slot.location,
         max_capacity: slot.capacity,
+        day_of_week: slot.dayOfWeek,
         is_available: true,
       }));
 

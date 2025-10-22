@@ -116,6 +116,11 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
       return;
     }
 
+    // 요일 계산
+    const dateObj = new Date(date);
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const dayOfWeek = days[dateObj.getDay()];
+
     const slots = [];
     for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
       const hours = Math.floor(minutes / 60);
@@ -127,6 +132,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
         time: timeStr,
         location,
         capacity,
+        dayOfWeek,
       });
     }
 
