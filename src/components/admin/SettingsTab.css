@@ -336,3 +336,55 @@
 .checkbox-label span {
   color: #666;
 }
+
+/* 위험 구역 */
+.danger-zone {
+  border: 2px solid #f44336;
+  background: #ffebee;
+}
+
+.danger-zone h3 {
+  color: #d32f2f;
+}
+
+.danger-zone-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.danger-info {
+  flex: 1;
+}
+
+.danger-info h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.danger-info p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.btn-danger {
+  padding: 12px 24px;
+  border: 2px solid #f44336;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  background: white;
+  color: #f44336;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.btn-danger:hover {
+  background: #f44336;
+  color: white;
+}

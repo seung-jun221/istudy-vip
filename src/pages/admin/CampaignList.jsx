@@ -6,7 +6,7 @@ import './CampaignList.css';
 
 export default function CampaignList() {
   const navigate = useNavigate();
-  const { logout, loadCampaigns } = useAdmin();
+  const { logout, loadCampaigns, deleteCampaign } = useAdmin();
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -44,6 +44,19 @@ export default function CampaignList() {
   const formatTime = (timeStr) => {
     if (!timeStr) return '';
     return timeStr.slice(0, 5);
+  };
+
+  const handleDeleteCampaign = async (e, campaignId, campaignTitle) => {
+    e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
+
+    if (!window.confirm(`"${campaignTitle || '캠페인'}"을(를) 삭제하시겠습니까?\n\n⚠️ 관련된 모든 예약 데이터도 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    const success = await deleteCampaign(campaignId);
+    if (success) {
+      fetchCampaigns(); // 목록 새로고침
+    }
   };
 
   return (
@@ -130,6 +143,14 @@ export default function CampaignList() {
 
                 <div className="campaign-card-footer">
                   <button className="btn-link">상세 보기 →</button>
+                  <button
+                    className="btn-delete-campaign"
+                    onClick={(e) =>
+                      handleDeleteCampaign(e, campaign.id, campaign.title || campaign.location)
+                    }
+                  >
+                    🗑️ 삭제
+                  </button>
                 </div>
               </div>
             ))}

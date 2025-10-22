@@ -178,7 +178,9 @@
 }
 
 .campaign-list-container .campaign-card-footer {
-  text-align: right;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .campaign-list-container .btn-link {
@@ -189,6 +191,22 @@
   font-weight: 600;
   cursor: pointer;
   padding: 0;
+}
+
+.campaign-list-container .btn-delete-campaign {
+  background: none;
+  border: none;
+  color: #f44336;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.campaign-list-container .btn-delete-campaign:hover {
+  background: #ffebee;
 }
 
 .campaign-list-container .btn {
