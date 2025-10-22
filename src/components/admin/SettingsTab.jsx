@@ -21,12 +21,6 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
   // localStorage에서 auto_open_threshold 읽기
   const [autoOpenThreshold, setAutoOpenThreshold] = useState(0);
 
-  useEffect(() => {
-    const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
-    const threshold = settings[campaign.id]?.auto_open_threshold || 0;
-    setAutoOpenThreshold(threshold);
-  }, [campaign.id]);
-
   const [formData, setFormData] = useState({
     title: campaign.title || '',
     date: campaign.date || '',
@@ -36,6 +30,23 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
     display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
     status: campaign.status || 'active',
   });
+
+  // campaign가 업데이트되면 formData도 업데이트
+  useEffect(() => {
+    setFormData({
+      title: campaign.title || '',
+      date: campaign.date || '',
+      time: campaign.time || '',
+      location: campaign.location || '',
+      max_capacity: campaign.max_capacity || 0,
+      display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
+      status: campaign.status || 'active',
+    });
+
+    const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
+    const threshold = settings[campaign.id]?.auto_open_threshold || 0;
+    setAutoOpenThreshold(threshold);
+  }, [campaign]);
 
   // 컨설팅 슬롯 생성기 상태
   const [consultingGenerator, setConsultingGenerator] = useState({
