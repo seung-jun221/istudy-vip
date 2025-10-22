@@ -468,19 +468,84 @@ export function AdminProvider({ children }) {
   const deleteCampaign = async (campaignId) => {
     try {
       setLoading(true);
+      console.log('🗑️ 캠페인 삭제 시작:', campaignId);
 
+      // 1. 컨설팅 예약 조회 (test_reservations 삭제를 위해)
+      const { data: consultings } = await supabase
+        .from('consulting_reservations')
+        .select('id')
+        .eq('linked_seminar_id', campaignId);
+
+      const consultingIds = consultings?.map(c => c.id) || [];
+      console.log('📋 컨설팅 예약 ID 목록:', consultingIds);
+
+      // 2. 진단검사 예약 삭제 (컨설팅 예약을 참조하므로 먼저 삭제)
+      if (consultingIds.length > 0) {
+        const { error: testReservationsError } = await supabase
+          .from('test_reservations')
+          .delete()
+          .in('consulting_reservation_id', consultingIds);
+
+        if (testReservationsError) {
+          console.error('❌ 진단검사 예약 삭제 실패:', testReservationsError);
+          throw testReservationsError;
+        }
+        console.log('✅ 진단검사 예약 삭제 완료');
+      }
+
+      // 3. 컨설팅 예약 삭제
+      const { error: consultingsError } = await supabase
+        .from('consulting_reservations')
+        .delete()
+        .eq('linked_seminar_id', campaignId);
+
+      if (consultingsError) {
+        console.error('❌ 컨설팅 예약 삭제 실패:', consultingsError);
+        throw consultingsError;
+      }
+      console.log('✅ 컨설팅 예약 삭제 완료');
+
+      // 4. 컨설팅 슬롯 삭제
+      const { error: slotsError } = await supabase
+        .from('consulting_slots')
+        .delete()
+        .eq('linked_seminar_id', campaignId);
+
+      if (slotsError) {
+        console.error('❌ 컨설팅 슬롯 삭제 실패:', slotsError);
+        throw slotsError;
+      }
+      console.log('✅ 컨설팅 슬롯 삭제 완료');
+
+      // 5. 설명회 참석자 삭제
+      const { error: attendeesError } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('seminar_id', campaignId);
+
+      if (attendeesError) {
+        console.error('❌ 설명회 참석자 삭제 실패:', attendeesError);
+        throw attendeesError;
+      }
+      console.log('✅ 설명회 참석자 삭제 완료');
+
+      // 6. 캠페인 삭제
       const { error } = await supabase
         .from('seminars')
         .delete()
         .eq('id', campaignId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ 캠페인 삭제 실패:', error);
+        throw error;
+      }
 
+      console.log('🎉 캠페인 삭제 완료!');
       showToast('캠페인이 삭제되었습니다.', 'success');
       return true;
     } catch (error) {
-      console.error('캠페인 삭제 실패:', error);
-      showToast('삭제에 실패했습니다.', 'error');
+      console.error('💥 캠페인 삭제 실패:', error);
+      showToast(`삭제에 실패했습니다: ${error.message}`, 'error');
       return false;
     } finally {
       setLoading(false);
