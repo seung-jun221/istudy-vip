@@ -71,18 +71,19 @@ export function AdminProvider({ children }) {
       // 각 캠페인별 통계 계산
       const campaignsWithStats = await Promise.all(
         data.map(async (campaign) => {
-          // 설명회 참석자 수
+          // 설명회 예약 수
           const { count: attendeeCount } = await supabase
             .from('reservations')
             .select('*', { count: 'exact', head: true })
             .eq('seminar_id', campaign.id)
             .in('status', ['예약', '참석']);
 
-          // 컨설팅 예약 수 (설명회 참석자 기준)
+          // 컨설팅 예약 수 (취소 제외)
           const { count: consultingCount } = await supabase
             .from('consulting_reservations')
             .select('*', { count: 'exact', head: true })
-            .eq('linked_seminar_id', campaign.id);
+            .eq('linked_seminar_id', campaign.id)
+            .neq('status', 'cancelled');
 
           // 진단검사 예약 수 (consulting_reservations를 통해 간접적으로 조회)
           const { data: consultingIds } = await supabase

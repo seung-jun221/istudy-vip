@@ -662,7 +662,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
 
       {/* 위험 구역 - 캠페인 삭제 */}
       <div className="settings-section danger-zone">
-        <h3>⚠️ 위험 구역</h3>
+        <h3>위험 구역</h3>
         <div className="danger-zone-content">
           <div className="danger-info">
             <h4>캠페인 삭제</h4>

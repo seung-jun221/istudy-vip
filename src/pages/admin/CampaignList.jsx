@@ -96,15 +96,15 @@ export default function CampaignList() {
 
                 <div className="campaign-info">
                   <div className="info-row">
-                    <span className="info-label">📅 날짜:</span>
+                    <span className="info-label">날짜:</span>
                     <span className="info-value">{formatDate(campaign.date)}</span>
                   </div>
                   <div className="info-row">
-                    <span className="info-label">⏰ 시간:</span>
+                    <span className="info-label">시간:</span>
                     <span className="info-value">{formatTime(campaign.time)}</span>
                   </div>
                   <div className="info-row">
-                    <span className="info-label">📍 장소:</span>
+                    <span className="info-label">장소:</span>
                     <span className="info-value">{campaign.location}</span>
                   </div>
                 </div>
@@ -112,7 +112,7 @@ export default function CampaignList() {
                 <div className="campaign-stats">
                   <div className="stat-item">
                     <div className="stat-value">{campaign.stats.attendees}</div>
-                    <div className="stat-label">설명회 참석</div>
+                    <div className="stat-label">설명회 예약</div>
                   </div>
                   <div className="stat-item">
                     <div className="stat-value">{campaign.stats.consultings}</div>
