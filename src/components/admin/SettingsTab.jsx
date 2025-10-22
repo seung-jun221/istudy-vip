@@ -7,6 +7,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
   const {
     updateCampaign,
     createConsultingSlots,
+    updateConsultingSlot,
     deleteConsultingSlot,
     createTestSlots,
     deleteTestSlot,
@@ -40,6 +41,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
     endTime: '17:00',
     location: campaign.location || '',
     capacity: 1,
+    isAvailable: true, // 기본값: 즉시 오픈
   });
 
   // 진단검사 슬롯 생성기 상태
@@ -99,7 +101,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
 
   // 컨설팅 슬롯 생성기 - 시간대별 슬롯 생성
   const generateConsultingSlots = async () => {
-    const { date, startTime, endTime, location, capacity } = consultingGenerator;
+    const { date, startTime, endTime, location, capacity, isAvailable } = consultingGenerator;
 
     if (!date || !startTime || !endTime || !location) {
       alert('모든 필드를 입력해주세요.');
@@ -133,6 +135,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
         location,
         capacity,
         dayOfWeek,
+        isAvailable,
       });
     }
 
@@ -145,6 +148,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
         endTime: '17:00',
         location: campaign.location || '',
         capacity: 1,
+        isAvailable: true,
       });
     }
   };
@@ -154,6 +158,19 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
     if (!window.confirm('이 슬롯을 삭제하시겠습니까?')) return;
 
     const success = await deleteConsultingSlot(slotId);
+    if (success) {
+      onUpdate();
+    }
+  };
+
+  // 컨설팅 슬롯 공개/비공개 토글
+  const handleToggleSlotAvailability = async (slotId, currentStatus) => {
+    const newStatus = !currentStatus;
+    const statusText = newStatus ? '공개' : '비공개';
+
+    if (!window.confirm(`이 슬롯을 ${statusText}로 변경하시겠습니까?`)) return;
+
+    const success = await updateConsultingSlot(slotId, { is_available: newStatus });
     if (success) {
       onUpdate();
     }
@@ -462,6 +479,21 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
                 />
               </div>
             </div>
+            <div className="form-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={consultingGenerator.isAvailable}
+                  onChange={(e) =>
+                    setConsultingGenerator({
+                      ...consultingGenerator,
+                      isAvailable: e.target.checked,
+                    })
+                  }
+                />
+                <span>즉시 오픈 (체크 해제 시 비공개로 생성되며, 자동 슬롯 오픈 대상이 됩니다)</span>
+              </label>
+            </div>
             <button className="btn btn-primary" onClick={generateConsultingSlots}>
               슬롯 생성
             </button>
@@ -482,13 +514,24 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
                     <span className="slot-time">{formatTime(slot.time)}</span>
                     <span className="slot-location">{slot.location}</span>
                     <span className="slot-capacity">정원 {slot.max_capacity}명</span>
+                    <span className={`slot-status ${slot.is_available ? 'open' : 'closed'}`}>
+                      {slot.is_available ? '공개' : '비공개'}
+                    </span>
                   </div>
-                  <button
-                    className="btn-delete"
-                    onClick={() => handleDeleteConsultingSlot(slot.id)}
-                  >
-                    삭제
-                  </button>
+                  <div className="slot-actions">
+                    <button
+                      className={`btn-toggle ${slot.is_available ? 'btn-close' : 'btn-open'}`}
+                      onClick={() => handleToggleSlotAvailability(slot.id, slot.is_available)}
+                    >
+                      {slot.is_available ? '비공개로 변경' : '공개로 변경'}
+                    </button>
+                    <button
+                      className="btn-delete"
+                      onClick={() => handleDeleteConsultingSlot(slot.id)}
+                    >
+                      삭제
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

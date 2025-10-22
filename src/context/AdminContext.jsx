@@ -497,7 +497,7 @@ export function AdminProvider({ children }) {
         location: slot.location,
         max_capacity: slot.capacity,
         day_of_week: slot.dayOfWeek,
-        is_available: true,
+        is_available: slot.isAvailable !== undefined ? slot.isAvailable : true,
       }));
 
       const { error } = await supabase.from('consulting_slots').insert(slotsToInsert);
