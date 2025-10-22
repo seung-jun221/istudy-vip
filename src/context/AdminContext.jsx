@@ -123,43 +123,65 @@ export function AdminProvider({ children }) {
   const loadCampaignDetail = async (campaignId) => {
     try {
       setLoading(true);
+      console.log('🔍 캠페인 상세 조회 시작:', campaignId);
 
       // 1. 캠페인 기본 정보
+      console.log('1️⃣ 캠페인 기본 정보 조회...');
       const { data: campaign, error: campaignError } = await supabase
         .from('seminars')
         .select('*')
         .eq('id', campaignId)
         .single();
 
-      if (campaignError) throw campaignError;
+      if (campaignError) {
+        console.error('❌ 캠페인 기본 정보 조회 실패:', campaignError);
+        throw campaignError;
+      }
+      console.log('✅ 캠페인 정보:', campaign);
 
       // 2. 설명회 참석자 목록
+      console.log('2️⃣ 설명회 참석자 조회...');
       const { data: attendees, error: attendeesError } = await supabase
         .from('reservations')
         .select('*')
         .eq('seminar_id', campaignId)
         .order('created_at', { ascending: false });
 
-      if (attendeesError) throw attendeesError;
+      if (attendeesError) {
+        console.error('❌ 참석자 조회 실패:', attendeesError);
+        throw attendeesError;
+      }
+      console.log('✅ 참석자 수:', attendees?.length || 0);
 
       // 3. 컨설팅 예약 목록
+      console.log('3️⃣ 컨설팅 예약 조회...');
       const { data: consultings, error: consultingsError } = await supabase
         .from('consulting_reservations')
         .select('*, consulting_slots(*)')
         .eq('linked_seminar_id', campaignId)
         .order('created_at', { ascending: false });
 
-      if (consultingsError) throw consultingsError;
+      if (consultingsError) {
+        console.error('❌ 컨설팅 조회 실패:', consultingsError);
+        throw consultingsError;
+      }
+      console.log('✅ 컨설팅 예약 수:', consultings?.length || 0);
 
       // 4. 진단검사 예약 목록
+      console.log('4️⃣ 진단검사 예약 조회...');
       const { data: tests, error: testsError } = await supabase
         .from('test_reservations')
         .select('*, test_slots(*)')
         .eq('seminar_id', campaignId)
         .order('created_at', { ascending: false });
 
-      if (testsError) throw testsError;
+      if (testsError) {
+        console.error('❌ 진단검사 조회 실패:', testsError);
+        throw testsError;
+      }
+      console.log('✅ 진단검사 예약 수:', tests?.length || 0);
 
+      console.log('🎉 캠페인 상세 조회 완료!');
       return {
         campaign,
         attendees: attendees || [],
@@ -167,7 +189,13 @@ export function AdminProvider({ children }) {
         tests: tests || [],
       };
     } catch (error) {
-      console.error('캠페인 상세 조회 실패:', error);
+      console.error('💥 캠페인 상세 조회 실패:', error);
+      console.error('에러 상세:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
       showToast('캠페인 정보를 불러오는데 실패했습니다.', 'error');
       return null;
     } finally {
