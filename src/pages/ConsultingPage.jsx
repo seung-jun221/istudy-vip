@@ -29,6 +29,7 @@ export default function ConsultingPage() {
     selectedDate,
     selectedTime,
     selectedLocation,
+    setSelectedSeminarId,
     loadAvailableDates,
     // ⭐ 진단검사 관련
     loadAvailableTestDates,
@@ -49,8 +50,11 @@ export default function ConsultingPage() {
     setPhone(phoneNumber);
     setUserInfo(attendeeData);
 
-    // 지역이 이미 선택되어 있으므로 바로 날짜 로드
-    await loadAvailableDates(attendeeData.location);
+    // 설명회 ID 설정 (시간 슬롯 조회에 사용)
+    setSelectedSeminarId(attendeeData.linkedSeminarId);
+
+    // 캠페인 ID로 날짜 로드 (location이 아닌 linked_seminar_id 사용)
+    await loadAvailableDates(attendeeData.linkedSeminarId, true);
 
     setStep('date');
   };

@@ -19,6 +19,7 @@ export function ConsultingProvider({ children }) {
   // 컨설팅 예약 관련
   const [availableLocations, setAvailableLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedSeminarId, setSelectedSeminarId] = useState(null); // 설명회 예약자용
   const [availableDates, setAvailableDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -215,18 +216,26 @@ export function ConsultingProvider({ children }) {
   };
 
   // 날짜 로드
-  const loadAvailableDates = async (location) => {
+  const loadAvailableDates = async (locationOrSeminarId, useSeminarId = false) => {
     try {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
 
-      const { data: slots, error } = await supabase
+      let query = supabase
         .from('consulting_slots')
         .select('*')
-        .eq('location', location)
         .gte('date', today)
         .eq('is_available', true)
-        .order('date', { ascending: true });
+        .order('date', { ascending: true});
+
+      // 설명회 예약자는 linked_seminar_id로, 미예약자는 location으로 검색
+      if (useSeminarId) {
+        query = query.eq('linked_seminar_id', locationOrSeminarId);
+      } else {
+        query = query.eq('location', locationOrSeminarId);
+      }
+
+      const { data: slots, error } = await query;
 
       if (error) throw error;
 
@@ -271,15 +280,23 @@ export function ConsultingProvider({ children }) {
   const loadTimeSlots = async (date, location) => {
     try {
       setLoading(true);
-      console.log('⏰ 시간 슬롯 로드 시작:', { date, location });
+      console.log('⏰ 시간 슬롯 로드 시작:', { date, location, selectedSeminarId });
 
-      const { data: slots, error } = await supabase
+      let query = supabase
         .from('consulting_slots')
         .select('*')
         .eq('date', date)
-        .eq('location', location)
         .eq('is_available', true) // ⭐ 활성화된 슬롯만
         .order('time');
+
+      // 설명회 예약자는 linked_seminar_id로, 미예약자는 location으로 검색
+      if (selectedSeminarId) {
+        query = query.eq('linked_seminar_id', selectedSeminarId);
+      } else {
+        query = query.eq('location', location);
+      }
+
+      const { data: slots, error } = await query;
 
       if (error) throw error;
 
@@ -558,6 +575,8 @@ export function ConsultingProvider({ children }) {
     loadAvailableLocations,
     selectedLocation,
     setSelectedLocation,
+    selectedSeminarId,
+    setSelectedSeminarId,
     availableDates,
     loadAvailableDates,
     selectedDate,
