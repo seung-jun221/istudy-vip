@@ -398,6 +398,16 @@ export function AdminProvider({ children }) {
         }
       }
 
+      // auto_open_threshold를 localStorage에 저장 (seminars 테이블에 컬럼이 없으므로)
+      if (campaignData.auto_open_threshold) {
+        const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
+        settings[id] = {
+          auto_open_threshold: campaignData.auto_open_threshold,
+        };
+        localStorage.setItem('campaign_settings', JSON.stringify(settings));
+        console.log('✅ 자동 슬롯 오픈 설정 저장:', campaignData.auto_open_threshold);
+      }
+
       showToast('새 캠페인이 생성되었습니다!', 'success');
       return true;
     } catch (error) {
