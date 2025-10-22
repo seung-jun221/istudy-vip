@@ -3,8 +3,14 @@ import { useAdmin } from '../../context/AdminContext';
 import './AdminTabs.css';
 import './SettingsTab.css';
 
-export default function SettingsTab({ campaign, onUpdate }) {
-  const { updateCampaign } = useAdmin();
+export default function SettingsTab({ campaign, consultingSlots, testSlots, onUpdate }) {
+  const {
+    updateCampaign,
+    createConsultingSlots,
+    deleteConsultingSlot,
+    createTestSlots,
+    deleteTestSlot,
+  } = useAdmin();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -16,6 +22,23 @@ export default function SettingsTab({ campaign, onUpdate }) {
     max_capacity: campaign.max_capacity || 0,
     display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
     status: campaign.status || 'active',
+  });
+
+  // 컨설팅 슬롯 생성기 상태
+  const [consultingGenerator, setConsultingGenerator] = useState({
+    date: '',
+    startTime: '14:00',
+    endTime: '17:00',
+    location: campaign.location || '',
+    capacity: 1,
+  });
+
+  // 진단검사 슬롯 생성기 상태
+  const [testGenerator, setTestGenerator] = useState({
+    date: '',
+    time: '14:00',
+    location: campaign.location || '',
+    capacity: 1,
   });
 
   const handleChange = (e) => {
@@ -50,6 +73,109 @@ export default function SettingsTab({ campaign, onUpdate }) {
       status: campaign.status || 'active',
     });
     setEditing(false);
+  };
+
+  // 컨설팅 슬롯 생성기 - 시간대별 슬롯 생성
+  const generateConsultingSlots = async () => {
+    const { date, startTime, endTime, location, capacity } = consultingGenerator;
+
+    if (!date || !startTime || !endTime || !location) {
+      alert('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    const start = startTime.split(':').map(Number);
+    const end = endTime.split(':').map(Number);
+    const startMinutes = start[0] * 60 + start[1];
+    const endMinutes = end[0] * 60 + end[1];
+
+    if (startMinutes >= endMinutes) {
+      alert('종료시간은 시작시간보다 늦어야 합니다.');
+      return;
+    }
+
+    const slots = [];
+    for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      const timeStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+
+      slots.push({
+        date,
+        time: timeStr,
+        location,
+        capacity,
+      });
+    }
+
+    const success = await createConsultingSlots(campaign.id, slots);
+    if (success) {
+      onUpdate(); // 데이터 새로고침
+      setConsultingGenerator({
+        date: '',
+        startTime: '14:00',
+        endTime: '17:00',
+        location: campaign.location || '',
+        capacity: 1,
+      });
+    }
+  };
+
+  // 컨설팅 슬롯 삭제
+  const handleDeleteConsultingSlot = async (slotId) => {
+    if (!window.confirm('이 슬롯을 삭제하시겠습니까?')) return;
+
+    const success = await deleteConsultingSlot(slotId);
+    if (success) {
+      onUpdate();
+    }
+  };
+
+  // 진단검사 슬롯 추가
+  const addTestSlot = async () => {
+    const { date, time, location, capacity } = testGenerator;
+
+    if (!date || !time || !location) {
+      alert('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    const success = await createTestSlots(campaign.id, [
+      { date, time, location, capacity },
+    ]);
+
+    if (success) {
+      onUpdate();
+      setTestGenerator({
+        date: '',
+        time: '14:00',
+        location: campaign.location || '',
+        capacity: 1,
+      });
+    }
+  };
+
+  // 진단검사 슬롯 삭제
+  const handleDeleteTestSlot = async (slotId) => {
+    if (!window.confirm('이 슬롯을 삭제하시겠습니까?')) return;
+
+    const success = await deleteTestSlot(slotId);
+    if (success) {
+      onUpdate();
+    }
+  };
+
+  // 날짜 포맷팅
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    return `${date.getMonth() + 1}월 ${date.getDate()}일 (${days[date.getDay()]})`;
+  };
+
+  const formatTime = (timeStr) => {
+    if (!timeStr) return '-';
+    return timeStr.slice(0, 5);
   };
 
   return (
@@ -213,19 +339,195 @@ export default function SettingsTab({ campaign, onUpdate }) {
         )}
       </div>
 
-      {/* 추가 정보 섹션 */}
-      <div className="settings-info-section">
-        <h3>슬롯 관리</h3>
-        <p className="info-text">
-          컨설팅 슬롯 및 진단검사 슬롯은 Supabase 대시보드에서 직접 관리하세요.
-        </p>
-        <div className="info-box">
-          <div className="info-item">
-            <strong>컨설팅 슬롯 테이블:</strong> consulting_slots
+      {/* 컨설팅 슬롯 관리 */}
+      <div className="settings-section">
+        <h3>컨설팅 슬롯 관리</h3>
+
+        {/* 슬롯 생성기 */}
+        <div className="slot-generator">
+          <h4 className="generator-title">새 슬롯 생성 (30분 간격 자동 생성)</h4>
+          <div className="generator-form">
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">날짜</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={consultingGenerator.date}
+                  onChange={(e) =>
+                    setConsultingGenerator({ ...consultingGenerator, date: e.target.value })
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">시작 시간</label>
+                <input
+                  type="time"
+                  className="form-input"
+                  value={consultingGenerator.startTime}
+                  onChange={(e) =>
+                    setConsultingGenerator({
+                      ...consultingGenerator,
+                      startTime: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">종료 시간</label>
+                <input
+                  type="time"
+                  className="form-input"
+                  value={consultingGenerator.endTime}
+                  onChange={(e) =>
+                    setConsultingGenerator({ ...consultingGenerator, endTime: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">장소</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={consultingGenerator.location}
+                  onChange={(e) =>
+                    setConsultingGenerator({ ...consultingGenerator, location: e.target.value })
+                  }
+                  placeholder="예: 분당점 2층"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">정원 (1명 권장)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={consultingGenerator.capacity}
+                  onChange={(e) =>
+                    setConsultingGenerator({
+                      ...consultingGenerator,
+                      capacity: parseInt(e.target.value),
+                    })
+                  }
+                  min="1"
+                />
+              </div>
+            </div>
+            <button className="btn btn-primary" onClick={generateConsultingSlots}>
+              슬롯 생성
+            </button>
           </div>
-          <div className="info-item">
-            <strong>진단검사 슬롯 테이블:</strong> test_slots
+        </div>
+
+        {/* 기존 슬롯 목록 */}
+        <div className="slots-list-section">
+          <h4>등록된 컨설팅 슬롯 ({consultingSlots?.length || 0}개)</h4>
+          {!consultingSlots || consultingSlots.length === 0 ? (
+            <div className="empty-slots">등록된 슬롯이 없습니다.</div>
+          ) : (
+            <div className="slots-table">
+              {consultingSlots.map((slot) => (
+                <div key={slot.id} className="slot-row">
+                  <div className="slot-info">
+                    <span className="slot-date">{formatDate(slot.date)}</span>
+                    <span className="slot-time">{formatTime(slot.time)}</span>
+                    <span className="slot-location">{slot.location}</span>
+                    <span className="slot-capacity">정원 {slot.max_capacity}명</span>
+                  </div>
+                  <button
+                    className="btn-delete"
+                    onClick={() => handleDeleteConsultingSlot(slot.id)}
+                  >
+                    삭제
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 진단검사 슬롯 관리 */}
+      <div className="settings-section">
+        <h3>진단검사 슬롯 관리</h3>
+
+        {/* 슬롯 추가 폼 */}
+        <div className="slot-generator">
+          <h4 className="generator-title">새 검사 슬롯 추가</h4>
+          <div className="generator-form">
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">날짜</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={testGenerator.date}
+                  onChange={(e) => setTestGenerator({ ...testGenerator, date: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">시간</label>
+                <input
+                  type="time"
+                  className="form-input"
+                  value={testGenerator.time}
+                  onChange={(e) => setTestGenerator({ ...testGenerator, time: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">장소</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={testGenerator.location}
+                  onChange={(e) =>
+                    setTestGenerator({ ...testGenerator, location: e.target.value })
+                  }
+                  placeholder="예: 분당점 3층"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">정원</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={testGenerator.capacity}
+                  onChange={(e) =>
+                    setTestGenerator({ ...testGenerator, capacity: parseInt(e.target.value) })
+                  }
+                  min="1"
+                />
+              </div>
+            </div>
+            <button className="btn btn-primary" onClick={addTestSlot}>
+              슬롯 추가
+            </button>
           </div>
+        </div>
+
+        {/* 기존 슬롯 목록 */}
+        <div className="slots-list-section">
+          <h4>등록된 검사 슬롯 ({testSlots?.length || 0}개)</h4>
+          {!testSlots || testSlots.length === 0 ? (
+            <div className="empty-slots">등록된 슬롯이 없습니다.</div>
+          ) : (
+            <div className="slots-table">
+              {testSlots.map((slot) => (
+                <div key={slot.id} className="slot-row">
+                  <div className="slot-info">
+                    <span className="slot-date">{formatDate(slot.date)}</span>
+                    <span className="slot-time">{formatTime(slot.time)}</span>
+                    <span className="slot-location">{slot.location}</span>
+                    <span className="slot-capacity">정원 {slot.max_capacity}명</span>
+                  </div>
+                  <button className="btn-delete" onClick={() => handleDeleteTestSlot(slot.id)}>
+                    삭제
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

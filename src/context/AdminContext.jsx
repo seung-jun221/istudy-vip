@@ -244,6 +244,20 @@ export function AdminProvider({ children }) {
         })
       );
 
+      // 4-3. 해당 캠페인의 모든 진단검사 슬롯 조회 (슬롯 관리용)
+      console.log('4️⃣-3 모든 진단검사 슬롯 조회...');
+      const { data: allTestSlots, error: testSlotsError } = await supabase
+        .from('test_slots')
+        .select('*')
+        .eq('linked_seminar_id', campaignId)
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      if (testSlotsError) {
+        console.error('❌ 진단검사 슬롯 조회 실패:', testSlotsError);
+      }
+      console.log('✅ 진단검사 슬롯 수:', allTestSlots?.length || 0);
+
       console.log('🎉 캠페인 상세 조회 완료!');
       return {
         campaign,
@@ -251,6 +265,7 @@ export function AdminProvider({ children }) {
         consultings: consultingsWithSlots || [],
         consultingSlots: allConsultingSlots || [],
         tests: testsWithSlots || [],
+        testSlots: allTestSlots || [],
       };
     } catch (error) {
       console.error('💥 캠페인 상세 조회 실패:', error);
@@ -469,6 +484,126 @@ export function AdminProvider({ children }) {
     }
   };
 
+  // 컨설팅 슬롯 생성 (배치)
+  const createConsultingSlots = async (campaignId, slots) => {
+    try {
+      setLoading(true);
+
+      const slotsToInsert = slots.map((slot) => ({
+        linked_seminar_id: campaignId,
+        date: slot.date,
+        time: slot.time,
+        location: slot.location,
+        max_capacity: slot.capacity,
+        is_available: true,
+      }));
+
+      const { error } = await supabase.from('consulting_slots').insert(slotsToInsert);
+
+      if (error) throw error;
+
+      showToast(`${slots.length}개의 슬롯이 추가되었습니다.`, 'success');
+      return true;
+    } catch (error) {
+      console.error('슬롯 생성 실패:', error);
+      showToast('슬롯 추가에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 컨설팅 슬롯 수정
+  const updateConsultingSlot = async (slotId, slotData) => {
+    try {
+      setLoading(true);
+
+      const { error } = await supabase
+        .from('consulting_slots')
+        .update(slotData)
+        .eq('id', slotId);
+
+      if (error) throw error;
+
+      showToast('슬롯이 수정되었습니다.', 'success');
+      return true;
+    } catch (error) {
+      console.error('슬롯 수정 실패:', error);
+      showToast('슬롯 수정에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 컨설팅 슬롯 삭제
+  const deleteConsultingSlot = async (slotId) => {
+    try {
+      setLoading(true);
+
+      const { error } = await supabase.from('consulting_slots').delete().eq('id', slotId);
+
+      if (error) throw error;
+
+      showToast('슬롯이 삭제되었습니다.', 'success');
+      return true;
+    } catch (error) {
+      console.error('슬롯 삭제 실패:', error);
+      showToast('슬롯 삭제에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 진단검사 슬롯 생성 (배치)
+  const createTestSlots = async (campaignId, slots) => {
+    try {
+      setLoading(true);
+
+      const slotsToInsert = slots.map((slot) => ({
+        linked_seminar_id: campaignId,
+        date: slot.date,
+        time: slot.time,
+        location: slot.location,
+        max_capacity: slot.capacity,
+      }));
+
+      const { error } = await supabase.from('test_slots').insert(slotsToInsert);
+
+      if (error) throw error;
+
+      showToast(`${slots.length}개의 검사 슬롯이 추가되었습니다.`, 'success');
+      return true;
+    } catch (error) {
+      console.error('검사 슬롯 생성 실패:', error);
+      showToast('검사 슬롯 추가에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 진단검사 슬롯 삭제
+  const deleteTestSlot = async (slotId) => {
+    try {
+      setLoading(true);
+
+      const { error } = await supabase.from('test_slots').delete().eq('id', slotId);
+
+      if (error) throw error;
+
+      showToast('검사 슬롯이 삭제되었습니다.', 'success');
+      return true;
+    } catch (error) {
+      console.error('검사 슬롯 삭제 실패:', error);
+      showToast('검사 슬롯 삭제에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     isAuthenticated,
     loading,
@@ -483,6 +618,11 @@ export function AdminProvider({ children }) {
     updateCampaign,
     createCampaign,
     deleteCampaign,
+    createConsultingSlots,
+    updateConsultingSlot,
+    deleteConsultingSlot,
+    createTestSlots,
+    deleteTestSlot,
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
