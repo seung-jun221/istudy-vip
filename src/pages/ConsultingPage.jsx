@@ -365,6 +365,9 @@ export default function ConsultingPage() {
                   <strong>학년:</strong> {userInfo?.grade}
                 </div>
                 <div>
+                  <strong>수학 선행정도:</strong> {userInfo?.mathLevel || '상담 시 확인'}
+                </div>
+                <div>
                   <strong>지역:</strong> {selectedLocation}
                 </div>
               </div>

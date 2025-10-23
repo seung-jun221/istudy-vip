@@ -379,6 +379,18 @@ export default function ConsultingResult({
             <span className="font-semibold">{reservation.student_name}</span>
           </div>
           <div className="flex justify-between text-sm">
+            <span className="text-gray-600">학교</span>
+            <span className="font-semibold">{reservation.school}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">학년</span>
+            <span className="font-semibold">{reservation.grade}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">수학 선행정도</span>
+            <span className="font-semibold">{reservation.math_level || '상담 시 확인'}</span>
+          </div>
+          <div className="flex justify-between text-sm">
             <span className="text-gray-600">날짜</span>
             <span className="font-semibold">
               {dateStr} ({dayName})
