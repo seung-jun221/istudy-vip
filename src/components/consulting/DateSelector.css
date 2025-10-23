@@ -92,18 +92,18 @@
 
 /* 🟠 마감 임박 (1~3석) */
 .date-button.date-warning {
-  border-color: #ff6b35;
+  border-color: #FF7846;
   background: #fff8f5;
 }
 
 .date-button.date-warning:hover {
   background: #ffe8dd;
-  border-color: #e55a2b;
+  border-color: #FF7846;
 }
 
 .date-button.date-warning.selected {
-  background: #ff6b35;
-  border-color: #ff6b35;
+  background: #FF7846;
+  border-color: #FF7846;
 }
 
 .date-button.date-warning.selected .date-text {
@@ -151,12 +151,12 @@
 }
 
 .badge-green {
-  background: #4caf50;
+  background: #2e7d32;
   color: white;
 }
 
 .badge-orange {
-  background: #ff6b35;
+  background: #FF7846;
   color: white;
 }
 

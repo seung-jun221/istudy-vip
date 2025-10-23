@@ -12,8 +12,8 @@ export default function Button({
   const variants = {
     primary: 'bg-primary text-white hover:bg-blue-700',
     secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
-    danger: 'bg-red-500 text-white hover:bg-red-600',
-    success: 'bg-green-500 text-white hover:bg-green-600',
+    danger: 'bg-[#E94E3D] text-white hover:bg-[#C62828]',
+    success: 'bg-emerald-700 text-white hover:bg-emerald-800',
   };
 
   return (

@@ -1,0 +1,243 @@
+/* 캠페인 목록 - 기존 사이트 스타일 적용 */
+.campaign-list-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.campaign-list-container .admin-header {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 20px 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.campaign-list-container .admin-header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.campaign-list-container .admin-header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a73e8;
+}
+
+.campaign-list-container .admin-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.campaign-list-container .campaign-list-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.campaign-list-container .loading-state,
+.campaign-list-container .empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #666;
+}
+
+.campaign-list-container .spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 16px;
+  border: 3px solid #f3f3f3;
+  border-top-color: #1a73e8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.campaign-list-container .campaign-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 24px;
+}
+
+.campaign-list-container .campaign-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.campaign-list-container .campaign-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.15);
+}
+
+/* 종료된 캠페인 스타일 */
+.campaign-list-container .campaign-card-inactive {
+  background: #f5f5f5;
+  opacity: 0.7;
+  transform: scale(0.95);
+}
+
+.campaign-list-container .campaign-card-inactive:hover {
+  transform: scale(0.95) translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  opacity: 0.85;
+}
+
+.campaign-list-container .campaign-card-inactive .campaign-title {
+  color: #666;
+}
+
+.campaign-list-container .campaign-card-inactive .stat-value,
+.campaign-list-container .campaign-card-inactive .info-value {
+  color: #888;
+}
+
+.campaign-list-container .campaign-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f5f5f5;
+}
+
+.campaign-list-container .campaign-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+}
+
+.campaign-list-container .campaign-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.campaign-list-container .campaign-status.active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.campaign-list-container .campaign-status.inactive {
+  background: #ffebee;
+  color: #E94E3D;
+}
+
+.campaign-list-container .campaign-info {
+  margin-bottom: 20px;
+}
+
+.campaign-list-container .info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.campaign-list-container .info-label {
+  color: #666;
+}
+
+.campaign-list-container .info-value {
+  color: #333;
+  font-weight: 500;
+}
+
+.campaign-list-container .campaign-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.campaign-list-container .stat-item {
+  text-align: center;
+}
+
+.campaign-list-container .stat-item.highlight {
+  background: #1a73e8;
+  border-radius: 8px;
+  padding: 8px 0;
+  color: white;
+}
+
+.campaign-list-container .stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.campaign-list-container .stat-item.highlight .stat-value {
+  color: white;
+}
+
+.campaign-list-container .stat-label {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+}
+
+.campaign-list-container .stat-item.highlight .stat-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.campaign-list-container .campaign-card-footer {
+  text-align: right;
+}
+
+.campaign-list-container .btn-link {
+  background: none;
+  border: none;
+  color: #1a73e8;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.campaign-list-container .btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s;
+}
+
+.campaign-list-container .btn-secondary {
+  background: #edf2f7;
+  color: #333;
+}
+
+.campaign-list-container .btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+.campaign-list-container .btn-outline {
+  background: white;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.campaign-list-container .btn-outline:hover {
+  background: #f5f5f5;
+}

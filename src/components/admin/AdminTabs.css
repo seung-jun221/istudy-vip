@@ -1,0 +1,372 @@
+/* 탭 공통 스타일 - 기존 사이트 스타일 적용 */
+.tab-container {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 필터 바 */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #1a73e8;
+}
+
+.filter-select {
+  min-width: 160px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #1a73e8;
+}
+
+/* 테이블 */
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.data-table thead {
+  background: #f5f5f5;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.data-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f5f5f5;
+  color: #666;
+}
+
+.data-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.highlight-cell {
+  font-weight: 600;
+  color: #333;
+}
+
+.empty-cell {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.empty-text {
+  color: #ccc;
+}
+
+.notes-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 상태 배지 */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 예약 상태 */
+.status-예약 {
+  background: #e3f2fd;
+  color: #1a73e8;
+}
+
+.status-참석 {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-불참 {
+  background: #fff3cd;
+  color: #FF7846;
+}
+
+.status-취소 {
+  background: #ffebee;
+  color: #E94E3D;
+}
+
+.status-confirmed {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-inactive {
+  background: #f5f5f5;
+  color: #666;
+}
+
+/* 등록 상태 */
+.enrollment-미정 {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.enrollment-확정 {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.enrollment-불가 {
+  background: #ffebee;
+  color: #E94E3D;
+}
+
+/* 액션 버튼 */
+.btn-action {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: #1a73e8;
+  color: white;
+  transition: all 0.3s;
+}
+
+.btn-action:hover {
+  background: #1557b0;
+}
+
+/* 요약 바 */
+.summary-bar {
+  padding: 12px 0;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 12px;
+}
+
+/* 날짜 탭 */
+.date-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.date-tab {
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.date-tab:hover {
+  border-color: #1a73e8;
+  background: #f0f7ff;
+}
+
+.date-tab.active {
+  border-color: #1a73e8;
+  background: #1a73e8;
+  color: white;
+}
+
+.date-tab.active .date-count {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.date-count {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+}
+
+/* 슬롯 컨테이너 */
+.slots-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 시간대 블록 */
+.time-slot-block {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fafafa;
+  transition: all 0.3s;
+}
+
+.time-slot-block:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.slot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.slot-time {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.time-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.capacity-badge {
+  padding: 4px 10px;
+  background: #1a73e8;
+  color: white;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.slot-location {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* 빈 슬롯 */
+.empty-slot {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  background: white;
+  border-radius: 8px;
+  border: 1px dashed #ddd;
+}
+
+/* 예약 리스트 */
+.reservations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reservation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s;
+}
+
+.reservation-item:hover {
+  border-color: #1a73e8;
+  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.1);
+}
+
+.reservation-info {
+  flex: 1;
+}
+
+.student-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.student-details {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.math-level {
+  font-size: 12px;
+  color: #1a73e8;
+  font-weight: 500;
+}
+
+.reservation-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 빈 상태 */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: #999;
+}
+
+.empty-state p {
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.empty-hint {
+  font-size: 13px;
+  color: #bbb;
+}
