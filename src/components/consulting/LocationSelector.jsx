@@ -42,7 +42,7 @@ export default function LocationSelector({ onNext, onBack }) {
 
       {/* 지역이 없는 경우 */}
       {availableLocations.length === 0 && (
-        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 text-center">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
           <div className="text-4xl mb-3">⚠️</div>
           <p className="text-gray-700 font-medium mb-2">
             현재 예약 가능한 컨설팅이 없습니다.
@@ -60,7 +60,7 @@ export default function LocationSelector({ onNext, onBack }) {
             key={locInfo.location}
             onClick={() => handleLocationSelect(locInfo.location)}
             className={`
-              border-2 rounded-lg p-4 cursor-pointer transition-all
+              border rounded-lg p-4 cursor-pointer transition-all
               ${
                 selectedLocation === locInfo.location
                   ? 'border-primary bg-blue-50'

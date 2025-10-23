@@ -364,7 +364,7 @@ export default function ConsultingResult({
       </div>
 
       {/* ========== 컨설팅 예약 정보 ========== */}
-      <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h3 className="text-lg font-bold text-blue-800 mb-4 flex items-center">
           📘 컨설팅 예약
         </h3>
@@ -404,12 +404,12 @@ export default function ConsultingResult({
 
       {/* ========== 진단검사 정보 ========== */}
       {loadingTest ? (
-        <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 text-center">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
           <p className="text-gray-600">진단검사 정보 확인 중...</p>
         </div>
       ) : testMethod === 'onsite' ? (
         testReservation ? (
-          <div className="bg-emerald-50 border-2 border-emerald-200 rounded-lg p-6">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
             <h3 className="text-lg font-bold text-emerald-800 mb-4 flex items-center">
               📗 진단검사 예약 (학원 방문)
             </h3>
@@ -443,13 +443,13 @@ export default function ConsultingResult({
 
             <button
               onClick={handleCancelTest}
-              className="w-full mt-4 py-2.5 bg-[#FF7846] text-white rounded-lg font-semibold hover:bg-[#E94E3D] transition-all"
+              className="w-full mt-4 py-2.5 bg-[#E94E3D] text-white rounded-lg font-semibold hover:bg-[#C62828] transition-all"
             >
               진단검사 예약 취소
             </button>
           </div>
         ) : (
-          <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-6">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
             <h3 className="text-lg font-bold text-orange-800 mb-3 flex items-center">
               ⚠️ 진단검사 예약 필요
             </h3>
@@ -476,7 +476,7 @@ export default function ConsultingResult({
         )
       ) : testMethod === 'home' ? (
         testApplication ? (
-          <div className="bg-emerald-50 border-2 border-emerald-200 rounded-lg p-6">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
             <h3 className="text-lg font-bold text-emerald-800 mb-4 flex items-center">
               ✅ 진단검사 (가정 응시)
             </h3>
@@ -517,7 +517,7 @@ export default function ConsultingResult({
             </div>
           </div>
         ) : (
-          <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-6">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
             <h3 className="text-lg font-bold text-orange-800 mb-3 flex items-center">
               ⚠️ 진단검사 시험지 다운로드 필요
             </h3>

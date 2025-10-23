@@ -42,7 +42,7 @@ export default function TestComplete({
       </div>
 
       {/* 진단검사 예약 정보 */}
-      <div className="bg-emerald-50 border-2 border-emerald-200 rounded-lg p-6 text-left">
+      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 text-left">
         <h3 className="text-lg font-bold text-emerald-800 mb-3">
           📝 진단검사 예약
         </h3>
@@ -90,7 +90,7 @@ export default function TestComplete({
       </div>
 
       {/* 준비사항 안내 */}
-      <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-6 text-left">
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-left">
         <h4 className="text-lg font-bold text-orange-800 mb-3">
           📌 진단검사 준비사항
         </h4>
