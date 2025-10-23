@@ -93,16 +93,9 @@ export default function ConsultingPage() {
         privacyConsent: userInfo.isSeminarAttendee ? null : 'Y',
       });
 
-      const reservationWithSlot = {
-        ...reservation,
-        consulting_slots: {
-          date: selectedDate,
-          time: selectedTime + ':00',
-          location: selectedLocation,
-        },
-      };
-
-      setCompletedReservation(reservationWithSlot);
+      // reservation 객체에 이미 consulting_slots가 join되어 있으므로 그대로 사용
+      // (실제 DB location 값이 포함되어 있음)
+      setCompletedReservation(reservation);
       setStep('complete');
     } catch (error) {
       console.error('예약 실패:', error);
