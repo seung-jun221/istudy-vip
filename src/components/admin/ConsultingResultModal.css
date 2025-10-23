@@ -98,7 +98,7 @@
 }
 
 .modal-content .required {
-  color: #f44336;
+  color: #E94E3D;
   margin-left: 4px;
 }
 
@@ -162,15 +162,15 @@
 }
 
 .radio-text.success.active {
-  border-color: #4caf50;
+  border-color: #2e7d32;
   background: #e8f5e9;
   color: #2e7d32;
 }
 
 .radio-text.danger.active {
-  border-color: #f44336;
+  border-color: #E94E3D;
   background: #ffebee;
-  color: #c62828;
+  color: #E94E3D;
 }
 
 .modal-content .form-textarea {

@@ -62,12 +62,12 @@
 
 .error-message {
   background: #ffebee;
-  color: #c62828;
+  color: #E94E3D;
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 14px;
   margin-bottom: 20px;
-  border: 1px solid #ef9a9a;
+  border: 1px solid #E94E3D;
 }
 
 .admin-login-container .btn {

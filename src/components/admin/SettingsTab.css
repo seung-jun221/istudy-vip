@@ -284,19 +284,19 @@
 }
 
 .btn-toggle.btn-open {
-  background: #4caf50;
+  background: #2e7d32;
 }
 
 .btn-toggle.btn-open:hover {
-  background: #388e3c;
+  background: #1b5e20;
 }
 
 .btn-toggle.btn-close {
-  background: #ff9800;
+  background: #FF7846;
 }
 
 .btn-toggle.btn-close:hover {
-  background: #f57c00;
+  background: #E94E3D;
 }
 
 /* 삭제 버튼 */
@@ -307,14 +307,14 @@
   font-weight: 600;
   cursor: pointer;
   border: none;
-  background: #f44336;
+  background: #E94E3D;
   color: white;
   transition: all 0.3s;
   white-space: nowrap;
 }
 
 .btn-delete:hover {
-  background: #d32f2f;
+  background: #C62828;
 }
 
 /* 체크박스 라벨 */
@@ -339,12 +339,12 @@
 
 /* 위험 구역 */
 .danger-zone {
-  border: 2px solid #f44336;
+  border: 2px solid #E94E3D;
   background: #ffebee;
 }
 
 .danger-zone h3 {
-  color: #d32f2f;
+  color: #E94E3D;
 }
 
 .danger-zone-content {
@@ -373,18 +373,18 @@
 
 .btn-danger {
   padding: 12px 24px;
-  border: 2px solid #f44336;
+  border: 2px solid #E94E3D;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   background: white;
-  color: #f44336;
+  color: #E94E3D;
   transition: all 0.3s;
   white-space: nowrap;
 }
 
 .btn-danger:hover {
-  background: #f44336;
+  background: #E94E3D;
   color: white;
 }

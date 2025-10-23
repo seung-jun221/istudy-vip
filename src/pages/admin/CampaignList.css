@@ -129,12 +129,12 @@
 
 .campaign-list-container .campaign-status.active {
   background: #e8f5e9;
-  color: #4caf50;
+  color: #2e7d32;
 }
 
 .campaign-list-container .campaign-status.inactive {
   background: #ffebee;
-  color: #f44336;
+  color: #E94E3D;
 }
 
 .campaign-list-container .campaign-info {
