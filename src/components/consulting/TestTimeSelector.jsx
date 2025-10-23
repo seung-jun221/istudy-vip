@@ -40,7 +40,7 @@ export default function TestTimeSelector({ onNext, onBack }) {
 
       {/* 시간 선택 그리드 */}
       {testTimeSlots.length === 0 ? (
-        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 text-center">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
           <div className="text-4xl mb-3">⚠️</div>
           <p className="text-gray-700 font-medium">
             예약 가능한 시간이 없습니다.
@@ -60,7 +60,7 @@ export default function TestTimeSelector({ onNext, onBack }) {
                 disabled={isFull}
                 onClick={() => handleTimeSelect(slot.timeDisplay)}
                 className={`
-                  border-2 rounded-lg p-4 transition-all text-center
+                  border rounded-lg p-4 transition-all text-center
                   ${
                     isFull
                       ? 'bg-gray-100 border-gray-300 cursor-not-allowed opacity-60'
@@ -75,7 +75,7 @@ export default function TestTimeSelector({ onNext, onBack }) {
                 </div>
                 <div className="text-sm">
                   {isFull ? (
-                    <span className="text-red-600 font-medium">마감</span>
+                    <span className="text-[#E94E3D] font-medium">마감</span>
                   ) : (
                     <span className="text-gray-600">
                       잔여 {availableSeats}석
@@ -93,7 +93,7 @@ export default function TestTimeSelector({ onNext, onBack }) {
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 px-6 py-3 bg-white border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50"
+          className="flex-1 px-6 py-3 bg-white border border-gray-300 rounded-lg font-semibold hover:bg-gray-50"
         >
           ← 뒤로
         </button>

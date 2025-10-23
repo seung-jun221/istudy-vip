@@ -98,7 +98,7 @@ export default function ConsultingComplete({
       </div>
 
       {/* 예약 정보 */}
-      <div className="bg-blue-50 rounded-lg p-6 space-y-3 text-left mb-6">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-3 text-left mb-6">
         <div className="flex justify-between">
           <span className="text-gray-600">예약번호</span>
           <span className="font-semibold">{reservationId}</span>
@@ -126,13 +126,13 @@ export default function ConsultingComplete({
       {/* ⭐ 진단검사 안내 - 지역별 분기 */}
       {testMethod === 'onsite' ? (
         // 🏫 역삼점: 학원 방문 응시 (체크박스 + 자정 마감 경고)
-        <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6 text-left">
-          <h4 className="text-lg font-bold text-green-800 mb-3">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 text-left">
+          <h4 className="text-lg font-bold text-emerald-800 mb-3">
             📝 다음 단계: 진단검사 예약 (필수)
           </h4>
 
-          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mb-4">
-            <p className="text-sm font-bold text-yellow-900 mb-2">
+          <div className="bg-orange-50 border border-[#FF7846] rounded-lg p-4 mb-4">
+            <p className="text-sm font-bold text-orange-900 mb-2">
               ⚠️ 중요 안내
             </p>
             <ul className="text-sm text-gray-700 space-y-2 list-disc ml-5">
@@ -144,13 +144,13 @@ export default function ConsultingComplete({
               </li>
               <li>
                 진단검사 예약은{' '}
-                <strong className="text-red-600">
+                <strong className="text-[#E94E3D]">
                   당일 자정(23:59)까지만 가능
                 </strong>
                 합니다.
               </li>
               <li>
-                <strong className="text-red-600">
+                <strong className="text-[#E94E3D]">
                   자정까지 진단검사 예약을 하지 않으시면 컨설팅 예약이 자동으로
                   취소됩니다.
                 </strong>
@@ -159,7 +159,7 @@ export default function ConsultingComplete({
           </div>
 
           {/* 동의 체크박스 */}
-          <label className="flex items-start space-x-3 cursor-pointer mb-4 p-3 border-2 border-gray-300 rounded-lg hover:border-green-500 transition-all">
+          <label className="flex items-start space-x-3 cursor-pointer mb-4 p-3 border border-gray-300 rounded-lg hover:border-emerald-500 transition-all">
             <input
               type="checkbox"
               checked={agreed}
@@ -178,7 +178,7 @@ export default function ConsultingComplete({
             disabled={!agreed || saving}
             className={`w-full py-3 rounded-lg font-semibold transition-all ${
               agreed && !saving
-                ? 'bg-green-500 text-white hover:bg-green-600'
+                ? 'bg-emerald-700 text-white hover:bg-emerald-800'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
@@ -187,15 +187,15 @@ export default function ConsultingComplete({
 
           <button
             onClick={onHome}
-            className="w-full mt-3 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+            className="w-full mt-3 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
           >
             나중에 하기 (홈으로)
           </button>
         </div>
       ) : (
         // 🏠 대치점: 가정 셀프테스트 (단순 안내)
-        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 text-left">
-          <h4 className="text-lg font-bold text-yellow-800 mb-3">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-left">
+          <h4 className="text-lg font-bold text-orange-800 mb-3">
             📝 다음 단계: 진단검사 응시 (필수)
           </h4>
           <p className="text-sm text-gray-700 mb-3">
@@ -216,14 +216,14 @@ export default function ConsultingComplete({
             )}&verified=true`}
             className="block mb-3"
           >
-            <button className="w-full py-3 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all">
+            <button className="w-full py-3 bg-[#FF7846] text-white rounded-lg font-semibold hover:bg-[#E94E3D] transition-all">
               시험지 다운로드하러 가기 →
             </button>
           </a>
 
           <button
             onClick={onHome}
-            className="w-full py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+            className="w-full py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
           >
             나중에 하기 (홈으로)
           </button>

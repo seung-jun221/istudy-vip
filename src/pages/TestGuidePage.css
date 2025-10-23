@@ -60,7 +60,7 @@
 }
 
 .test-guide-container .step.completed {
-  background: #4caf50;
+  background: #2e7d32;
   color: white;
 }
 
@@ -71,7 +71,7 @@
 }
 
 .test-guide-container .step-line.completed {
-  background: #4caf50;
+  background: #2e7d32;
 }
 
 .test-guide-container .form-group {
@@ -222,11 +222,11 @@
 }
 
 .test-guide-container .badge-recommended {
-  background: #4caf50;
+  background: #2e7d32;
 }
 
 .test-guide-container .badge-advanced {
-  background: #ff6b35; /* 기존과 동일 */
+  background: #FF7846;
 }
 
 .test-guide-container .badge-highest {
@@ -264,11 +264,11 @@
 }
 
 .test-guide-container .check {
-  color: #4caf50;
+  color: #2e7d32;
 }
 
 .test-guide-container .warn {
-  color: #ff9800;
+  color: #FF7846;
 }
 
 .test-guide-container .info {
@@ -305,13 +305,13 @@
 }
 
 .test-guide-container .warning-box {
-  background: #fff3cd; /* 기존과 동일 */
-  border: 1px solid #ffc107; /* 기존과 동일 */
-  padding: 20px; /* 기존과 동일 */
+  background: #fff3cd;
+  border: 1px solid #FF7846;
+  padding: 20px;
   border-radius: 8px;
-  margin-bottom: 30px; /* 기존과 동일 */
-  font-size: 14px; /* 기존과 동일 */
-  line-height: 1.6; /* 기존과 동일 */
+  margin-bottom: 30px;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .test-guide-container .info-box {
@@ -385,11 +385,11 @@
 }
 
 .test-guide-container .download-btn.solution {
-  background: #4caf50; /* 기존과 동일 */
+  background: #2e7d32;
 }
 
 .test-guide-container .download-btn.solution:hover {
-  background: #45a049; /* 기존과 동일 */
+  background: #1b5e20;
 }
 
 .test-guide-container .countdown-box {

@@ -50,7 +50,7 @@ export default function TimeSelector({ onNext, onBack }) {
 
       {/* ⭐ 로딩 중 표시 추가 */}
       {timeSlots.length === 0 && (
-        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 text-center">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
           <div className="text-4xl mb-3">⏳</div>
           <p className="text-gray-700 font-medium">
             시간 정보를 불러오는 중...
@@ -71,7 +71,7 @@ export default function TimeSelector({ onNext, onBack }) {
                 key={slot.id}
                 onClick={() => (isAvailable ? handleTimeSelect(timeStr) : null)}
                 className={`
-                  border-2 rounded-lg p-4 transition-all text-center
+                  border rounded-lg p-4 transition-all text-center
                   ${
                     !isAvailable
                       ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'

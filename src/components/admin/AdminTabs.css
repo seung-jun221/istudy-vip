@@ -118,27 +118,27 @@
 
 .status-참석 {
   background: #e8f5e9;
-  color: #4caf50;
+  color: #2e7d32;
 }
 
 .status-불참 {
   background: #fff3cd;
-  color: #ff6b35;
+  color: #FF7846;
 }
 
 .status-취소 {
   background: #ffebee;
-  color: #f44336;
+  color: #E94E3D;
 }
 
 .status-confirmed {
   background: #e8f5e9;
-  color: #4caf50;
+  color: #2e7d32;
 }
 
 .status-active {
   background: #e8f5e9;
-  color: #4caf50;
+  color: #2e7d32;
 }
 
 .status-inactive {
@@ -154,12 +154,12 @@
 
 .enrollment-확정 {
   background: #e8f5e9;
-  color: #4caf50;
+  color: #2e7d32;
 }
 
 .enrollment-불가 {
   background: #ffebee;
-  color: #f44336;
+  color: #E94E3D;
 }
 
 /* 액션 버튼 */

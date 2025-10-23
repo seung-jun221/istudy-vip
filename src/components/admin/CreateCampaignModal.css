@@ -68,7 +68,7 @@
 .btn-remove {
   padding: 4px 12px;
   background: #ffebee;
-  color: #f44336;
+  color: #E94E3D;
   border: none;
   border-radius: 6px;
   font-size: 12px;
@@ -78,7 +78,7 @@
 }
 
 .btn-remove:hover {
-  background: #f44336;
+  background: #E94E3D;
   color: white;
 }
 
@@ -196,7 +196,7 @@
   align-items: center;
   justify-content: center;
   background: #ffebee;
-  color: #f44336;
+  color: #E94E3D;
   border: none;
   border-radius: 50%;
   font-size: 18px;
@@ -206,6 +206,6 @@
 }
 
 .btn-remove-sm:hover {
-  background: #f44336;
+  background: #E94E3D;
   color: white;
 }

@@ -87,28 +87,24 @@ export default function CampaignDetail() {
       {/* 통계 카드 */}
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-icon">👥</div>
           <div className="stat-content">
             <div className="stat-number">{stats.attendees}</div>
-            <div className="stat-label">설명회 참석</div>
+            <div className="stat-label">설명회 예약</div>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">📋</div>
           <div className="stat-content">
             <div className="stat-number">{stats.consultings}</div>
             <div className="stat-label">컨설팅 예약</div>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">📝</div>
           <div className="stat-content">
             <div className="stat-number">{stats.tests}</div>
             <div className="stat-label">진단검사 예약</div>
           </div>
         </div>
         <div className="stat-card highlight">
-          <div className="stat-icon">✅</div>
           <div className="stat-content">
             <div className="stat-number">{stats.enrolled}</div>
             <div className="stat-label">최종 등록</div>
@@ -122,7 +118,7 @@ export default function CampaignDetail() {
           className={`tab-btn ${activeTab === 'attendees' ? 'active' : ''}`}
           onClick={() => setActiveTab('attendees')}
         >
-          설명회 참석자 ({stats.attendees})
+          설명회 예약자 ({stats.attendees})
         </button>
         <button
           className={`tab-btn ${activeTab === 'consultings' ? 'active' : ''}`}

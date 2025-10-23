@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import './AdminTabs.css';
 import './SettingsTab.css';
 
 export default function SettingsTab({ campaign, consultingSlots, testSlots, onUpdate }) {
+  const navigate = useNavigate();
   const {
     updateCampaign,
     createConsultingSlots,
@@ -11,18 +13,13 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
     deleteConsultingSlot,
     createTestSlots,
     deleteTestSlot,
+    deleteCampaign,
   } = useAdmin();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // localStorage에서 auto_open_threshold 읽기
   const [autoOpenThreshold, setAutoOpenThreshold] = useState(0);
-
-  useEffect(() => {
-    const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
-    const threshold = settings[campaign.id]?.auto_open_threshold || 0;
-    setAutoOpenThreshold(threshold);
-  }, [campaign.id]);
 
   const [formData, setFormData] = useState({
     title: campaign.title || '',
@@ -33,6 +30,23 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
     display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
     status: campaign.status || 'active',
   });
+
+  // campaign가 업데이트되면 formData도 업데이트
+  useEffect(() => {
+    setFormData({
+      title: campaign.title || '',
+      date: campaign.date || '',
+      time: campaign.time || '',
+      location: campaign.location || '',
+      max_capacity: campaign.max_capacity || 0,
+      display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
+      status: campaign.status || 'active',
+    });
+
+    const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
+    const threshold = settings[campaign.id]?.auto_open_threshold || 0;
+    setAutoOpenThreshold(threshold);
+  }, [campaign]);
 
   // 컨설팅 슬롯 생성기 상태
   const [consultingGenerator, setConsultingGenerator] = useState({
@@ -221,6 +235,30 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
   const formatTime = (timeStr) => {
     if (!timeStr) return '-';
     return timeStr.slice(0, 5);
+  };
+
+  // 캠페인 삭제
+  const handleDeleteCampaign = async () => {
+    const confirmText = `"${campaign.title || campaign.location}" 캠페인을 완전히 삭제하시겠습니까?\n\n⚠️ 경고:\n- 관련된 모든 컨설팅 예약이 삭제됩니다\n- 관련된 모든 진단검사 예약이 삭제됩니다\n- 관련된 모든 슬롯이 삭제됩니다\n- 이 작업은 되돌릴 수 없습니다\n\n정말로 삭제하시겠습니까?`;
+
+    if (!window.confirm(confirmText)) {
+      return;
+    }
+
+    const doubleConfirm = window.prompt(
+      '삭제를 진행하려면 "삭제"를 입력하세요:',
+      ''
+    );
+
+    if (doubleConfirm !== '삭제') {
+      alert('삭제가 취소되었습니다.');
+      return;
+    }
+
+    const success = await deleteCampaign(campaign.id);
+    if (success) {
+      navigate('/admin/campaigns');
+    }
   };
 
   return (
@@ -619,6 +657,23 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* 위험 구역 - 캠페인 삭제 */}
+      <div className="settings-section danger-zone">
+        <h3>위험 구역</h3>
+        <div className="danger-zone-content">
+          <div className="danger-info">
+            <h4>캠페인 삭제</h4>
+            <p>
+              캠페인을 삭제하면 모든 관련 데이터(예약, 슬롯 등)가 함께 삭제됩니다. 이 작업은
+              되돌릴 수 없습니다.
+            </p>
+          </div>
+          <button className="btn-danger" onClick={handleDeleteCampaign}>
+            캠페인 삭제
+          </button>
         </div>
       </div>
     </div>
