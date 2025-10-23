@@ -435,6 +435,12 @@ export function ConsultingProvider({ children }) {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
 
+      console.log('🧪 진단검사 날짜 로드 시작:', {
+        location,
+        consultingDate,
+        today,
+      });
+
       const { data: slots, error } = await supabase
         .from('test_slots')
         .select('*')
@@ -445,6 +451,9 @@ export function ConsultingProvider({ children }) {
         .order('date', { ascending: true });
 
       if (error) throw error;
+
+      console.log('✅ 로드된 test_slots:', slots);
+      console.log('📊 test_slots 개수:', slots?.length || 0);
 
       const dateMap = new Map();
 
@@ -474,6 +483,7 @@ export function ConsultingProvider({ children }) {
             : 'available',
       }));
 
+      console.log('📅 최종 진단검사 날짜 목록:', dates);
       setAvailableTestDates(dates);
     } catch (error) {
       console.error('진단검사 날짜 로드 실패:', error);
