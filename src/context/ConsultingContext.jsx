@@ -20,6 +20,7 @@ export function ConsultingProvider({ children }) {
   const [availableLocations, setAvailableLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [selectedSeminarId, setSelectedSeminarId] = useState(null); // 설명회 예약자용
+  const [selectedSlotId, setSelectedSlotId] = useState(null); // 선택한 슬롯 ID
   const [availableDates, setAvailableDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -337,12 +338,28 @@ export function ConsultingProvider({ children }) {
     try {
       setLoading(true);
 
+      // 선택한 슬롯 찾기 (실제 location 정보 필요)
+      const selectedSlot = timeSlots.find(
+        (slot) => slot.time.slice(0, 5) === selectedTime
+      );
+
+      if (!selectedSlot) {
+        throw new Error('선택한 슬롯을 찾을 수 없습니다.');
+      }
+
+      console.log('📝 예약 생성 파라미터:', {
+        date: selectedDate,
+        time: selectedTime,
+        location: selectedSlot.location, // 실제 DB location 사용
+        slotId: selectedSlot.id,
+      });
+
       const { data, error } = await supabase.rpc(
         'create_consulting_reservation',
         {
           p_slot_date: selectedDate,
           p_slot_time: selectedTime + ':00',
-          p_slot_location: selectedLocation,
+          p_slot_location: selectedSlot.location, // 실제 슬롯의 location 사용
           p_student_name: reservationData.studentName,
           p_parent_phone: reservationData.parentPhone,
           p_school: reservationData.school || 'UNKNOWN',
