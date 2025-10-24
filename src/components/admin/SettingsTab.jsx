@@ -7,6 +7,7 @@ import './SettingsTab.css';
 export default function SettingsTab({ campaign, consultingSlots, testSlots, onUpdate }) {
   const navigate = useNavigate();
   const {
+    authMode,
     updateCampaign,
     createConsultingSlots,
     updateConsultingSlot,
@@ -268,7 +269,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
     <div className="tab-container settings-tab">
       <div className="settings-header">
         <h3>캠페인 기본 설정</h3>
-        {!editing && (
+        {!editing && authMode === 'super' && (
           <button className="btn btn-primary" onClick={() => setEditing(true)}>
             수정하기
           </button>
@@ -468,12 +469,15 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
         )}
       </div>
 
-      {/* 컨설팅 슬롯 관리 */}
-      <div className="settings-section">
-        <h3>컨설팅 슬롯 관리</h3>
+      {/* 수퍼 관리자 전용 기능 */}
+      {authMode === 'super' && (
+        <>
+          {/* 컨설팅 슬롯 관리 */}
+          <div className="settings-section">
+            <h3>컨설팅 슬롯 관리</h3>
 
-        {/* 슬롯 생성기 */}
-        <div className="slot-generator">
+            {/* 슬롯 생성기 */}
+            <div className="slot-generator">
           <h4 className="generator-title">새 슬롯 생성 (30분 간격 자동 생성)</h4>
           <div className="generator-form">
             <div className="form-row">
@@ -702,6 +706,8 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
           </button>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }
