@@ -96,7 +96,7 @@ export function AdminProvider({ children }) {
                 .from('test_reservations')
                 .select('*', { count: 'exact', head: true })
                 .in('consulting_reservation_id', consultingIdList)
-                .neq('status', 'cancelled') // ⭐ 취소된 예약 제외
+                .in('status', ['confirmed', '예약']) // ⭐ 확정된 예약만 포함
             : { count: 0 };
 
           // 최종 등록 수 (등록여부가 '확정'인 경우)
@@ -233,7 +233,7 @@ export function AdminProvider({ children }) {
           .from('test_reservations')
           .select('*')
           .in('consulting_reservation_id', consultingIdList)
-          .neq('status', 'cancelled') // ⭐ 취소된 예약 제외
+          .in('status', ['confirmed', '예약']) // ⭐ 확정된 예약만 포함
           .order('id', { ascending: false });
 
         if (testsError) {
