@@ -66,11 +66,11 @@ SELECT
   status,
   cancel_reason,
   test_deadline_agreed_at,
-  updated_at
+  created_at
 FROM consulting_reservations
 WHERE status = 'cancelled'
   AND cancel_reason LIKE '%자동 취소%'
-ORDER BY updated_at DESC;
+ORDER BY created_at DESC;
 
 -- ========================================
 -- 실행 방법:
