@@ -85,11 +85,7 @@ export default function TestsTab({ tests }) {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <button
-          className="btn btn-primary"
-          onClick={handleExportExcel}
-          style={{ fontSize: '14px', padding: '8px 16px', height: 'auto' }}
-        >
+        <button className="btn-excel" onClick={handleExportExcel}>
           📊 엑셀 다운로드
         </button>
       </div>

@@ -231,7 +231,7 @@ export function AdminProvider({ children }) {
       if (consultingIdList.length > 0) {
         const { data: testsData, error: testsError } = await supabase
           .from('test_reservations')
-          .select('*')
+          .select('*, consulting_reservations(student_name, school, grade, math_level, parent_phone)')
           .in('consulting_reservation_id', consultingIdList)
           .in('status', ['confirmed', '예약']) // ⭐ 확정된 예약만 포함
           .order('id', { ascending: false });
@@ -240,7 +240,16 @@ export function AdminProvider({ children }) {
           console.error('❌ 진단검사 조회 실패:', testsError);
           throw testsError;
         }
-        tests = testsData || [];
+
+        // 컨설팅 정보를 평탄화 (flatten)
+        tests = (testsData || []).map((test) => ({
+          ...test,
+          student_name: test.consulting_reservations?.student_name || test.student_name,
+          school: test.consulting_reservations?.school,
+          grade: test.consulting_reservations?.grade,
+          math_level: test.consulting_reservations?.math_level,
+          parent_phone: test.consulting_reservations?.parent_phone || test.parent_phone,
+        }));
       }
 
       console.log('✅ 진단검사 예약 수:', tests?.length || 0);

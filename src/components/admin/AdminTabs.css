@@ -370,3 +370,23 @@
   font-size: 13px;
   color: #bbb;
 }
+
+/* 엑셀 다운로드 버튼 */
+.btn-excel {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: #10a37f;
+  color: white;
+  transition: all 0.3s;
+  white-space: nowrap;
+  height: auto;
+  line-height: 1.5;
+}
+
+.btn-excel:hover {
+  background: #0d8c6d;
+}

@@ -90,11 +90,7 @@ export default function AttendeesTab({ attendees }) {
           <option value="불참">불참</option>
           <option value="취소">취소</option>
         </select>
-        <button
-          className="btn btn-primary"
-          onClick={handleExportExcel}
-          style={{ fontSize: '14px', padding: '8px 16px', height: 'auto' }}
-        >
+        <button className="btn-excel" onClick={handleExportExcel}>
           📊 엑셀 다운로드
         </button>
       </div>
