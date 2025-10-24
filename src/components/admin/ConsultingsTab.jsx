@@ -131,7 +131,11 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
       {/* 상단 액션 바 */}
       <div className="filter-bar">
         <div></div>
-        <button className="btn btn-primary" onClick={handleExportExcel}>
+        <button
+          className="btn btn-primary"
+          onClick={handleExportExcel}
+          style={{ fontSize: '14px', padding: '8px 16px', height: 'auto' }}
+        >
           📊 엑셀 다운로드
         </button>
       </div>

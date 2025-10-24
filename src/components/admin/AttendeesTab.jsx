@@ -36,6 +36,7 @@ export default function AttendeesTab({ attendees }) {
       학생명: attendee.student_name || '',
       학년: attendee.grade || '',
       학교: attendee.school || '',
+      선행정도: attendee.math_level || '',
       '학부모 연락처': attendee.parent_phone || '',
       상태: attendee.status || '',
     }));
@@ -49,6 +50,7 @@ export default function AttendeesTab({ attendees }) {
       { wch: 12 }, // 학생명
       { wch: 10 }, // 학년
       { wch: 20 }, // 학교
+      { wch: 15 }, // 선행정도
       { wch: 15 }, // 학부모 연락처
       { wch: 10 }, // 상태
     ];
@@ -88,7 +90,11 @@ export default function AttendeesTab({ attendees }) {
           <option value="불참">불참</option>
           <option value="취소">취소</option>
         </select>
-        <button className="btn btn-primary" onClick={handleExportExcel}>
+        <button
+          className="btn btn-primary"
+          onClick={handleExportExcel}
+          style={{ fontSize: '14px', padding: '8px 16px', height: 'auto' }}
+        >
           📊 엑셀 다운로드
         </button>
       </div>
@@ -102,6 +108,7 @@ export default function AttendeesTab({ attendees }) {
               <th>학생명</th>
               <th>학년</th>
               <th>학교</th>
+              <th>선행정도</th>
               <th>학부모 연락처</th>
               <th>상태</th>
             </tr>
@@ -109,7 +116,7 @@ export default function AttendeesTab({ attendees }) {
           <tbody>
             {filteredAttendees.length === 0 ? (
               <tr>
-                <td colSpan="6" className="empty-cell">
+                <td colSpan="7" className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -120,6 +127,7 @@ export default function AttendeesTab({ attendees }) {
                   <td className="highlight-cell">{attendee.student_name}</td>
                   <td>{attendee.grade || '-'}</td>
                   <td>{attendee.school || '-'}</td>
+                  <td>{attendee.math_level || '-'}</td>
                   <td>{attendee.parent_phone}</td>
                   <td>
                     <span className={`status-badge status-${attendee.status}`}>

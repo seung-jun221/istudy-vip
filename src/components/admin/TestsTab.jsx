@@ -37,6 +37,9 @@ export default function TestsTab({ tests }) {
     // 엑셀 데이터 준비
     const excelData = filteredTests.map((test) => ({
       학생명: test.student_name || '',
+      학년: test.grade || '',
+      학교: test.school || '',
+      선행정도: test.math_level || '',
       '학부모 연락처': test.parent_phone || '',
       '진단검사 날짜': formatDateForExcel(test.test_date),
       '진단검사 시간': test.test_slots?.time ? test.test_slots.time.slice(0, 5) : '',
@@ -49,6 +52,9 @@ export default function TestsTab({ tests }) {
     // 컬럼 너비 설정
     worksheet['!cols'] = [
       { wch: 12 }, // 학생명
+      { wch: 10 }, // 학년
+      { wch: 20 }, // 학교
+      { wch: 15 }, // 선행정도
       { wch: 15 }, // 학부모 연락처
       { wch: 15 }, // 진단검사 날짜
       { wch: 12 }, // 진단검사 시간
@@ -79,7 +85,11 @@ export default function TestsTab({ tests }) {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <button className="btn btn-primary" onClick={handleExportExcel}>
+        <button
+          className="btn btn-primary"
+          onClick={handleExportExcel}
+          style={{ fontSize: '14px', padding: '8px 16px', height: 'auto' }}
+        >
           📊 엑셀 다운로드
         </button>
       </div>
@@ -90,6 +100,9 @@ export default function TestsTab({ tests }) {
           <thead>
             <tr>
               <th>학생명</th>
+              <th>학년</th>
+              <th>학교</th>
+              <th>선행정도</th>
               <th>학부모 연락처</th>
               <th>진단검사 날짜</th>
               <th>진단검사 시간</th>
@@ -99,7 +112,7 @@ export default function TestsTab({ tests }) {
           <tbody>
             {filteredTests.length === 0 ? (
               <tr>
-                <td colSpan="5" className="empty-cell">
+                <td colSpan="8" className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -107,6 +120,9 @@ export default function TestsTab({ tests }) {
               filteredTests.map((test) => (
                 <tr key={test.id}>
                   <td className="highlight-cell">{test.student_name}</td>
+                  <td>{test.grade || '-'}</td>
+                  <td>{test.school || '-'}</td>
+                  <td>{test.math_level || '-'}</td>
                   <td>{test.parent_phone}</td>
                   <td>{formatTestDate(test.test_date)}</td>
                   <td>
