@@ -35,8 +35,7 @@ BEGIN
     UPDATE consulting_reservations
     SET
       status = 'cancelled',  -- ⭐ 수정: 'cancelled'로 통일
-      cancel_reason = '진단검사 미예약으로 자동 취소 (당일 자정 마감)',
-      cancelled_at = NOW()
+      cancel_reason = '진단검사 미예약으로 자동 취소 (당일 자정 마감)'
     WHERE id = v_reservation_id;
 
     -- 컨설팅 슬롯 감소
@@ -67,11 +66,11 @@ SELECT
   status,
   cancel_reason,
   test_deadline_agreed_at,
-  cancelled_at
+  updated_at
 FROM consulting_reservations
 WHERE status = 'cancelled'
   AND cancel_reason LIKE '%자동 취소%'
-ORDER BY cancelled_at DESC;
+ORDER BY updated_at DESC;
 
 -- ========================================
 -- 실행 방법:
