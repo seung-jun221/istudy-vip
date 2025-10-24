@@ -12,8 +12,6 @@ export default function ConsultingComplete({
   const { loadTestMethod } = useConsulting();
   const [testMethod, setTestMethod] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [agreed, setAgreed] = useState(false); // ⭐ 동의 체크박스
-  const [saving, setSaving] = useState(false);
 
   // 예약 날짜 정보
   const slot = reservation.consulting_slots;
@@ -41,36 +39,8 @@ export default function ConsultingComplete({
     fetchTestMethod();
   }, [location]);
 
-  // ⭐ 동의 체크 후 DB 저장 & 진단검사 예약 이동
-  const handleProceedToTest = async () => {
-    if (testMethod === 'onsite' && !agreed) {
-      alert('하단의 안내 사항에 동의해주세요.');
-      return;
-    }
-
-    // 역삼점인 경우에만 동의 저장
-    if (testMethod === 'onsite') {
-      try {
-        setSaving(true);
-        const { error } = await supabase
-          .from('consulting_reservations')
-          .update({
-            test_deadline_agreed: true,
-            test_deadline_agreed_at: new Date().toISOString(),
-          })
-          .eq('id', reservation.id);
-
-        if (error) throw error;
-      } catch (error) {
-        console.error('동의 저장 실패:', error);
-        alert('처리 중 오류가 발생했습니다. 다시 시도해주세요.');
-        return;
-      } finally {
-        setSaving(false);
-      }
-    }
-
-    // 진단검사 예약 페이지로 이동
+  // ⭐ 진단검사 예약 페이지로 이동 (동의는 이미 받음)
+  const handleProceedToTest = () => {
     onTestReservation();
   };
 
@@ -158,31 +128,12 @@ export default function ConsultingComplete({
             </ul>
           </div>
 
-          {/* 동의 체크박스 */}
-          <label className="flex items-start space-x-3 cursor-pointer mb-4 p-3 border border-gray-300 rounded-lg hover:border-emerald-500 transition-all">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-1 w-5 h-5 cursor-pointer"
-            />
-            <span className="text-sm text-gray-800">
-              위 내용을 확인했으며,{' '}
-              <strong>당일 자정까지 진단검사 예약을 완료</strong>하겠습니다.
-            </span>
-          </label>
-
           {/* 진단검사 예약 버튼 */}
           <button
             onClick={handleProceedToTest}
-            disabled={!agreed || saving}
-            className={`w-full py-3 rounded-lg font-semibold transition-all ${
-              agreed && !saving
-                ? 'bg-emerald-700 text-white hover:bg-emerald-800'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
+            className="w-full py-3 rounded-lg font-semibold transition-all bg-emerald-700 text-white hover:bg-emerald-800"
           >
-            {saving ? '처리 중...' : '진단검사 예약하러 가기 →'}
+            진단검사 예약하러 가기 →
           </button>
 
           <button

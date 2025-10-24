@@ -23,6 +23,8 @@ export default function ConsultingPage() {
   // ⭐ 진단검사 예약 정보
   const [completedTestReservation, setCompletedTestReservation] =
     useState(null);
+  // ⭐ 진단검사 마감 동의
+  const [agreed, setAgreed] = useState(false);
 
   const {
     createConsultingReservation,
@@ -87,10 +89,13 @@ export default function ConsultingPage() {
         studentName: userInfo.studentName,
         school: userInfo.school,
         grade: userInfo.grade,
-        mathLevel: userInfo.mathLevel, // ⭐ 이 줄 추가!
+        mathLevel: userInfo.mathLevel,
         isSeminarAttendee: userInfo.isSeminarAttendee || false,
         linkedSeminarId: userInfo.linkedSeminarId || null,
         privacyConsent: userInfo.isSeminarAttendee ? null : 'Y',
+        // ⭐ 동의 정보 추가
+        testDeadlineAgreed: agreed,
+        testDeadlineAgreedAt: agreed ? new Date().toISOString() : null,
       });
 
       // reservation 객체에 이미 consulting_slots가 join되어 있으므로 그대로 사용
@@ -373,6 +378,8 @@ export default function ConsultingPage() {
             <TimeSelector
               onNext={handleTimeNext}
               onBack={() => setStep('date')}
+              agreed={agreed}
+              onAgreeChange={setAgreed}
             />
           </div>
         )}

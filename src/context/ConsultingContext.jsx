@@ -364,10 +364,13 @@ export function ConsultingProvider({ children }) {
           p_parent_phone: reservationData.parentPhone,
           p_school: reservationData.school || 'UNKNOWN',
           p_grade: reservationData.grade || 'UNKNOWN',
-          p_math_level: reservationData.mathLevel || '상담 시 확인', // ⭐ 추가
+          p_math_level: reservationData.mathLevel || '상담 시 확인',
           p_is_seminar_attendee: reservationData.isSeminarAttendee || false,
           p_linked_seminar_id: reservationData.linkedSeminarId || null,
           p_privacy_consent: reservationData.privacyConsent || null,
+          // ⭐ 동의 정보 추가
+          p_test_deadline_agreed: reservationData.testDeadlineAgreed || false,
+          p_test_deadline_agreed_at: reservationData.testDeadlineAgreedAt || null,
         }
       );
 
