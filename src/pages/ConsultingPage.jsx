@@ -36,6 +36,7 @@ export default function ConsultingPage() {
     loadAvailableDates,
     // ⭐ 진단검사 관련
     loadAvailableTestDates,
+    availableTestDates, // ⭐ 추가
     selectedTestDate,
     selectedTestTime,
     testTimeSlots,
