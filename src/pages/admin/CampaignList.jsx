@@ -50,7 +50,14 @@ export default function CampaignList() {
     <div className="campaign-list-container">
       <header className="admin-header">
         <div className="admin-header-content">
-          <h1>캠페인 관리</h1>
+          <div className="admin-header-title">
+            <img
+              src="/assets/images/istudy-logo.png"
+              alt="아이스터디"
+              className="admin-logo"
+            />
+            <h1>통합 예약관리 시스템</h1>
+          </div>
           <div className="admin-header-actions">
             <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
               + 신규 캠페인 추가
