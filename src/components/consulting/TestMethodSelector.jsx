@@ -35,7 +35,7 @@ export default function TestMethodSelector({
             onClick={onSelectOnsite}
             style={{ height: 'auto', padding: '24px' }}
           >
-            <div className="date-content" style={{ alignItems: 'center', gap: '12px' }}>
+            <div className="date-content" style={{ flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
               <span style={{ fontSize: '48px' }}>🏫</span>
               <span className="text-xl font-bold">방문 진단검사</span>
               <div className="date-status-wrapper" style={{ marginTop: '8px' }}>
@@ -55,7 +55,7 @@ export default function TestMethodSelector({
           onClick={onSelectHome}
           style={{ height: 'auto', padding: '24px' }}
         >
-          <div className="date-content" style={{ alignItems: 'center', gap: '12px' }}>
+          <div className="date-content" style={{ flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '48px' }}>🏠</span>
             <span className="text-xl font-bold">가정 셀프 테스트</span>
             <div className="date-status-wrapper" style={{ marginTop: '8px' }}>
