@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as XLSX from 'xlsx';
 import './AdminTabs.css';
 
 export default function TestsTab({ tests }) {
@@ -26,6 +27,47 @@ export default function TestsTab({ tests }) {
     return `${date.getMonth() + 1}/${date.getDate()}`;
   };
 
+  const formatDateForExcel = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+
+  const handleExportExcel = () => {
+    // 엑셀 데이터 준비
+    const excelData = filteredTests.map((test) => ({
+      학생명: test.student_name || '',
+      '학부모 연락처': test.parent_phone || '',
+      '진단검사 날짜': formatDateForExcel(test.test_date),
+      '진단검사 시간': test.test_slots?.time ? test.test_slots.time.slice(0, 5) : '',
+      지점: test.location || '',
+    }));
+
+    // 워크시트 생성
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // 컬럼 너비 설정
+    worksheet['!cols'] = [
+      { wch: 12 }, // 학생명
+      { wch: 15 }, // 학부모 연락처
+      { wch: 15 }, // 진단검사 날짜
+      { wch: 12 }, // 진단검사 시간
+      { wch: 15 }, // 지점
+    ];
+
+    // 워크북 생성
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '진단검사 예약');
+
+    // 파일명 생성 (현재 날짜 포함)
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+    const filename = `진단검사_예약_${dateStr}.xlsx`;
+
+    // 파일 다운로드
+    XLSX.writeFile(workbook, filename);
+  };
+
   return (
     <div className="tab-container">
       {/* 필터 영역 */}
@@ -37,6 +79,9 @@ export default function TestsTab({ tests }) {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        <button className="btn btn-primary" onClick={handleExportExcel}>
+          📊 엑셀 다운로드
+        </button>
       </div>
 
       {/* 테이블 */}

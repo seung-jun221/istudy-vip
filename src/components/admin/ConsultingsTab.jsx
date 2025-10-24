@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as XLSX from 'xlsx';
 import { useAdmin } from '../../context/AdminContext';
 import ConsultingResultModal from './ConsultingResultModal';
 import './AdminTabs.css';
@@ -62,6 +63,56 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
     return timeStr.slice(0, 5);
   };
 
+  const handleExportExcel = () => {
+    // 슬롯 정보와 함께 예약 데이터 준비
+    const excelData = consultings.map((consulting) => {
+      // 해당 예약의 슬롯 찾기
+      const slot = consultingSlots?.find((s) => s.id === consulting.slot_id);
+
+      return {
+        컨설팅날짜: slot?.date || '',
+        컨설팅시간: formatTime(slot?.time),
+        지점: slot?.location || '',
+        학생명: consulting.student_name || '',
+        학년: consulting.grade || '',
+        학교: consulting.school || '',
+        '학부모 연락처': consulting.parent_phone || '',
+        '수학 선행정도': consulting.math_level || '',
+        '등록 상태': consulting.enrollment_status || '미정',
+        '컨설팅 완료': consulting.consulted_at ? 'O' : 'X',
+      };
+    });
+
+    // 워크시트 생성
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // 컬럼 너비 설정
+    worksheet['!cols'] = [
+      { wch: 12 }, // 컨설팅날짜
+      { wch: 10 }, // 컨설팅시간
+      { wch: 15 }, // 지점
+      { wch: 12 }, // 학생명
+      { wch: 10 }, // 학년
+      { wch: 20 }, // 학교
+      { wch: 15 }, // 학부모 연락처
+      { wch: 15 }, // 수학 선행정도
+      { wch: 12 }, // 등록 상태
+      { wch: 12 }, // 컨설팅 완료
+    ];
+
+    // 워크북 생성
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '컨설팅 현황');
+
+    // 파일명 생성 (현재 날짜 포함)
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+    const filename = `컨설팅_현황_${dateStr}.xlsx`;
+
+    // 파일 다운로드
+    XLSX.writeFile(workbook, filename);
+  };
+
   if (dates.length === 0) {
     return (
       <div className="tab-container">
@@ -77,6 +128,14 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
 
   return (
     <div className="tab-container">
+      {/* 상단 액션 바 */}
+      <div className="filter-bar">
+        <div></div>
+        <button className="btn btn-primary" onClick={handleExportExcel}>
+          📊 엑셀 다운로드
+        </button>
+      </div>
+
       {/* 날짜 선택 탭 */}
       <div className="date-tabs">
         {dates.map((date) => (

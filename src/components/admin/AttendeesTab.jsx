@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as XLSX from 'xlsx';
 import './AdminTabs.css';
 
 export default function AttendeesTab({ attendees }) {
@@ -20,6 +21,49 @@ export default function AttendeesTab({ attendees }) {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
     return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const formatDateForExcel = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const handleExportExcel = () => {
+    // 엑셀 데이터 준비
+    const excelData = filteredAttendees.map((attendee) => ({
+      예약일시: formatDateForExcel(attendee.registered_at),
+      학생명: attendee.student_name || '',
+      학년: attendee.grade || '',
+      학교: attendee.school || '',
+      '학부모 연락처': attendee.parent_phone || '',
+      상태: attendee.status || '',
+    }));
+
+    // 워크시트 생성
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // 컬럼 너비 설정
+    worksheet['!cols'] = [
+      { wch: 20 }, // 예약일시
+      { wch: 12 }, // 학생명
+      { wch: 10 }, // 학년
+      { wch: 20 }, // 학교
+      { wch: 15 }, // 학부모 연락처
+      { wch: 10 }, // 상태
+    ];
+
+    // 워크북 생성
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '설명회 예약자');
+
+    // 파일명 생성 (현재 날짜 포함)
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+    const filename = `설명회_예약자_${dateStr}.xlsx`;
+
+    // 파일 다운로드
+    XLSX.writeFile(workbook, filename);
   };
 
   return (
@@ -44,6 +88,9 @@ export default function AttendeesTab({ attendees }) {
           <option value="불참">불참</option>
           <option value="취소">취소</option>
         </select>
+        <button className="btn btn-primary" onClick={handleExportExcel}>
+          📊 엑셀 다운로드
+        </button>
       </div>
 
       {/* 테이블 */}
