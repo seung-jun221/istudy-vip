@@ -357,6 +357,7 @@ export function ConsultingProvider({ children }) {
       const { data, error } = await supabase.rpc(
         'create_consulting_reservation',
         {
+          p_slot_id: selectedSlot.id, // ⭐ slot_id 추가
           p_slot_date: selectedDate,
           p_slot_time: selectedTime + ':00',
           p_slot_location: selectedSlot.location, // 실제 슬롯의 location 사용
