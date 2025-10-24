@@ -455,8 +455,8 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
         <div className="form-group">
           <label className="form-label">진단검사 방식</label>
           {editing ? (
-            <div className="radio-group" style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <div className="radio-group" style={{ display: 'flex', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 <input
                   type="radio"
                   name="test_method"
@@ -464,9 +464,9 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
                   checked={formData.test_method === 'home'}
                   onChange={handleChange}
                 />
-                <span>🏠 가정 셀프 테스트만</span>
+                <span style={{ whiteSpace: 'nowrap' }}>가정 셀프 테스트만</span>
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 <input
                   type="radio"
                   name="test_method"
@@ -474,9 +474,9 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
                   checked={formData.test_method === 'onsite'}
                   onChange={handleChange}
                 />
-                <span>🏫 방문 진단검사만</span>
+                <span style={{ whiteSpace: 'nowrap' }}>방문 진단검사만</span>
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 <input
                   type="radio"
                   name="test_method"
@@ -484,14 +484,14 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
                   checked={formData.test_method === 'both'}
                   onChange={handleChange}
                 />
-                <span>🔄 둘 다 가능</span>
+                <span style={{ whiteSpace: 'nowrap' }}>둘 다 가능</span>
               </label>
             </div>
           ) : (
             <div className="form-value">
-              {formData.test_method === 'home' && '🏠 가정 셀프 테스트만'}
-              {formData.test_method === 'onsite' && '🏫 방문 진단검사만'}
-              {formData.test_method === 'both' && '🔄 둘 다 가능'}
+              {formData.test_method === 'home' && '가정 셀프 테스트만'}
+              {formData.test_method === 'onsite' && '방문 진단검사만'}
+              {formData.test_method === 'both' && '둘 다 가능'}
             </div>
           )}
           <div className="form-hint">
