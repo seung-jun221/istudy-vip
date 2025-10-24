@@ -10,6 +10,7 @@ import ConsultingComplete from '../components/consulting/ConsultingComplete';
 import ConsultingCheck from '../components/consulting/ConsultingCheck';
 import ConsultingResult from '../components/consulting/ConsultingResult';
 // ⭐ 진단검사 컴포넌트 import
+import TestMethodSelector from '../components/consulting/TestMethodSelector';
 import TestDateSelector from '../components/consulting/TestDateSelector';
 import TestTimeSelector from '../components/consulting/TestTimeSelector';
 import TestComplete from '../components/consulting/TestComplete';
@@ -111,7 +112,7 @@ export default function ConsultingPage() {
   // ⭐ 진단검사 예약 플로우 (신규)
   // ========================================
 
-  // 진단검사 예약 시작 (컨설팅 완료 → 진단검사 날짜 선택)
+  // 진단검사 예약 시작 (컨설팅 완료 → 진단검사 방식 선택 or 날짜 선택)
   const handleStartTestReservation = async () => {
     // 예약 정보가 있는지 확인
     const reservation = completedReservation || checkedReservation;
@@ -144,9 +145,35 @@ export default function ConsultingPage() {
       setCompletedReservation(reservation);
     }
 
-    // 컨설팅 날짜보다 이전 날짜만 로드
-    await loadAvailableTestDates(location, consultingDate);
-    setStep('test-date');
+    // ⭐ campaign의 test_method 확인
+    const seminarId = reservation.linked_seminar_id;
+    let testMethod = 'home'; // 기본값
+
+    if (seminarId) {
+      const { data: campaign } = await supabase
+        .from('seminars')
+        .select('test_method')
+        .eq('id', seminarId)
+        .single();
+
+      testMethod = campaign?.test_method || 'home';
+    }
+
+    // test_method에 따라 분기
+    if (testMethod === 'both') {
+      // 방문/가정 선택 화면으로
+      await loadAvailableTestDates(location, consultingDate);
+      setStep('test-method-select');
+    } else if (testMethod === 'onsite') {
+      // 바로 방문 테스트 날짜 선택으로
+      await loadAvailableTestDates(location, consultingDate);
+      setStep('test-date');
+    } else {
+      // 가정 테스트 - TestGuide 페이지로 리다이렉트
+      window.location.href = `/test-guide?phone=${encodeURIComponent(
+        reservation.parent_phone
+      )}&name=${encodeURIComponent(reservation.student_name)}&verified=true`;
+    }
   };
 
   // 진단검사 날짜 선택 완료
@@ -218,6 +245,19 @@ export default function ConsultingPage() {
       console.error('진단검사 예약 실패:', error);
       showToast('진단검사 예약 처리 중 오류가 발생했습니다.', 'error');
     }
+  };
+
+  // 진단검사 방식 선택: 방문 선택
+  const handleSelectOnsite = () => {
+    setStep('test-date');
+  };
+
+  // 진단검사 방식 선택: 가정 선택
+  const handleSelectHome = () => {
+    const reservation = completedReservation || checkedReservation;
+    window.location.href = `/test-guide?phone=${encodeURIComponent(
+      reservation.parent_phone
+    )}&name=${encodeURIComponent(reservation.student_name)}&verified=true`;
   };
 
   // ========================================
@@ -391,6 +431,20 @@ export default function ConsultingPage() {
               reservation={completedReservation}
               onHome={handleHome}
               onTestReservation={handleStartTestReservation}
+            />
+          </div>
+        )}
+
+        {/* ⭐ 진단검사 방식 선택 */}
+        {step === 'test-method-select' && (
+          <div className="card">
+            <h1 className="mb-6">진단검사 예약하기</h1>
+
+            <TestMethodSelector
+              testSlotsAvailable={availableTestDates.length > 0}
+              onSelectOnsite={handleSelectOnsite}
+              onSelectHome={handleSelectHome}
+              onBack={() => setStep('complete')}
             />
           </div>
         )}

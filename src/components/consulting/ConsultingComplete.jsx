@@ -31,13 +31,31 @@ export default function ConsultingComplete({
   useEffect(() => {
     const fetchTestMethod = async () => {
       setLoading(true);
+
+      // ⭐ seminars 테이블에서 campaign 정보 가져오기
+      const seminarId = reservation.linked_seminar_id;
+      if (seminarId) {
+        const { data: campaign } = await supabase
+          .from('seminars')
+          .select('test_method')
+          .eq('id', seminarId)
+          .single();
+
+        if (campaign?.test_method) {
+          setTestMethod(campaign.test_method);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // ⭐ fallback: 기존 test_methods 테이블 조회 (레거시 지원)
       const method = await loadTestMethod(location);
       setTestMethod(method);
       setLoading(false);
     };
 
     fetchTestMethod();
-  }, [location]);
+  }, [location, reservation]);
 
   // ⭐ 진단검사 예약 페이지로 이동 (동의는 이미 받음)
   const handleProceedToTest = () => {
@@ -93,9 +111,9 @@ export default function ConsultingComplete({
         </div>
       </div>
 
-      {/* ⭐ 진단검사 안내 - 지역별 분기 */}
+      {/* ⭐ 진단검사 안내 - 방식별 분기 */}
       {testMethod === 'onsite' ? (
-        // 🏫 역삼점: 학원 방문 응시 (체크박스 + 자정 마감 경고)
+        // 🏫 방문 진단검사만 (학원 방문 응시)
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 text-left">
           <h4 className="text-lg font-bold text-emerald-800 mb-3">
             📝 다음 단계: 진단검사 예약 (필수)
@@ -134,6 +152,32 @@ export default function ConsultingComplete({
             className="w-full py-3 rounded-lg font-semibold transition-all bg-emerald-700 text-white hover:bg-emerald-800"
           >
             진단검사 예약하러 가기 →
+          </button>
+
+          <button
+            onClick={onHome}
+            className="w-full mt-3 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+          >
+            나중에 하기 (홈으로)
+          </button>
+        </div>
+      ) : testMethod === 'both' ? (
+        // 🔄 둘 다 가능 (사용자 선택)
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 text-left">
+          <h4 className="text-lg font-bold text-purple-800 mb-3">
+            📝 다음 단계: 진단검사 방식 선택 (필수)
+          </h4>
+
+          <p className="text-sm text-gray-700 mb-4">
+            진단검사는 <strong>방문 또는 가정</strong> 중 선택하실 수 있습니다.
+          </p>
+
+          {/* 진단검사 방식 선택 버튼 */}
+          <button
+            onClick={handleProceedToTest}
+            className="w-full py-3 rounded-lg font-semibold transition-all bg-purple-700 text-white hover:bg-purple-800"
+          >
+            진단검사 방식 선택하기 →
           </button>
 
           <button

@@ -31,6 +31,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
     display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
     status: campaign.status || 'active',
     access_password: campaign.access_password || '',
+    test_method: campaign.test_method || 'home', // ⭐ 진단검사 방식
   });
 
   // campaign가 업데이트되면 formData도 업데이트
@@ -44,6 +45,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
       display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
       status: campaign.status || 'active',
       access_password: campaign.access_password || '',
+      test_method: campaign.test_method || 'home', // ⭐ 진단검사 방식
     });
 
     const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
@@ -109,6 +111,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
       display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
       status: campaign.status || 'active',
       access_password: campaign.access_password || '',
+      test_method: campaign.test_method || 'home', // ⭐ 진단검사 방식
     });
     // autoOpenThreshold도 원래 값으로 되돌리기
     const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
@@ -445,6 +448,56 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
           <div className="form-hint">
             이 비밀번호로 로그인하면 해당 캠페인 상세 페이지로 직접 접근할 수 있습니다.
             담당자에게만 공유하세요.
+          </div>
+        </div>
+
+        {/* 진단검사 방식 */}
+        <div className="form-group">
+          <label className="form-label">진단검사 방식</label>
+          {editing ? (
+            <div className="radio-group" style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="test_method"
+                  value="home"
+                  checked={formData.test_method === 'home'}
+                  onChange={handleChange}
+                />
+                <span>🏠 가정 셀프 테스트만</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="test_method"
+                  value="onsite"
+                  checked={formData.test_method === 'onsite'}
+                  onChange={handleChange}
+                />
+                <span>🏫 방문 진단검사만</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="test_method"
+                  value="both"
+                  checked={formData.test_method === 'both'}
+                  onChange={handleChange}
+                />
+                <span>🔄 둘 다 가능</span>
+              </label>
+            </div>
+          ) : (
+            <div className="form-value">
+              {formData.test_method === 'home' && '🏠 가정 셀프 테스트만'}
+              {formData.test_method === 'onsite' && '🏫 방문 진단검사만'}
+              {formData.test_method === 'both' && '🔄 둘 다 가능'}
+            </div>
+          )}
+          <div className="form-hint">
+            • 가정만: 사용자가 시험지 PDF를 다운로드하여 집에서 응시<br />
+            • 방문만: 사용자가 날짜/시간을 선택하여 학원에서 응시<br />
+            • 둘 다: 사용자가 방문 또는 가정 중 선택 (방문 슬롯 마감 시 가정으로 폴백)
           </div>
         </div>
 

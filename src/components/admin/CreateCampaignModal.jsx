@@ -27,7 +27,7 @@ export default function CreateCampaignModal({ onClose }) {
     location: '',
     capacity: 1,
   });
-  const [testMethod, setTestMethod] = useState('home'); // 'home' or 'onsite'
+  const [testMethod, setTestMethod] = useState('home'); // 'home', 'onsite', or 'both'
   const [testSlots, setTestSlots] = useState([]);
 
   const handleChange = (e) => {
@@ -160,7 +160,7 @@ export default function CreateCampaignModal({ onClose }) {
       auto_open_threshold: parseInt(formData.auto_open_threshold),
       consultingSlots,
       testMethod,
-      testSlots: testMethod === 'onsite' ? testSlots : [],
+      testSlots: (testMethod === 'onsite' || testMethod === 'both') ? testSlots : [],
     });
 
     setSaving(false);
@@ -433,7 +433,7 @@ export default function CreateCampaignModal({ onClose }) {
                     <span
                       className={`radio-text ${testMethod === 'home' ? 'active' : ''}`}
                     >
-                      가정 셀프 테스트
+                      🏠 가정 셀프 테스트만
                     </span>
                   </label>
                   <label className="radio-label">
@@ -447,13 +447,32 @@ export default function CreateCampaignModal({ onClose }) {
                     <span
                       className={`radio-text ${testMethod === 'onsite' ? 'active' : ''}`}
                     >
-                      방문 진단검사
+                      🏫 방문 진단검사만
+                    </span>
+                  </label>
+                  <label className="radio-label">
+                    <input
+                      type="radio"
+                      name="testMethod"
+                      value="both"
+                      checked={testMethod === 'both'}
+                      onChange={(e) => setTestMethod(e.target.value)}
+                    />
+                    <span
+                      className={`radio-text ${testMethod === 'both' ? 'active' : ''}`}
+                    >
+                      🔄 둘 다 가능
                     </span>
                   </label>
                 </div>
+                <div className="form-hint">
+                  • 가정만: 사용자가 시험지 PDF를 다운로드하여 집에서 응시<br />
+                  • 방문만: 사용자가 날짜/시간을 선택하여 학원에서 응시<br />
+                  • 둘 다: 사용자가 방문 또는 가정 중 선택 (방문 슬롯 마감 시 가정으로 폴백)
+                </div>
               </div>
 
-              {testMethod === 'onsite' && (
+              {(testMethod === 'onsite' || testMethod === 'both') && (
                 <>
                   <p className="step-description">
                     방문 진단검사 가능한 날짜와 시간을 추가하세요.
@@ -533,8 +552,16 @@ export default function CreateCampaignModal({ onClose }) {
               {testMethod === 'home' && (
                 <div className="info-box">
                   <p>
-                    가정 셀프 테스트는 별도의 슬롯 설정이 필요하지 않습니다. 학부모가
+                    💡 가정 셀프 테스트는 별도의 슬롯 설정이 필요하지 않습니다. 학부모가
                     자유롭게 테스트 자료를 다운로드할 수 있습니다.
+                  </p>
+                </div>
+              )}
+
+              {testMethod === 'both' && testSlots.length === 0 && (
+                <div className="info-box" style={{ background: '#fff3cd', borderColor: '#ffc107' }}>
+                  <p>
+                    ⚠️ 방문 진단검사 슬롯을 추가하지 않으면 가정 셀프 테스트만 가능합니다.
                   </p>
                 </div>
               )}

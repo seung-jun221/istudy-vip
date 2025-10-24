@@ -405,6 +405,7 @@ export function AdminProvider({ children }) {
           max_capacity: campaignData.max_capacity || 100,
           display_capacity: campaignData.display_capacity || campaignData.max_capacity || 100,
           status: campaignData.status || 'active',
+          test_method: campaignData.testMethod || 'home', // ⭐ 진단검사 방식 저장
         })
         .select()
         .single();
@@ -463,7 +464,7 @@ export function AdminProvider({ children }) {
       }
 
       // 방문 진단검사 슬롯 생성
-      if (campaignData.testMethod === 'onsite' && campaignData.testSlots && campaignData.testSlots.length > 0) {
+      if ((campaignData.testMethod === 'onsite' || campaignData.testMethod === 'both') && campaignData.testSlots && campaignData.testSlots.length > 0) {
         console.log('🧪 진단검사 슬롯 생성 중:', campaignData.testSlots.length + '개');
 
         const testSlotsToInsert = campaignData.testSlots.map(slot => ({
