@@ -32,6 +32,13 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
     return consultings.filter((c) => c.slot_id === slotId);
   };
 
+  // 통계 계산
+  const totalCount = consultings.length;
+  const completedCount = consultings.filter(c => c.consulted_at).length;
+  const pendingCount = totalCount - completedCount;
+  const noShowCount = consultings.filter(c => c.status === 'cancelled').length;
+  const enrolledCount = consultings.filter(c => c.enrollment_status === '확정').length;
+
   const handleWriteResult = (consulting) => {
     setSelectedConsulting(consulting);
     setShowModal(true);
@@ -128,6 +135,30 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
 
   return (
     <div className="tab-container">
+      {/* 통계 정보 */}
+      <div className="stats-info-bar">
+        <div className="stat-info-item">
+          <span className="stat-info-label">총 예약:</span>
+          <span className="stat-info-value">{totalCount}명</span>
+        </div>
+        <div className="stat-info-item">
+          <span className="stat-info-label">컨설팅 완료:</span>
+          <span className="stat-info-value">{completedCount}명</span>
+        </div>
+        <div className="stat-info-item">
+          <span className="stat-info-label">대기 중:</span>
+          <span className="stat-info-value">{pendingCount}명</span>
+        </div>
+        <div className="stat-info-item">
+          <span className="stat-info-label">노쇼:</span>
+          <span className="stat-info-value">{noShowCount}명</span>
+        </div>
+        <div className="stat-info-item">
+          <span className="stat-info-label">등록 확정:</span>
+          <span className="stat-info-value highlight">{enrolledCount}명</span>
+        </div>
+      </div>
+
       {/* 상단 액션 바 */}
       <div className="filter-bar">
         <div></div>
@@ -167,9 +198,6 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
               <div className="slot-header">
                 <div className="slot-time">
                   <span className="time-label">🕐 {formatTime(slot.time)}</span>
-                  <span className="capacity-badge">
-                    {reservations.length} / {slot.max_capacity}
-                  </span>
                 </div>
                 <div className="slot-location">{slot.location}</div>
               </div>

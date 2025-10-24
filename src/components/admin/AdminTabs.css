@@ -6,6 +6,40 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
+/* 통계 정보 바 */
+.stats-info-bar {
+  display: flex;
+  gap: 24px;
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e9ecef;
+}
+
+.stat-info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-info-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+}
+
+.stat-info-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+}
+
+.stat-info-value.highlight {
+  color: #1a73e8;
+  font-size: 18px;
+}
+
 /* 필터 바 */
 .filter-bar {
   display: flex;

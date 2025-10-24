@@ -2,7 +2,7 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import './AdminTabs.css';
 
-export default function TestsTab({ tests }) {
+export default function TestsTab({ tests, testSlots }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   // 필터링
@@ -12,6 +12,19 @@ export default function TestsTab({ tests }) {
       test.parent_phone?.includes(searchTerm);
 
     return matchesSearch;
+  });
+
+  // 슬롯별 예약 현황 계산
+  const slotStats = (testSlots || []).map(slot => {
+    const reservationsForSlot = tests.filter(t => t.slot_id === slot.id).length;
+    return {
+      ...slot,
+      reservations: reservationsForSlot
+    };
+  }).sort((a, b) => {
+    // 날짜순, 시간순 정렬
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return a.time.localeCompare(b.time);
   });
 
   const formatDateTime = (dateStr, timeStr) => {
@@ -76,6 +89,22 @@ export default function TestsTab({ tests }) {
 
   return (
     <div className="tab-container">
+      {/* 슬롯별 예약 현황 */}
+      {slotStats.length > 0 && (
+        <div className="stats-info-bar">
+          <div className="stat-info-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+            <span className="stat-info-label">슬롯별 예약 현황:</span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+              {slotStats.map(slot => (
+                <div key={slot.id} style={{ fontSize: '13px', padding: '4px 12px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px' }}>
+                  <strong>{formatTestDate(slot.date)} {slot.time?.slice(0, 5)}</strong>: {slot.reservations}/{slot.max_capacity}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 필터 영역 */}
       <div className="filter-bar">
         <input

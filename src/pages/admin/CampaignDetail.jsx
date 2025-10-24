@@ -97,34 +97,6 @@ export default function CampaignDetail() {
         </div>
       </header>
 
-      {/* 통계 카드 */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-content">
-            <div className="stat-number">{stats.attendees}</div>
-            <div className="stat-label">설명회 예약</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-content">
-            <div className="stat-number">{stats.consultings}</div>
-            <div className="stat-label">컨설팅 예약</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-content">
-            <div className="stat-number">{stats.tests}</div>
-            <div className="stat-label">진단검사 예약</div>
-          </div>
-        </div>
-        <div className="stat-card highlight">
-          <div className="stat-content">
-            <div className="stat-number">{stats.enrolled}</div>
-            <div className="stat-label">최종 등록</div>
-          </div>
-        </div>
-      </div>
-
       {/* 탭 네비게이션 */}
       <div className="tab-navigation">
         <button
@@ -155,7 +127,7 @@ export default function CampaignDetail() {
 
       {/* 탭 컨텐츠 */}
       <div className="tab-content">
-        {activeTab === 'attendees' && <AttendeesTab attendees={attendees} />}
+        {activeTab === 'attendees' && <AttendeesTab attendees={attendees} campaign={campaign} />}
         {activeTab === 'consultings' && (
           <ConsultingsTab
             consultings={consultings}
@@ -163,7 +135,7 @@ export default function CampaignDetail() {
             onUpdate={fetchCampaignDetail}
           />
         )}
-        {activeTab === 'tests' && <TestsTab tests={tests} />}
+        {activeTab === 'tests' && <TestsTab tests={tests} testSlots={testSlots} />}
         {activeTab === 'settings' && (
           <SettingsTab
             campaign={campaign}

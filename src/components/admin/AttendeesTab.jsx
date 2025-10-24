@@ -2,7 +2,7 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import './AdminTabs.css';
 
-export default function AttendeesTab({ attendees }) {
+export default function AttendeesTab({ attendees, campaign }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -16,6 +16,12 @@ export default function AttendeesTab({ attendees }) {
 
     return matchesSearch && matchesStatus;
   });
+
+  // 통계 계산
+  const confirmedCount = attendees.filter(a => ['예약', '참석'].includes(a.status)).length;
+  const maxCapacity = campaign?.max_capacity || 0;
+  const displayCapacity = campaign?.display_capacity || maxCapacity;
+  const reservationRate = maxCapacity > 0 ? Math.round((confirmedCount / maxCapacity) * 100) : 0;
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
@@ -70,6 +76,22 @@ export default function AttendeesTab({ attendees }) {
 
   return (
     <div className="tab-container">
+      {/* 통계 정보 */}
+      <div className="stats-info-bar">
+        <div className="stat-info-item">
+          <span className="stat-info-label">예약 현황:</span>
+          <span className="stat-info-value">{confirmedCount} / {maxCapacity}명</span>
+        </div>
+        <div className="stat-info-item">
+          <span className="stat-info-label">노출 정원:</span>
+          <span className="stat-info-value">{displayCapacity}석</span>
+        </div>
+        <div className="stat-info-item">
+          <span className="stat-info-label">예약율:</span>
+          <span className="stat-info-value highlight">{reservationRate}%</span>
+        </div>
+      </div>
+
       {/* 필터 영역 */}
       <div className="filter-bar">
         <input
