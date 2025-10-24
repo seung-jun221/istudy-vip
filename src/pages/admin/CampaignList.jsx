@@ -6,14 +6,23 @@ import './CampaignList.css';
 
 export default function CampaignList() {
   const navigate = useNavigate();
-  const { logout, loadCampaigns } = useAdmin();
+  const { logout, loadCampaigns, authMode, allowedCampaignId } = useAdmin();
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  // 캠페인 관리자는 자동으로 해당 캠페인 상세 페이지로 리다이렉트
   useEffect(() => {
-    fetchCampaigns();
-  }, []);
+    if (authMode === 'campaign' && allowedCampaignId) {
+      navigate(`/admin/campaigns/${allowedCampaignId}`, { replace: true });
+    }
+  }, [authMode, allowedCampaignId, navigate]);
+
+  useEffect(() => {
+    if (authMode === 'super') {
+      fetchCampaigns();
+    }
+  }, [authMode]);
 
   const fetchCampaigns = async () => {
     setLoading(true);

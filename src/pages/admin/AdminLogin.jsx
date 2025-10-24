@@ -8,16 +8,33 @@ export default function AdminLogin() {
   const { login } = useAdmin();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    if (login(password)) {
-      navigate('/admin/campaigns');
-    } else {
-      setError('비밀번호가 올바르지 않습니다.');
+    try {
+      const result = await login(password);
+
+      if (result.success) {
+        if (result.mode === 'super') {
+          // 수퍼 관리자 - 캠페인 목록으로
+          navigate('/admin/campaigns');
+        } else if (result.mode === 'campaign') {
+          // 캠페인 관리자 - 해당 캠페인 상세 페이지로
+          navigate(`/admin/campaigns/${result.campaignId}`);
+        }
+      } else {
+        setError('비밀번호가 올바르지 않습니다.');
+        setPassword('');
+      }
+    } catch (err) {
+      setError('로그인 중 오류가 발생했습니다.');
       setPassword('');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -45,8 +62,8 @@ export default function AdminLogin() {
 
           {error && <div className="error-message">{error}</div>}
 
-          <button type="submit" className="btn btn-primary">
-            로그인
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? '로그인 중...' : '로그인'}
           </button>
         </form>
       </div>

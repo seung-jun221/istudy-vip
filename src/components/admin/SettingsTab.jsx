@@ -29,6 +29,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
     max_capacity: campaign.max_capacity || 0,
     display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
     status: campaign.status || 'active',
+    access_password: campaign.access_password || '',
   });
 
   // campaign가 업데이트되면 formData도 업데이트
@@ -41,6 +42,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
       max_capacity: campaign.max_capacity || 0,
       display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
       status: campaign.status || 'active',
+      access_password: campaign.access_password || '',
     });
 
     const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
@@ -105,6 +107,7 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
       max_capacity: campaign.max_capacity || 0,
       display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
       status: campaign.status || 'active',
+      access_password: campaign.access_password || '',
     });
     // autoOpenThreshold도 원래 값으로 되돌리기
     const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
@@ -418,6 +421,29 @@ export default function SettingsTab({ campaign, consultingSlots, testSlots, onUp
           <div className="form-hint">
             잔여 예약 가능 슬롯 수가 이 값 이하가 되면 다음 날짜의 슬롯이 자동으로
             오픈됩니다. 0으로 설정하면 자동 오픈이 비활성화됩니다.
+          </div>
+        </div>
+
+        {/* 접근 비밀번호 */}
+        <div className="form-group">
+          <label className="form-label">캠페인 접근 비밀번호</label>
+          {editing ? (
+            <input
+              type="text"
+              name="access_password"
+              className="form-input"
+              value={formData.access_password}
+              onChange={handleChange}
+              placeholder="담당자 전용 비밀번호를 입력하세요"
+            />
+          ) : (
+            <div className="form-value">
+              {campaign.access_password ? '●●●●●●●●' : '(미설정)'}
+            </div>
+          )}
+          <div className="form-hint">
+            이 비밀번호로 로그인하면 해당 캠페인 상세 페이지로 직접 접근할 수 있습니다.
+            담당자에게만 공유하세요.
           </div>
         </div>
 

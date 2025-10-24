@@ -15,32 +15,78 @@ export function AdminProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [authMode, setAuthMode] = useState('super'); // 'super' | 'campaign'
+  const [allowedCampaignId, setAllowedCampaignId] = useState(null);
 
   // 로컬스토리지에서 인증 상태 복원
   useEffect(() => {
     const authStatus = localStorage.getItem('admin_authenticated');
+    const mode = localStorage.getItem('admin_auth_mode');
+    const campaignId = localStorage.getItem('admin_campaign_id');
+
     if (authStatus === 'true') {
       setIsAuthenticated(true);
+      setAuthMode(mode || 'super');
+      setAllowedCampaignId(campaignId || null);
     }
   }, []);
 
   // 로그인
-  const login = (password) => {
+  const login = async (password) => {
     // 환경변수에서 비밀번호 가져오기 (없으면 기본값)
     const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'admin1234';
 
+    // 수퍼 관리자 로그인
     if (password === adminPassword) {
       setIsAuthenticated(true);
+      setAuthMode('super');
+      setAllowedCampaignId(null);
       localStorage.setItem('admin_authenticated', 'true');
-      return true;
+      localStorage.setItem('admin_auth_mode', 'super');
+      localStorage.removeItem('admin_campaign_id');
+      return { success: true, mode: 'super' };
     }
-    return false;
+
+    // 캠페인 비밀번호 확인
+    try {
+      const { data: campaigns, error } = await supabase
+        .from('seminars')
+        .select('id, access_password, title, location')
+        .not('access_password', 'is', null);
+
+      if (error) throw error;
+
+      const matchedCampaign = campaigns?.find(c => c.access_password === password);
+
+      if (matchedCampaign) {
+        setIsAuthenticated(true);
+        setAuthMode('campaign');
+        setAllowedCampaignId(matchedCampaign.id);
+        localStorage.setItem('admin_authenticated', 'true');
+        localStorage.setItem('admin_auth_mode', 'campaign');
+        localStorage.setItem('admin_campaign_id', matchedCampaign.id);
+        return {
+          success: true,
+          mode: 'campaign',
+          campaignId: matchedCampaign.id,
+          campaignTitle: matchedCampaign.title || matchedCampaign.location
+        };
+      }
+    } catch (error) {
+      console.error('캠페인 비밀번호 확인 중 오류:', error);
+    }
+
+    return { success: false };
   };
 
   // 로그아웃
   const logout = () => {
     setIsAuthenticated(false);
+    setAuthMode('super');
+    setAllowedCampaignId(null);
     localStorage.removeItem('admin_authenticated');
+    localStorage.removeItem('admin_auth_mode');
+    localStorage.removeItem('admin_campaign_id');
   };
 
   // Toast 표시
@@ -905,6 +951,8 @@ export function AdminProvider({ children }) {
 
   const value = {
     isAuthenticated,
+    authMode,
+    allowedCampaignId,
     loading,
     toast,
     showToast,

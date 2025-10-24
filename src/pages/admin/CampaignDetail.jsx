@@ -10,7 +10,7 @@ import './CampaignDetail.css';
 export default function CampaignDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { loadCampaignDetail } = useAdmin();
+  const { loadCampaignDetail, authMode, logout } = useAdmin();
 
   const [activeTab, setActiveTab] = useState('attendees');
   const [campaignData, setCampaignData] = useState(null);
@@ -69,13 +69,26 @@ export default function CampaignDetail() {
     enrolled: consultings.filter((c) => c.enrollment_status === '확정').length,
   };
 
+  const handleLogout = () => {
+    if (window.confirm('로그아웃 하시겠습니까?')) {
+      logout();
+      navigate('/admin/login');
+    }
+  };
+
   return (
     <div className="campaign-detail-container">
       {/* 헤더 */}
       <header className="campaign-detail-header">
-        <button className="btn-back" onClick={() => navigate('/admin/campaigns')}>
-          ← 목록으로
-        </button>
+        {authMode === 'super' ? (
+          <button className="btn-back" onClick={() => navigate('/admin/campaigns')}>
+            ← 목록으로
+          </button>
+        ) : (
+          <button className="btn-back" onClick={handleLogout}>
+            로그아웃
+          </button>
+        )}
         <div className="campaign-header-info">
           <h1>{campaign.title || campaign.location}</h1>
           <p>
