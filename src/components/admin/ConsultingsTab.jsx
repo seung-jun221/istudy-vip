@@ -135,33 +135,30 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
 
   return (
     <div className="tab-container">
-      {/* 통계 정보 */}
+      {/* 통계 정보 + 엑셀 다운로드 */}
       <div className="stats-info-bar">
-        <div className="stat-info-item">
-          <span className="stat-info-label">총 예약:</span>
-          <span className="stat-info-value">{totalCount}명</span>
+        <div style={{ display: 'flex', gap: '24px', flex: 1 }}>
+          <div className="stat-info-item">
+            <span className="stat-info-label">총 예약:</span>
+            <span className="stat-info-value">{totalCount}명</span>
+          </div>
+          <div className="stat-info-item">
+            <span className="stat-info-label">컨설팅 완료:</span>
+            <span className="stat-info-value">{completedCount}명</span>
+          </div>
+          <div className="stat-info-item">
+            <span className="stat-info-label">대기 중:</span>
+            <span className="stat-info-value">{pendingCount}명</span>
+          </div>
+          <div className="stat-info-item">
+            <span className="stat-info-label">노쇼:</span>
+            <span className="stat-info-value">{noShowCount}명</span>
+          </div>
+          <div className="stat-info-item">
+            <span className="stat-info-label">등록 확정:</span>
+            <span className="stat-info-value highlight">{enrolledCount}명</span>
+          </div>
         </div>
-        <div className="stat-info-item">
-          <span className="stat-info-label">컨설팅 완료:</span>
-          <span className="stat-info-value">{completedCount}명</span>
-        </div>
-        <div className="stat-info-item">
-          <span className="stat-info-label">대기 중:</span>
-          <span className="stat-info-value">{pendingCount}명</span>
-        </div>
-        <div className="stat-info-item">
-          <span className="stat-info-label">노쇼:</span>
-          <span className="stat-info-value">{noShowCount}명</span>
-        </div>
-        <div className="stat-info-item">
-          <span className="stat-info-label">등록 확정:</span>
-          <span className="stat-info-value highlight">{enrolledCount}명</span>
-        </div>
-      </div>
-
-      {/* 상단 액션 바 */}
-      <div className="filter-bar">
-        <div></div>
         <button className="btn-excel" onClick={handleExportExcel}>
           📊 엑셀 다운로드
         </button>

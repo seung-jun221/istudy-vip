@@ -92,15 +92,13 @@ export default function TestsTab({ tests, testSlots }) {
       {/* 슬롯별 예약 현황 */}
       {slotStats.length > 0 && (
         <div className="stats-info-bar">
-          <div className="stat-info-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <span className="stat-info-label">슬롯별 예약 현황:</span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-              {slotStats.map(slot => (
-                <div key={slot.id} style={{ fontSize: '13px', padding: '4px 12px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px' }}>
-                  <strong>{formatTestDate(slot.date)} {slot.time?.slice(0, 5)}</strong>: {slot.reservations}/{slot.max_capacity}
-                </div>
-              ))}
-            </div>
+            {slotStats.map(slot => (
+              <div key={slot.id} style={{ fontSize: '13px', padding: '4px 12px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px' }}>
+                <strong>{formatTestDate(slot.date)} {slot.time?.slice(0, 5)}</strong>: {slot.reservations}/{slot.max_capacity}
+              </div>
+            ))}
           </div>
         </div>
       )}
