@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Input from '../common/Input';
 import Button from '../common/Button';
 import { useConsulting } from '../../context/ConsultingContext';
+import { supabase } from '../../utils/supabase';
 
 export default function ConsultingInfoForm({ phone, onNext, onBack }) {
   const {
@@ -21,12 +22,70 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
     privacyConsent: false,
   });
 
+  const [surname, setSurname] = useState('');
+  const [loadingPrevious, setLoadingPrevious] = useState(false);
+
   useEffect(() => {
     loadAvailableLocations();
   }, []);
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // 이전 정보 불러오기
+  const handleLoadPrevious = async () => {
+    if (!surname || surname.length < 1) {
+      showToast('성을 입력해주세요.', 'error');
+      return;
+    }
+
+    setLoadingPrevious(true);
+
+    try {
+      // 전화번호와 성(학생명 첫 글자)으로 이전 예약 조회
+      const { data: reservations, error } = await supabase
+        .from('consulting_reservations')
+        .select('*')
+        .eq('parent_phone', phone)
+        .neq('status', 'cancelled')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!reservations || reservations.length === 0) {
+        showToast('이전 예약 정보를 찾을 수 없습니다.', 'info');
+        setLoadingPrevious(false);
+        return;
+      }
+
+      // 성씨가 일치하는 예약 찾기
+      const matchingReservation = reservations.find((r) =>
+        r.student_name?.startsWith(surname)
+      );
+
+      if (!matchingReservation) {
+        showToast(`성이 "${surname}"인 예약을 찾을 수 없습니다.`, 'info');
+        setLoadingPrevious(false);
+        return;
+      }
+
+      // 이전 정보 자동 입력 (선행정도는 비움)
+      setFormData((prev) => ({
+        ...prev,
+        studentName: matchingReservation.student_name,
+        school: matchingReservation.school,
+        grade: matchingReservation.grade,
+        mathLevel: '', // 선행정도는 비움
+      }));
+
+      showToast('이전 정보를 불러왔습니다.', 'success');
+    } catch (error) {
+      console.error('이전 정보 로드 실패:', error);
+      showToast('이전 정보를 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoadingPrevious(false);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -86,6 +145,35 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
       <p className="text-gray-600 mb-4">
         컨설팅 예약을 위해 정보를 입력해주세요.
       </p>
+
+      {/* 이전 정보 불러오기 */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 className="text-sm font-semibold text-blue-800 mb-2">
+          📂 이전 정보 불러오기
+        </h4>
+        <p className="text-xs text-blue-700 mb-3">
+          이전에 컨설팅 예약을 하신 적이 있다면, 학생 성을 입력하여 정보를
+          불러올 수 있습니다.
+        </p>
+        <div className="flex gap-2">
+          <Input
+            label=""
+            value={surname}
+            onChange={(e) => setSurname(e.target.value)}
+            placeholder="예: 홍"
+            style={{ marginBottom: 0 }}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleLoadPrevious}
+            disabled={loadingPrevious}
+            style={{ whiteSpace: 'nowrap', minWidth: '100px' }}
+          >
+            {loadingPrevious ? '조회중...' : '불러오기'}
+          </Button>
+        </div>
+      </div>
 
       {/* 학생명 */}
       <Input
