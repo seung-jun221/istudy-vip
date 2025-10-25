@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Input from '../common/Input';
 import Button from '../common/Button';
 import { validatePhone } from '../../utils/format';
@@ -114,6 +115,21 @@ export default function ConsultingCheck({ onBack, onResult }) {
         required
         onKeyPress={handleKeyPress}
       />
+
+      {/* 비밀번호 재설정 안내 */}
+      <div className="info-box" style={{ fontSize: '13px', padding: '12px' }}>
+        💡 비밀번호를 잊으셨나요?{' '}
+        <Link
+          to="/consulting/password-reset"
+          style={{
+            color: '#1976d2',
+            textDecoration: 'underline',
+            fontWeight: '500',
+          }}
+        >
+          비밀번호 재설정
+        </Link>
+      </div>
 
       <div className="flex gap-3">
         <Button type="button" variant="secondary" onClick={onBack}>

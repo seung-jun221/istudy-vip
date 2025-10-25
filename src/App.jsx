@@ -7,7 +7,9 @@ import {
 import { ConsultingProvider, useConsulting } from './context/ConsultingContext';
 import { AdminProvider, useAdmin } from './context/AdminContext';
 import ReservationPage from './pages/ReservationPage';
+import ReservationPasswordReset from './pages/ReservationPasswordReset';
 import ConsultingPage from './pages/ConsultingPage';
+import ConsultingPasswordReset from './pages/ConsultingPasswordReset';
 import TestGuidePage from './pages/TestGuidePage';
 import AdminLogin from './pages/admin/AdminLogin';
 import CampaignList from './pages/admin/CampaignList';
@@ -41,7 +43,10 @@ function AppContent() {
       <Routes>
         {/* 고객용 페이지 */}
         <Route path="/" element={<ReservationPage />} />
+        <Route path="/reservation" element={<ReservationPage />} />
+        <Route path="/reservation/password-reset" element={<ReservationPasswordReset />} />
         <Route path="/consulting" element={<ConsultingPage />} />
+        <Route path="/consulting/password-reset" element={<ConsultingPasswordReset />} />
         <Route path="/test-guide" element={<TestGuidePage />} />
 
         {/* 관리자 페이지 */}

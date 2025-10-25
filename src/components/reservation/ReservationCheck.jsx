@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Input from '../common/Input';
 import Button from '../common/Button';
 import { validatePhone } from '../../utils/format';
@@ -67,11 +68,10 @@ export default function ReservationCheck({
 
       if (error || !reservations || reservations.length === 0) {
         setLoading(false);
-        // 옵션 1: 토스트 메시지 (5초간 표시)
         showToast(
-          '비밀번호가 일치하지 않습니다. 비밀번호를 잊으셨다면 010-8676-1505로 연락주세요.',
+          '전화번호 또는 비밀번호가 일치하지 않습니다.',
           'error',
-          5000
+          3000
         );
         return;
       }
@@ -135,20 +135,19 @@ export default function ReservationCheck({
         onKeyPress={handleKeyPress}
       />
 
-      {/* 옵션 2: 안내 문구 추가 */}
+      {/* 비밀번호 재설정 안내 */}
       <div className="info-box" style={{ fontSize: '13px', padding: '12px' }}>
         💡 비밀번호를 잊으셨나요?{' '}
-        <a
-          href="tel:010-8676-1505"
+        <Link
+          to="/reservation/password-reset"
           style={{
             color: '#1976d2',
             textDecoration: 'underline',
             fontWeight: '500',
           }}
         >
-          010-8676-1505
-        </a>
-        로 연락주세요.
+          비밀번호 재설정
+        </Link>
       </div>
 
       <div className="flex gap-3">
