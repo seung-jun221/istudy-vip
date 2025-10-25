@@ -17,6 +17,7 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
     grade: '',
     mathLevel: '',
     location: '',
+    password: '',
     privacyConsent: false,
   });
 
@@ -56,6 +57,11 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
       return;
     }
 
+    if (formData.password.length !== 6) {
+      showToast('비밀번호는 6자리 숫자여야 합니다.', 'error');
+      return;
+    }
+
     if (!formData.privacyConsent) {
       showToast('개인정보 수집 및 이용에 동의해주세요.', 'error');
       return;
@@ -71,6 +77,7 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
       grade: formData.grade,
       mathLevel: formData.mathLevel,
       location: formData.location,
+      password: formData.password,
     });
   };
 
@@ -113,6 +120,9 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
             required
           >
             <option value="">선택</option>
+            <option value="초1">초등학교 1학년</option>
+            <option value="초2">초등학교 2학년</option>
+            <option value="초3">초등학교 3학년</option>
             <option value="초4">초등학교 4학년</option>
             <option value="초5">초등학교 5학년</option>
             <option value="초6">초등학교 6학년</option>
@@ -157,6 +167,22 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
           선택하신 지역의 예약 가능한 날짜만 표시됩니다.
         </p>
       </div>
+
+      {/* 비밀번호 */}
+      <Input
+        label="비밀번호 (숫자 6자리)"
+        type="password"
+        value={formData.password}
+        onChange={(e) =>
+          handleChange(
+            'password',
+            e.target.value.replace(/[^0-9]/g, '').slice(0, 6)
+          )
+        }
+        placeholder="000000"
+        maxLength={6}
+        required
+      />
 
       {/* 개인정보 수집 동의 섹션 */}
       <div className="privacy-section">
@@ -208,6 +234,14 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
         <div className="privacy-notice">
           ※ 만 14세 미만 아동의 경우 법정대리인의 동의가 필요합니다.
         </div>
+      </div>
+
+      {/* 비밀번호 경고 */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <p className="text-yellow-800 text-sm">
+          ⚠️ 비밀번호는 예약 확인 및 취소 시 필요합니다. 안전한 곳에
+          기록해두세요.
+        </p>
       </div>
 
       {/* 버튼 */}

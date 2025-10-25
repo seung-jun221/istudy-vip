@@ -1,6 +1,6 @@
 // src/context/ConsultingContext.jsx - 진단검사 기능 추가
 import { createContext, useContext, useState } from 'react';
-import { supabase } from '../utils/supabase';
+import { supabase, hashPassword } from '../utils/supabase';
 
 const ConsultingContext = createContext();
 
@@ -366,6 +366,7 @@ export function ConsultingProvider({ children }) {
           p_school: reservationData.school || 'UNKNOWN',
           p_grade: reservationData.grade || 'UNKNOWN',
           p_math_level: reservationData.mathLevel || '상담 시 확인',
+          p_password: hashPassword(reservationData.password), // ⭐ 비밀번호 추가
           p_is_seminar_attendee: reservationData.isSeminarAttendee || false,
           p_linked_seminar_id: reservationData.linkedSeminarId || null,
           p_privacy_consent: reservationData.privacyConsent || null,

@@ -92,6 +92,7 @@ export default function ConsultingPage() {
         school: userInfo.school,
         grade: userInfo.grade,
         mathLevel: userInfo.mathLevel,
+        password: userInfo.password, // ⭐ 비밀번호 추가
         isSeminarAttendee: userInfo.isSeminarAttendee || false,
         linkedSeminarId: userInfo.linkedSeminarId || null,
         privacyConsent: userInfo.isSeminarAttendee ? null : 'Y',

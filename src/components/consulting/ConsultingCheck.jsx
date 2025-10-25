@@ -3,10 +3,11 @@ import Input from '../common/Input';
 import Button from '../common/Button';
 import { validatePhone } from '../../utils/format';
 import { useConsulting } from '../../context/ConsultingContext';
-import { supabase } from '../../utils/supabase';
+import { supabase, hashPassword } from '../../utils/supabase';
 
 export default function ConsultingCheck({ onBack, onResult }) {
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
   const { showToast, setLoading } = useConsulting();
 
   const handlePhoneChange = (e) => {
@@ -26,6 +27,11 @@ export default function ConsultingCheck({ onBack, onResult }) {
   const handleSubmit = async () => {
     if (!validatePhone(phone)) {
       showToast('올바른 전화번호를 입력해주세요.', 'error');
+      return;
+    }
+
+    if (password.length !== 6) {
+      showToast('비밀번호는 6자리 숫자여야 합니다.', 'error');
       return;
     }
 
@@ -50,6 +56,13 @@ export default function ConsultingCheck({ onBack, onResult }) {
 
       // 가장 최근 예약
       const latestReservation = reservations[0];
+
+      // ⭐ 비밀번호 검증
+      if (latestReservation.password !== hashPassword(password)) {
+        showToast('비밀번호가 일치하지 않습니다.', 'error');
+        setLoading(false);
+        return;
+      }
 
       if (reservations.length > 1) {
         showToast(
@@ -76,7 +89,7 @@ export default function ConsultingCheck({ onBack, onResult }) {
   return (
     <div className="space-y-4">
       <p className="text-gray-600 mb-4">
-        예약 시 등록한 연락처를 입력해주세요.
+        예약 시 등록한 연락처와 비밀번호를 입력해주세요.
       </p>
 
       <Input
@@ -85,6 +98,19 @@ export default function ConsultingCheck({ onBack, onResult }) {
         value={phone}
         onChange={handlePhoneChange}
         placeholder="010-0000-0000"
+        required
+        onKeyPress={handleKeyPress}
+      />
+
+      <Input
+        label="비밀번호 (숫자 6자리)"
+        type="password"
+        value={password}
+        onChange={(e) =>
+          setPassword(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))
+        }
+        placeholder="000000"
+        maxLength={6}
         required
         onKeyPress={handleKeyPress}
       />
