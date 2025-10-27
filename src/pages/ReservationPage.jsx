@@ -40,32 +40,8 @@ export default function ReservationPage() {
 
   const handlePhoneNext = (phoneNumber) => {
     setPhone(phoneNumber);
+    setPreviousInfo(null); // 초기화
     setStep('info');
-  };
-
-  const handleLoadPrevious = async (phoneNumber) => {
-    try {
-      const { data, error } = await supabase
-        .from('reservations')
-        .select('*')
-        .eq('parent_phone', phoneNumber)
-        .order('registered_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        setPreviousInfo(data);
-        showToast('이전 정보를 불러왔습니다.', 'success');
-        setPhone(phoneNumber);
-        setStep('info');
-      }
-    } catch (error) {
-      showToast('이전 정보가 없습니다.', 'info');
-      setPhone(phoneNumber);
-      setStep('info');
-    }
   };
 
   const handleComplete = (reservation) => {
@@ -160,7 +136,6 @@ export default function ReservationPage() {
 
           <PhoneInput
             onNext={handlePhoneNext}
-            onLoadPrevious={handleLoadPrevious}
             onNavigateToCheck={handleNavigateToCheck}
           />
         </div>
