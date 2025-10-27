@@ -55,25 +55,29 @@ export default function ConsultingCheck({ onBack, onResult }) {
         return;
       }
 
-      // 가장 최근 예약
-      const latestReservation = reservations[0];
+      // ⭐ 비밀번호가 일치하는 예약 찾기 (모든 예약 검색)
+      const hashedPassword = hashPassword(password);
+      const matchingReservation = reservations.find(
+        (r) => r.password === hashedPassword
+      );
 
-      // ⭐ 비밀번호 검증
-      if (latestReservation.password !== hashPassword(password)) {
+      if (!matchingReservation) {
         showToast('비밀번호가 일치하지 않습니다.', 'error');
         setLoading(false);
         return;
       }
 
-      if (reservations.length > 1) {
+      // 비밀번호가 일치하는 예약이 가장 최근이 아닐 경우 안내
+      if (matchingReservation.id !== reservations[0].id) {
         showToast(
-          `${reservations.length}개의 예약이 있습니다. 가장 최근 예약을 표시합니다.`,
-          'info'
+          '이전 예약 정보를 표시합니다. 최근 예약을 확인하려면 다른 비밀번호를 사용해주세요.',
+          'warning',
+          5000
         );
       }
 
       setLoading(false);
-      onResult(latestReservation);
+      onResult(matchingReservation);
     } catch (error) {
       console.error('예약 조회 실패:', error);
       showToast('예약 조회 중 오류가 발생했습니다.', 'error');

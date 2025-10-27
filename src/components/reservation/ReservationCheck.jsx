@@ -57,26 +57,44 @@ export default function ReservationCheck({
     setLoading(true);
 
     try {
+      // 모든 예약 조회 (비밀번호 필터 제거)
       const { data: reservations, error } = await supabase
         .from('reservations')
         .select('*')
         .eq('parent_phone', phone)
-        .eq('password', hashPassword(password))
         .in('status', ['예약', '대기'])
-        .order('registered_at', { ascending: false })
-        .limit(1);
+        .order('registered_at', { ascending: false });
 
-      if (error || !reservations || reservations.length === 0) {
+      if (error) throw error;
+
+      if (!reservations || reservations.length === 0) {
         setLoading(false);
-        showToast(
-          '전화번호 또는 비밀번호가 일치하지 않습니다.',
-          'error',
-          3000
-        );
+        showToast('예약 정보를 찾을 수 없습니다.', 'error');
         return;
       }
 
-      const reservation = reservations[0];
+      // ⭐ 비밀번호가 일치하는 예약 찾기 (모든 예약 검색)
+      const hashedPassword = hashPassword(password);
+      const matchingReservation = reservations.find(
+        (r) => r.password === hashedPassword
+      );
+
+      if (!matchingReservation) {
+        setLoading(false);
+        showToast('비밀번호가 일치하지 않습니다.', 'error');
+        return;
+      }
+
+      // 비밀번호가 일치하는 예약이 가장 최근이 아닐 경우 안내
+      if (matchingReservation.id !== reservations[0].id) {
+        showToast(
+          '이전 예약 정보를 표시합니다. 최근 예약을 확인하려면 다른 비밀번호를 사용해주세요.',
+          'warning',
+          5000
+        );
+      }
+
+      const reservation = matchingReservation;
 
       const { data: seminar, error: seminarError } = await supabase
         .from('seminars')
