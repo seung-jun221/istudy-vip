@@ -164,20 +164,22 @@ export default function StudentInfoForm({
             이전에 설명회 예약을 하신 적이 있다면, 학생 성을 입력하여 정보를
             불러올 수 있습니다.
           </p>
-          <div className="flex gap-2">
-            <Input
-              label=""
-              value={surname}
-              onChange={(e) => setSurname(e.target.value)}
-              placeholder="예: 홍"
-              style={{ marginBottom: 0 }}
-            />
+          <div className="flex gap-2" style={{ alignItems: 'flex-end' }}>
+            <div style={{ flex: '0 0 80px' }}>
+              <Input
+                label=""
+                value={surname}
+                onChange={(e) => setSurname(e.target.value)}
+                placeholder="예: 홍"
+                style={{ marginBottom: 0 }}
+              />
+            </div>
             <Button
               type="button"
               variant="secondary"
               onClick={handleLoadPrevious}
               disabled={loadingPrevious}
-              style={{ whiteSpace: 'nowrap', minWidth: '100px' }}
+              style={{ whiteSpace: 'nowrap', flex: '1' }}
             >
               {loadingPrevious ? '조회중...' : '불러오기'}
             </Button>
