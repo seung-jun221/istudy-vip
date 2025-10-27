@@ -155,22 +155,21 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
           이전에 컨설팅 예약을 하신 적이 있다면, 학생 성을 입력하여 정보를
           불러올 수 있습니다.
         </p>
-        <div className="flex gap-2" style={{ alignItems: 'flex-end' }}>
-          <div style={{ flex: '0 0 80px' }}>
-            <Input
-              label=""
-              value={surname}
-              onChange={(e) => setSurname(e.target.value)}
-              placeholder="예: 홍"
-              style={{ marginBottom: 0 }}
-            />
-          </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            type="text"
+            value={surname}
+            onChange={(e) => setSurname(e.target.value)}
+            placeholder="예: 홍"
+            className="px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-primary"
+            style={{ width: '80px', flexShrink: 0 }}
+          />
           <Button
             type="button"
             variant="secondary"
             onClick={handleLoadPrevious}
             disabled={loadingPrevious}
-            style={{ whiteSpace: 'nowrap', flex: '1' }}
+            style={{ whiteSpace: 'nowrap', flex: '1', minWidth: '0' }}
           >
             {loadingPrevious ? '조회중...' : '불러오기'}
           </Button>
