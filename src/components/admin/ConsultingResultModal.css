@@ -1,0 +1,232 @@
+/* 컨설팅 결과 모달 - 기존 사이트 스타일 적용 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.modal-close:hover {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.student-info-box {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.modal-content .info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+.modal-content .info-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.modal-content .info-value {
+  color: #333;
+  font-weight: 600;
+}
+
+.modal-content .form-group {
+  margin-bottom: 24px;
+}
+
+.modal-content .form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+.modal-content .required {
+  color: #E94E3D;
+  margin-left: 4px;
+}
+
+.modal-content .form-input,
+.modal-content .form-select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.modal-content .form-input:focus,
+.modal-content .form-select:focus {
+  outline: none;
+  border-color: #1a73e8;
+}
+
+.modal-content .form-hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 6px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 12px;
+}
+
+.radio-label {
+  flex: 1;
+  cursor: pointer;
+}
+
+.radio-label input[type='radio'] {
+  display: none;
+}
+
+.radio-text {
+  display: block;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  transition: all 0.3s;
+}
+
+.radio-text:hover {
+  border-color: #ccc;
+  background: #fafafa;
+}
+
+.radio-text.active {
+  border-color: #999;
+  background: #f5f5f5;
+  color: #333;
+}
+
+.radio-text.success.active {
+  border-color: #2e7d32;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.radio-text.danger.active {
+  border-color: #E94E3D;
+  background: #ffebee;
+  color: #E94E3D;
+}
+
+.modal-content .form-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.3s;
+}
+
+.modal-content .form-textarea:focus {
+  outline: none;
+  border-color: #1a73e8;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.modal-content .btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s;
+}
+
+.modal-content .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-content .btn-secondary {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.modal-content .btn-secondary:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.modal-content .btn-primary {
+  background: #1a73e8;
+  color: white;
+}
+
+.modal-content .btn-primary:hover:not(:disabled) {
+  background: #1557b0;
+}

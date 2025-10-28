@@ -10,6 +10,7 @@ import ConsultingComplete from '../components/consulting/ConsultingComplete';
 import ConsultingCheck from '../components/consulting/ConsultingCheck';
 import ConsultingResult from '../components/consulting/ConsultingResult';
 // ⭐ 진단검사 컴포넌트 import
+import TestMethodSelector from '../components/consulting/TestMethodSelector';
 import TestDateSelector from '../components/consulting/TestDateSelector';
 import TestTimeSelector from '../components/consulting/TestTimeSelector';
 import TestComplete from '../components/consulting/TestComplete';
@@ -23,15 +24,19 @@ export default function ConsultingPage() {
   // ⭐ 진단검사 예약 정보
   const [completedTestReservation, setCompletedTestReservation] =
     useState(null);
+  // ⭐ 진단검사 마감 동의
+  const [agreed, setAgreed] = useState(false);
 
   const {
     createConsultingReservation,
     selectedDate,
     selectedTime,
     selectedLocation,
+    setSelectedSeminarId,
     loadAvailableDates,
     // ⭐ 진단검사 관련
     loadAvailableTestDates,
+    availableTestDates, // ⭐ 추가
     selectedTestDate,
     selectedTestTime,
     testTimeSlots,
@@ -49,8 +54,11 @@ export default function ConsultingPage() {
     setPhone(phoneNumber);
     setUserInfo(attendeeData);
 
-    // 지역이 이미 선택되어 있으므로 바로 날짜 로드
-    await loadAvailableDates(attendeeData.location);
+    // 설명회 ID 설정 (시간 슬롯 조회에 사용)
+    setSelectedSeminarId(attendeeData.linkedSeminarId);
+
+    // 캠페인 ID로 날짜 로드 (location이 아닌 linked_seminar_id 사용)
+    await loadAvailableDates(attendeeData.linkedSeminarId, true);
 
     setStep('date');
   };
@@ -83,22 +91,19 @@ export default function ConsultingPage() {
         studentName: userInfo.studentName,
         school: userInfo.school,
         grade: userInfo.grade,
-        mathLevel: userInfo.mathLevel, // ⭐ 이 줄 추가!
+        mathLevel: userInfo.mathLevel,
+        password: userInfo.password, // ⭐ 비밀번호 추가
         isSeminarAttendee: userInfo.isSeminarAttendee || false,
         linkedSeminarId: userInfo.linkedSeminarId || null,
         privacyConsent: userInfo.isSeminarAttendee ? null : 'Y',
+        // ⭐ 동의 정보 추가
+        testDeadlineAgreed: agreed,
+        testDeadlineAgreedAt: agreed ? new Date().toISOString() : null,
       });
 
-      const reservationWithSlot = {
-        ...reservation,
-        consulting_slots: {
-          date: selectedDate,
-          time: selectedTime + ':00',
-          location: selectedLocation,
-        },
-      };
-
-      setCompletedReservation(reservationWithSlot);
+      // reservation 객체에 이미 consulting_slots가 join되어 있으므로 그대로 사용
+      // (실제 DB location 값이 포함되어 있음)
+      setCompletedReservation(reservation);
       setStep('complete');
     } catch (error) {
       console.error('예약 실패:', error);
@@ -109,7 +114,7 @@ export default function ConsultingPage() {
   // ⭐ 진단검사 예약 플로우 (신규)
   // ========================================
 
-  // 진단검사 예약 시작 (컨설팅 완료 → 진단검사 날짜 선택)
+  // 진단검사 예약 시작 (컨설팅 완료 → 진단검사 방식 선택 or 날짜 선택)
   const handleStartTestReservation = async () => {
     // 예약 정보가 있는지 확인
     const reservation = completedReservation || checkedReservation;
@@ -142,9 +147,35 @@ export default function ConsultingPage() {
       setCompletedReservation(reservation);
     }
 
-    // 컨설팅 날짜보다 이전 날짜만 로드
-    await loadAvailableTestDates(location, consultingDate);
-    setStep('test-date');
+    // ⭐ campaign의 test_method 확인
+    const seminarId = reservation.linked_seminar_id;
+    let testMethod = 'home'; // 기본값
+
+    if (seminarId) {
+      const { data: campaign } = await supabase
+        .from('seminars')
+        .select('test_method')
+        .eq('id', seminarId)
+        .single();
+
+      testMethod = campaign?.test_method || 'home';
+    }
+
+    // test_method에 따라 분기
+    if (testMethod === 'both') {
+      // 방문/가정 선택 화면으로
+      await loadAvailableTestDates(location, consultingDate);
+      setStep('test-method-select');
+    } else if (testMethod === 'onsite') {
+      // 바로 방문 테스트 날짜 선택으로
+      await loadAvailableTestDates(location, consultingDate);
+      setStep('test-date');
+    } else {
+      // 가정 테스트 - TestGuide 페이지로 리다이렉트
+      window.location.href = `/test-guide?phone=${encodeURIComponent(
+        reservation.parent_phone
+      )}&name=${encodeURIComponent(reservation.student_name)}&verified=true`;
+    }
   };
 
   // 진단검사 날짜 선택 완료
@@ -216,6 +247,19 @@ export default function ConsultingPage() {
       console.error('진단검사 예약 실패:', error);
       showToast('진단검사 예약 처리 중 오류가 발생했습니다.', 'error');
     }
+  };
+
+  // 진단검사 방식 선택: 방문 선택
+  const handleSelectOnsite = () => {
+    setStep('test-date');
+  };
+
+  // 진단검사 방식 선택: 가정 선택
+  const handleSelectHome = () => {
+    const reservation = completedReservation || checkedReservation;
+    window.location.href = `/test-guide?phone=${encodeURIComponent(
+      reservation.parent_phone
+    )}&name=${encodeURIComponent(reservation.student_name)}&verified=true`;
   };
 
   // ========================================
@@ -365,6 +409,9 @@ export default function ConsultingPage() {
                   <strong>학년:</strong> {userInfo?.grade}
                 </div>
                 <div>
+                  <strong>수학 선행정도:</strong> {userInfo?.mathLevel || '상담 시 확인'}
+                </div>
+                <div>
                   <strong>지역:</strong> {selectedLocation}
                 </div>
               </div>
@@ -373,6 +420,8 @@ export default function ConsultingPage() {
             <TimeSelector
               onNext={handleTimeNext}
               onBack={() => setStep('date')}
+              agreed={agreed}
+              onAgreeChange={setAgreed}
             />
           </div>
         )}
@@ -384,6 +433,20 @@ export default function ConsultingPage() {
               reservation={completedReservation}
               onHome={handleHome}
               onTestReservation={handleStartTestReservation}
+            />
+          </div>
+        )}
+
+        {/* ⭐ 진단검사 방식 선택 */}
+        {step === 'test-method-select' && (
+          <div className="card">
+            <h1 className="mb-6">진단검사 예약하기</h1>
+
+            <TestMethodSelector
+              testSlotsAvailable={availableTestDates.length > 0}
+              onSelectOnsite={handleSelectOnsite}
+              onSelectHome={handleSelectHome}
+              onBack={() => setStep('complete')}
             />
           </div>
         )}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Input from '../common/Input';
 import Button from '../common/Button';
 import { validatePhone } from '../../utils/format';
@@ -56,27 +57,44 @@ export default function ReservationCheck({
     setLoading(true);
 
     try {
+      // 모든 예약 조회 (비밀번호 필터 제거)
       const { data: reservations, error } = await supabase
         .from('reservations')
         .select('*')
         .eq('parent_phone', phone)
-        .eq('password', hashPassword(password))
         .in('status', ['예약', '대기'])
-        .order('registered_at', { ascending: false })
-        .limit(1);
+        .order('registered_at', { ascending: false });
 
-      if (error || !reservations || reservations.length === 0) {
+      if (error) throw error;
+
+      if (!reservations || reservations.length === 0) {
         setLoading(false);
-        // 옵션 1: 토스트 메시지 (5초간 표시)
-        showToast(
-          '비밀번호가 일치하지 않습니다. 비밀번호를 잊으셨다면 010-8676-1505로 연락주세요.',
-          'error',
-          5000
-        );
+        showToast('예약 정보를 찾을 수 없습니다.', 'error');
         return;
       }
 
-      const reservation = reservations[0];
+      // ⭐ 비밀번호가 일치하는 예약 찾기 (모든 예약 검색)
+      const hashedPassword = hashPassword(password);
+      const matchingReservation = reservations.find(
+        (r) => r.password === hashedPassword
+      );
+
+      if (!matchingReservation) {
+        setLoading(false);
+        showToast('비밀번호가 일치하지 않습니다.', 'error');
+        return;
+      }
+
+      // 비밀번호가 일치하는 예약이 가장 최근이 아닐 경우 안내
+      if (matchingReservation.id !== reservations[0].id) {
+        showToast(
+          '이전 예약 정보를 표시합니다. 최근 예약을 확인하려면 다른 비밀번호를 사용해주세요.',
+          'warning',
+          5000
+        );
+      }
+
+      const reservation = matchingReservation;
 
       const { data: seminar, error: seminarError } = await supabase
         .from('seminars')
@@ -135,20 +153,19 @@ export default function ReservationCheck({
         onKeyPress={handleKeyPress}
       />
 
-      {/* 옵션 2: 안내 문구 추가 */}
+      {/* 비밀번호 재설정 안내 */}
       <div className="info-box" style={{ fontSize: '13px', padding: '12px' }}>
         💡 비밀번호를 잊으셨나요?{' '}
-        <a
-          href="tel:010-8676-1505"
+        <Link
+          to="/reservation/password-reset"
           style={{
             color: '#1976d2',
             textDecoration: 'underline',
             fontWeight: '500',
           }}
         >
-          010-8676-1505
-        </a>
-        로 연락주세요.
+          비밀번호 재설정
+        </Link>
       </div>
 
       <div className="flex gap-3">

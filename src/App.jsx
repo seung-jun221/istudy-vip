@@ -5,31 +5,68 @@ import {
   useReservation,
 } from './context/ReservationContext';
 import { ConsultingProvider, useConsulting } from './context/ConsultingContext';
+import { AdminProvider, useAdmin } from './context/AdminContext';
 import ReservationPage from './pages/ReservationPage';
+import ReservationPasswordReset from './pages/ReservationPasswordReset';
 import ConsultingPage from './pages/ConsultingPage';
-import TestGuidePage from './pages/TestGuidePage'; // ⭐ 추가
+import ConsultingPasswordReset from './pages/ConsultingPasswordReset';
+import TestGuidePage from './pages/TestGuidePage';
+import AdminLogin from './pages/admin/AdminLogin';
+import CampaignList from './pages/admin/CampaignList';
+import CampaignDetail from './pages/admin/CampaignDetail';
+import ProtectedRoute from './components/admin/ProtectedRoute';
 import Loading from './components/common/Loading';
 import Toast from './components/common/Toast';
 
 function AppContent() {
   const reservationContext = useReservation();
   const consultingContext = useConsulting();
+  const adminContext = useAdmin();
 
-  // 두 Context 중 하나라도 로딩 중이면 표시
-  const loading = reservationContext.loading || consultingContext.loading;
+  // 어느 Context라도 로딩 중이면 표시
+  const loading =
+    reservationContext.loading ||
+    consultingContext.loading ||
+    adminContext.loading;
 
-  // Toast는 각 Context의 것을 표시
-  const toast = reservationContext.toast || consultingContext.toast;
-  const hideToast = reservationContext.toast
+  // Toast 우선순위: admin > reservation > consulting
+  const toast =
+    adminContext.toast || reservationContext.toast || consultingContext.toast;
+  const hideToast = adminContext.toast
+    ? adminContext.hideToast
+    : reservationContext.toast
     ? reservationContext.hideToast
     : consultingContext.hideToast;
 
   return (
     <>
       <Routes>
+        {/* 고객용 페이지 */}
         <Route path="/" element={<ReservationPage />} />
+        <Route path="/reservation" element={<ReservationPage />} />
+        <Route path="/reservation/password-reset" element={<ReservationPasswordReset />} />
         <Route path="/consulting" element={<ConsultingPage />} />
-        <Route path="/test-guide" element={<TestGuidePage />} /> {/* ⭐ 추가 */}
+        <Route path="/consulting/password-reset" element={<ConsultingPasswordReset />} />
+        <Route path="/test-guide" element={<TestGuidePage />} />
+
+        {/* 관리자 페이지 */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin/campaigns"
+          element={
+            <ProtectedRoute>
+              <CampaignList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/campaigns/:id"
+          element={
+            <ProtectedRoute>
+              <CampaignDetail />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
 
       {/* 공통 컴포넌트 */}
@@ -49,11 +86,13 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <ReservationProvider>
-        <ConsultingProvider>
-          <AppContent />
-        </ConsultingProvider>
-      </ReservationProvider>
+      <AdminProvider>
+        <ReservationProvider>
+          <ConsultingProvider>
+            <AppContent />
+          </ConsultingProvider>
+        </ReservationProvider>
+      </AdminProvider>
     </BrowserRouter>
   );
 }

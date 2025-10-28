@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Input from '../common/Input';
 import Button from '../common/Button';
 import { useConsulting } from '../../context/ConsultingContext';
+import { supabase } from '../../utils/supabase';
 
 export default function ConsultingInfoForm({ phone, onNext, onBack }) {
   const {
@@ -17,8 +18,12 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
     grade: '',
     mathLevel: '',
     location: '',
+    password: '',
     privacyConsent: false,
   });
+
+  const [surname, setSurname] = useState('');
+  const [loadingPrevious, setLoadingPrevious] = useState(false);
 
   useEffect(() => {
     loadAvailableLocations();
@@ -26,6 +31,61 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // 이전 정보 불러오기
+  const handleLoadPrevious = async () => {
+    if (!surname || surname.length < 1) {
+      showToast('성을 입력해주세요.', 'error');
+      return;
+    }
+
+    setLoadingPrevious(true);
+
+    try {
+      // 전화번호와 성(학생명 첫 글자)으로 이전 예약 조회
+      const { data: reservations, error } = await supabase
+        .from('consulting_reservations')
+        .select('*')
+        .eq('parent_phone', phone)
+        .neq('status', 'cancelled')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!reservations || reservations.length === 0) {
+        showToast('이전 예약 정보를 찾을 수 없습니다.', 'info');
+        setLoadingPrevious(false);
+        return;
+      }
+
+      // 성씨가 일치하는 예약 찾기
+      const matchingReservation = reservations.find((r) =>
+        r.student_name?.startsWith(surname)
+      );
+
+      if (!matchingReservation) {
+        showToast(`성이 "${surname}"인 예약을 찾을 수 없습니다.`, 'info');
+        setLoadingPrevious(false);
+        return;
+      }
+
+      // 이전 정보 자동 입력 (선행정도는 비움)
+      setFormData((prev) => ({
+        ...prev,
+        studentName: matchingReservation.student_name,
+        school: matchingReservation.school,
+        grade: matchingReservation.grade,
+        mathLevel: '', // 선행정도는 비움
+      }));
+
+      showToast('이전 정보를 불러왔습니다.', 'success');
+    } catch (error) {
+      console.error('이전 정보 로드 실패:', error);
+      showToast('이전 정보를 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoadingPrevious(false);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -56,6 +116,11 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
       return;
     }
 
+    if (formData.password.length !== 6) {
+      showToast('비밀번호는 6자리 숫자여야 합니다.', 'error');
+      return;
+    }
+
     if (!formData.privacyConsent) {
       showToast('개인정보 수집 및 이용에 동의해주세요.', 'error');
       return;
@@ -71,6 +136,7 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
       grade: formData.grade,
       mathLevel: formData.mathLevel,
       location: formData.location,
+      password: formData.password,
     });
   };
 
@@ -79,6 +145,36 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
       <p className="text-gray-600 mb-4">
         컨설팅 예약을 위해 정보를 입력해주세요.
       </p>
+
+      {/* 이전 정보 불러오기 */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 className="text-sm font-semibold text-blue-800 mb-2">
+          📂 이전 정보 불러오기
+        </h4>
+        <p className="text-xs text-blue-700 mb-3">
+          이전에 컨설팅 예약을 하신 적이 있다면, 학생 성을 입력하여 정보를
+          불러올 수 있습니다.
+        </p>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            type="text"
+            value={surname}
+            onChange={(e) => setSurname(e.target.value)}
+            placeholder="예: 홍"
+            className="px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-primary"
+            style={{ width: '80px', flexShrink: 0 }}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleLoadPrevious}
+            disabled={loadingPrevious}
+            style={{ whiteSpace: 'nowrap', flex: '1', minWidth: '0' }}
+          >
+            {loadingPrevious ? '조회중...' : '불러오기'}
+          </Button>
+        </div>
+      </div>
 
       {/* 학생명 */}
       <Input
@@ -113,6 +209,9 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
             required
           >
             <option value="">선택</option>
+            <option value="초1">초등학교 1학년</option>
+            <option value="초2">초등학교 2학년</option>
+            <option value="초3">초등학교 3학년</option>
             <option value="초4">초등학교 4학년</option>
             <option value="초5">초등학교 5학년</option>
             <option value="초6">초등학교 6학년</option>
@@ -157,6 +256,22 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
           선택하신 지역의 예약 가능한 날짜만 표시됩니다.
         </p>
       </div>
+
+      {/* 비밀번호 */}
+      <Input
+        label="비밀번호 (숫자 6자리)"
+        type="password"
+        value={formData.password}
+        onChange={(e) =>
+          handleChange(
+            'password',
+            e.target.value.replace(/[^0-9]/g, '').slice(0, 6)
+          )
+        }
+        placeholder="000000"
+        maxLength={6}
+        required
+      />
 
       {/* 개인정보 수집 동의 섹션 */}
       <div className="privacy-section">
@@ -208,6 +323,14 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
         <div className="privacy-notice">
           ※ 만 14세 미만 아동의 경우 법정대리인의 동의가 필요합니다.
         </div>
+      </div>
+
+      {/* 비밀번호 경고 */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <p className="text-yellow-800 text-sm">
+          ⚠️ 비밀번호는 예약 확인 및 취소 시 필요합니다. 안전한 곳에
+          기록해두세요.
+        </p>
       </div>
 
       {/* 버튼 */}

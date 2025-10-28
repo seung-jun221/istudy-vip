@@ -114,7 +114,10 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
           studentName: attendeeInfo.student_name,
           school: attendeeInfo.school,
           grade: attendeeInfo.grade,
-          location: mappedLocation,
+          mathLevel: attendeeInfo.math_level, // ⭐ 설명회 예약 시 입력한 선행정도 정보
+          password: attendeeInfo.password, // ⭐ 설명회 예약 시 설정한 비밀번호
+          location: mappedLocation, // 표시용
+          originalLocation: seminar.location, // DB 조회용
           linkedSeminarId: seminar.id,
           isSeminarAttendee: true,
         });

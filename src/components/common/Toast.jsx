@@ -16,9 +16,9 @@ export default function Toast({
   }, [duration, onClose]);
 
   const bgColor = {
-    success: 'bg-green-500',
-    error: 'bg-red-500',
-    warning: 'bg-yellow-500',
+    success: 'bg-emerald-700',
+    error: 'bg-[#E94E3D]',
+    warning: 'bg-[#FF7846]',
     info: 'bg-blue-500',
   }[type];
 
