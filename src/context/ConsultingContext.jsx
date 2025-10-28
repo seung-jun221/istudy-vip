@@ -241,8 +241,10 @@ export function ConsultingProvider({ children }) {
 
       console.log('RPC 반환 데이터:', data);
 
-      // ⭐ RPC 함수가 반환하는 값 형식에 따라 처리
-      const reservationId = typeof data === 'string' ? data : data?.reservation_id || data;
+      // ⭐ RPC 함수가 반환하는 값 형식에 따라 처리 (배열/객체/문자열 모두 대응)
+      const reservationId = Array.isArray(data)
+        ? (data[0]?.reservation_id || data[0])
+        : (typeof data === 'string' ? data : data?.reservation_id || data);
 
       console.log('예약 ID:', reservationId);
 
