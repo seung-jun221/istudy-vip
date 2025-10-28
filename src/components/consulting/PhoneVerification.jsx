@@ -40,7 +40,7 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
           .from('consulting_reservations')
           .select('*, consulting_slots(*)')
           .eq('parent_phone', phone)
-          .in('status', ['confirmed', 'pending'])
+          .not('status', 'in', '(cancelled,auto_cancelled)') // ⭐ 취소된 예약 모두 제외
           .order('created_at', { ascending: false });
 
       if (consultingError) throw consultingError;

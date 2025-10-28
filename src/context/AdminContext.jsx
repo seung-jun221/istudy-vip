@@ -229,7 +229,7 @@ export function AdminProvider({ children }) {
         .from('consulting_reservations')
         .select('*')
         .eq('linked_seminar_id', campaignId)
-        .neq('status', 'cancelled') // 취소된 예약 제외
+        .not('status', 'in', '(cancelled,auto_cancelled)') // ⭐ 자동 취소도 제외
         .order('id', { ascending: false });
 
       if (consultingsError) {

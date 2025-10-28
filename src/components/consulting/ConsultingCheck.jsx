@@ -39,12 +39,12 @@ export default function ConsultingCheck({ onBack, onResult }) {
     setLoading(true);
 
     try {
-      // 예약 조회
+      // 예약 조회 (취소된 예약 제외)
       const { data: reservations, error } = await supabase
         .from('consulting_reservations')
         .select('*, consulting_slots(*)')
         .eq('parent_phone', phone)
-        .in('status', ['confirmed', 'pending'])
+        .not('status', 'in', '(cancelled,auto_cancelled)') // ⭐ 취소된 예약 모두 제외
         .order('created_at', { ascending: false });
 
       if (error) throw error;
