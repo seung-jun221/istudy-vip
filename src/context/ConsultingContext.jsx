@@ -239,10 +239,17 @@ export function ConsultingProvider({ children }) {
 
       if (error) throw error;
 
+      console.log('RPC 반환 데이터:', data);
+
+      // ⭐ RPC 함수가 반환하는 값 형식에 따라 처리
+      const reservationId = typeof data === 'string' ? data : data?.reservation_id || data;
+
+      console.log('예약 ID:', reservationId);
+
       const { data: reservation, error: fetchError } = await supabase
         .from('consulting_reservations')
         .select('*, consulting_slots(*)')
-        .eq('id', data.reservation_id)
+        .eq('id', reservationId)
         .single();
 
       if (fetchError) throw fetchError;
