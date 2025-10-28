@@ -127,13 +127,14 @@ export function AdminProvider({ children }) {
             .from('consulting_reservations')
             .select('*', { count: 'exact', head: true })
             .eq('linked_seminar_id', campaign.id)
-            .neq('status', 'cancelled');
+            .not('status', 'in', '(cancelled,auto_cancelled)'); // ⭐ 자동 취소도 제외
 
           // 진단검사 예약 수 (consulting_reservations를 통해 간접적으로 조회)
           const { data: consultingIds } = await supabase
             .from('consulting_reservations')
             .select('id')
-            .eq('linked_seminar_id', campaign.id);
+            .eq('linked_seminar_id', campaign.id)
+            .not('status', 'in', '(cancelled,auto_cancelled)'); // ⭐ 취소된 컨설팅 제외
 
           const consultingIdList = consultingIds?.map(c => c.id) || [];
 
@@ -145,12 +146,13 @@ export function AdminProvider({ children }) {
                 .in('status', ['confirmed', '예약']) // ⭐ 확정된 예약만 포함
             : { count: 0 };
 
-          // 최종 등록 수 (등록여부가 '확정'인 경우)
+          // 최종 등록 수 (등록여부가 '확정'인 경우, 취소 제외)
           const { count: enrolledCount } = await supabase
             .from('consulting_reservations')
             .select('*', { count: 'exact', head: true })
             .eq('linked_seminar_id', campaign.id)
-            .eq('enrollment_status', '확정');
+            .eq('enrollment_status', '확정')
+            .not('status', 'in', '(cancelled,auto_cancelled)'); // ⭐ 취소된 예약 제외
 
           return {
             ...campaign,
