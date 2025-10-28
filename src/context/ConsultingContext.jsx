@@ -378,13 +378,19 @@ export function ConsultingProvider({ children }) {
 
       if (error) throw error;
 
-      // RPC 함수가 TABLE을 반환하므로 배열의 첫 번째 요소에서 ID 추출
-      const newReservationId = data?.[0]?.reservation_id || data;
+      console.log('RPC 반환 데이터:', data);
+
+      // ⭐ RPC 함수가 반환하는 값 형식에 따라 처리
+      const reservationId = Array.isArray(data)
+        ? (data[0]?.reservation_id || data[0])
+        : (typeof data === 'string' ? data : data?.reservation_id || data);
+
+      console.log('예약 ID:', reservationId);
 
       const { data: reservation, error: fetchError } = await supabase
         .from('consulting_reservations')
         .select('*, consulting_slots(*)')
-        .eq('id', newReservationId)
+        .eq('id', reservationId)
         .single();
 
       if (fetchError) throw fetchError;
