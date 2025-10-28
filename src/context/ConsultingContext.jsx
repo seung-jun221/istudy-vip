@@ -352,7 +352,13 @@ export function ConsultingProvider({ children }) {
         time: selectedTime,
         location: selectedSlot.location, // 실제 DB location 사용
         slotId: selectedSlot.id,
+        isSeminarAttendee: reservationData.isSeminarAttendee,
       });
+
+      // ⭐ 설명회 예약자는 이미 해싱된 비밀번호를 가져오므로 재해싱 방지
+      const passwordToUse = reservationData.isSeminarAttendee
+        ? reservationData.password // 이미 해싱됨
+        : hashPassword(reservationData.password); // 미예약자는 해싱 필요
 
       const { data, error } = await supabase.rpc(
         'create_consulting_reservation',
@@ -366,7 +372,7 @@ export function ConsultingProvider({ children }) {
           p_school: reservationData.school || 'UNKNOWN',
           p_grade: reservationData.grade || 'UNKNOWN',
           p_math_level: reservationData.mathLevel || '상담 시 확인',
-          p_password: hashPassword(reservationData.password), // ⭐ 비밀번호 추가
+          p_password: passwordToUse, // ⭐ 조건부 해싱 적용
           p_is_seminar_attendee: reservationData.isSeminarAttendee || false,
           p_linked_seminar_id: reservationData.linkedSeminarId || null,
           p_privacy_consent: reservationData.privacyConsent || null,
