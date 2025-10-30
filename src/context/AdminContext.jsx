@@ -50,7 +50,7 @@ export function AdminProvider({ children }) {
     // 캠페인 비밀번호 확인
     try {
       const { data: campaigns, error } = await supabase
-        .from('seminars')
+        .from('campaigns')
         .select('id, access_password, title, location')
         .not('access_password', 'is', null);
 
@@ -102,39 +102,48 @@ export function AdminProvider({ children }) {
   // 캠페인(설명회) 관련 함수
   // ========================================
 
-  // 모든 캠페인 조회
+  // 모든 캠페인 조회 (campaigns + seminar_slots)
   const loadCampaigns = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('seminars')
-        .select('*');
 
-      if (error) throw error;
+      // 1. campaigns와 seminar_slots join해서 조회
+      const { data: campaignsData, error: campaignsError } = await supabase
+        .from('campaigns')
+        .select(`
+          *,
+          seminar_slots (*)
+        `);
 
-      // 각 캠페인별 통계 계산
+      if (campaignsError) throw campaignsError;
+
+      // 2. 각 캠페인별 통계 계산
       const campaignsWithStats = await Promise.all(
-        data.map(async (campaign) => {
-          // 설명회 예약 수
-          const { count: attendeeCount } = await supabase
-            .from('reservations')
-            .select('*', { count: 'exact', head: true })
-            .eq('seminar_id', campaign.id)
-            .in('status', ['예약', '참석']);
+        campaignsData.map(async (campaign) => {
+          // 설명회 예약 수 (해당 캠페인의 모든 슬롯에 대한 예약)
+          const slotIds = campaign.seminar_slots?.map(s => s.id) || [];
+
+          const { count: attendeeCount } = slotIds.length > 0
+            ? await supabase
+                .from('reservations')
+                .select('*', { count: 'exact', head: true })
+                .in('seminar_slot_id', slotIds)
+                .in('status', ['예약', '참석'])
+            : { count: 0 };
 
           // 컨설팅 예약 수 (취소 제외)
           const { count: consultingCount } = await supabase
             .from('consulting_reservations')
             .select('*', { count: 'exact', head: true })
             .eq('linked_seminar_id', campaign.id)
-            .not('status', 'in', '(cancelled,auto_cancelled)'); // ⭐ 자동 취소도 제외
+            .not('status', 'in', '(cancelled,auto_cancelled)');
 
-          // 진단검사 예약 수 (consulting_reservations를 통해 간접적으로 조회)
+          // 진단검사 예약 수
           const { data: consultingIds } = await supabase
             .from('consulting_reservations')
             .select('id')
             .eq('linked_seminar_id', campaign.id)
-            .not('status', 'in', '(cancelled,auto_cancelled)'); // ⭐ 취소된 컨설팅 제외
+            .not('status', 'in', '(cancelled,auto_cancelled)');
 
           const consultingIdList = consultingIds?.map(c => c.id) || [];
 
@@ -143,19 +152,25 @@ export function AdminProvider({ children }) {
                 .from('test_reservations')
                 .select('*', { count: 'exact', head: true })
                 .in('consulting_reservation_id', consultingIdList)
-                .in('status', ['confirmed', '예약']) // ⭐ 확정된 예약만 포함
+                .in('status', ['confirmed', '예약'])
             : { count: 0 };
 
-          // 최종 등록 수 (등록여부가 '확정'인 경우, 취소 제외)
+          // 최종 등록 수
           const { count: enrolledCount } = await supabase
             .from('consulting_reservations')
             .select('*', { count: 'exact', head: true })
             .eq('linked_seminar_id', campaign.id)
             .eq('enrollment_status', '확정')
-            .not('status', 'in', '(cancelled,auto_cancelled)'); // ⭐ 취소된 예약 제외
+            .not('status', 'in', '(cancelled,auto_cancelled)');
+
+          // 첫 번째 슬롯의 날짜/시간을 대표값으로 사용 (정렬용)
+          const firstSlot = campaign.seminar_slots?.[0];
 
           return {
             ...campaign,
+            // 호환성을 위해 첫 슬롯의 날짜/시간 추가
+            date: firstSlot?.date || null,
+            time: firstSlot?.time || null,
             stats: {
               attendees: attendeeCount || 0,
               consultings: consultingCount || 0,
@@ -166,19 +181,26 @@ export function AdminProvider({ children }) {
         })
       );
 
-      // 캠페인 정렬: active 먼저 + 날짜 오름차순, inactive는 맨 뒤 + 날짜 오름차순
+      // 캠페인 정렬: active 먼저 + 날짜 오름차순
       const sortedCampaigns = campaignsWithStats.sort((a, b) => {
-        // 1. status 우선 정렬 (active < inactive)
+        // 1. status 우선 정렬
         if (a.status !== b.status) {
           return a.status === 'active' ? -1 : 1;
         }
 
-        // 2. 같은 status 내에서 날짜 오름차순
+        // 2. 날짜 오름차순 (null은 맨 뒤)
+        if (!a.date && !b.date) return 0;
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+
         const dateCompare = new Date(a.date) - new Date(b.date);
         if (dateCompare !== 0) return dateCompare;
 
-        // 3. 같은 날짜면 시간 오름차순
-        return a.time.localeCompare(b.time);
+        // 3. 시간 오름차순
+        if (a.time && b.time) {
+          return a.time.localeCompare(b.time);
+        }
+        return 0;
       });
 
       return sortedCampaigns;
@@ -197,11 +219,14 @@ export function AdminProvider({ children }) {
       setLoading(true);
       console.log('🔍 캠페인 상세 조회 시작:', campaignId);
 
-      // 1. 캠페인 기본 정보
+      // 1. 캠페인 기본 정보 + 설명회 슬롯
       console.log('1️⃣ 캠페인 기본 정보 조회...');
       const { data: campaign, error: campaignError } = await supabase
-        .from('seminars')
-        .select('*')
+        .from('campaigns')
+        .select(`
+          *,
+          seminar_slots (*)
+        `)
         .eq('id', campaignId)
         .single();
 
@@ -211,17 +236,23 @@ export function AdminProvider({ children }) {
       }
       console.log('✅ 캠페인 정보:', campaign);
 
-      // 2. 설명회 참석자 목록
+      // 2. 설명회 참석자 목록 (캠페인의 모든 슬롯에 대한 예약)
       console.log('2️⃣ 설명회 참석자 조회...');
-      const { data: attendees, error: attendeesError } = await supabase
-        .from('reservations')
-        .select('*')
-        .eq('seminar_id', campaignId)
-        .order('id', { ascending: false });
+      const slotIds = campaign.seminar_slots?.map(s => s.id) || [];
 
-      if (attendeesError) {
-        console.error('❌ 참석자 조회 실패:', attendeesError);
-        throw attendeesError;
+      let attendees = [];
+      if (slotIds.length > 0) {
+        const { data: attendeesData, error: attendeesError } = await supabase
+          .from('reservations')
+          .select('*')
+          .in('seminar_slot_id', slotIds)
+          .order('id', { ascending: false });
+
+        if (attendeesError) {
+          console.error('❌ 참석자 조회 실패:', attendeesError);
+          throw attendeesError;
+        }
+        attendees = attendeesData || [];
       }
       console.log('✅ 참석자 수:', attendees?.length || 0);
 
@@ -396,29 +427,80 @@ export function AdminProvider({ children }) {
 
       console.log('📝 캠페인 생성 시작:', campaignData);
 
-      // seminars 테이블에 삽입하고 생성된 ID를 반환받음
-      const { data: campaignRecord, error } = await supabase
-        .from('seminars')
+      // 1. campaigns 테이블에 캠페인 기본 정보 삽입
+      const { data: campaignRecord, error: campaignError } = await supabase
+        .from('campaigns')
         .insert({
           title: campaignData.title,
-          date: campaignData.date,
-          time: campaignData.time,
           location: campaignData.location,
-          max_capacity: campaignData.max_capacity || 100,
-          display_capacity: campaignData.display_capacity || campaignData.max_capacity || 100,
+          season: campaignData.season || null,
           status: campaignData.status || 'active',
-          test_method: campaignData.testMethod || 'home', // ⭐ 진단검사 방식 저장
+          access_password: campaignData.access_password || null,
         })
         .select()
         .single();
 
-      if (error) {
-        console.error('❌ 캠페인 생성 DB 오류:', error);
-        throw error;
+      if (campaignError) {
+        console.error('❌ 캠페인 생성 DB 오류:', campaignError);
+        throw campaignError;
       }
 
-      const id = campaignRecord.id; // Supabase가 자동 생성한 UUID 사용
+      const id = campaignRecord.id;
       console.log('✅ 캠페인 기본 정보 생성 완료, ID:', id);
+
+      // 2. seminar_slots 테이블에 설명회 슬롯 삽입
+      if (campaignData.seminarSlots && campaignData.seminarSlots.length > 0) {
+        console.log('📅 설명회 슬롯 생성 중:', campaignData.seminarSlots.length + '개');
+
+        const seminarSlotsToInsert = campaignData.seminarSlots.map((slot, index) => ({
+          campaign_id: id,
+          session_number: index + 1,
+          date: slot.date,
+          time: slot.time,
+          location: slot.location || campaignData.location,
+          max_capacity: slot.max_capacity || 100,
+          display_capacity: slot.display_capacity || slot.max_capacity || 100,
+          current_bookings: 0,
+          status: 'active',
+          test_method: slot.testMethod || campaignData.testMethod || 'home',
+        }));
+
+        const { error: slotsError } = await supabase
+          .from('seminar_slots')
+          .insert(seminarSlotsToInsert);
+
+        if (slotsError) {
+          console.error('❌ 설명회 슬롯 생성 실패:', slotsError);
+          throw slotsError;
+        }
+
+        console.log('✅ 설명회 슬롯 생성 완료');
+      } else {
+        // seminarSlots가 없으면 기본 슬롯 1개 생성 (호환성)
+        console.log('📅 기본 설명회 슬롯 1개 생성');
+
+        const { error: slotError } = await supabase
+          .from('seminar_slots')
+          .insert({
+            campaign_id: id,
+            session_number: 1,
+            date: campaignData.date,
+            time: campaignData.time,
+            location: campaignData.location,
+            max_capacity: campaignData.max_capacity || 100,
+            display_capacity: campaignData.display_capacity || campaignData.max_capacity || 100,
+            current_bookings: 0,
+            status: 'active',
+            test_method: campaignData.testMethod || 'home',
+          });
+
+        if (slotError) {
+          console.error('❌ 기본 슬롯 생성 실패:', slotError);
+          throw slotError;
+        }
+
+        console.log('✅ 기본 슬롯 생성 완료');
+      }
 
       // 컨설팅 슬롯 생성
       if (campaignData.consultingSlots && campaignData.consultingSlots.length > 0) {
