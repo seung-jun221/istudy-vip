@@ -68,19 +68,19 @@ export default function ConsultingPage() {
       if (testMethodResult === 'onsite') {
         const today = new Date().toISOString().split('T')[0];
 
-        // 모든 진단검사 가능 날짜 조회 (컨설팅 날짜 제약 없이)
+        // 모든 진단검사 가능 날짜/시간 조회 (컨설팅 날짜 제약 없이)
         const { data: testSlots } = await supabase
           .from('test_slots')
-          .select('date')
+          .select('date, time')
           .eq('location', attendeeData.location)
           .eq('status', 'active')
           .gte('date', today)
-          .order('date', { ascending: true });
+          .order('date', { ascending: true })
+          .order('time', { ascending: true });
 
         if (testSlots && testSlots.length > 0) {
-          // 중복 제거 후 날짜만 추출
-          const uniqueDates = [...new Set(testSlots.map(slot => slot.date))];
-          setTestPreviewDates(uniqueDates);
+          // 날짜와 시간 모두 포함
+          setTestPreviewDates(testSlots);
         }
       }
     } catch (error) {
@@ -421,37 +421,40 @@ export default function ConsultingPage() {
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">📝</span>
                     <span className="font-bold text-blue-800">
-                      진단검사 일정 안내
+                      진단검사 일정 안내 (소요시간: 80분)
                     </span>
                   </div>
                   <p className="text-sm text-gray-700 mb-2">
                     컨설팅을 위해 사전 진단검사가 필수입니다.<br />
                     <strong className="text-blue-700">진단검사는 컨설팅 날짜 이전에 완료</strong>해야 하므로,<br />
-                    아래 진단검사 가능 날짜를 확인하여 컨설팅 날짜를 선택해주세요.
+                    아래 진단검사 가능 일정을 확인하여 컨설팅 날짜를 선택해주세요.
                   </p>
                   <div className="bg-white rounded p-3 mt-2">
-                    <p className="text-xs text-gray-600 mb-1">진단검사 가능 날짜:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {testPreviewDates.slice(0, 5).map((date, index) => {
-                        const dateObj = new Date(date);
+                    <p className="text-xs text-gray-600 mb-2">진단검사 가능 일정:</p>
+                    <div className="space-y-1">
+                      {testPreviewDates.slice(0, 5).map((slot, index) => {
+                        const dateObj = new Date(slot.date);
                         const month = dateObj.getMonth() + 1;
                         const day = dateObj.getDate();
                         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
                         const dayName = dayNames[dateObj.getDay()];
+                        const timeStr = slot.time.slice(0, 5);
 
                         return (
-                          <span
+                          <div
                             key={index}
-                            className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium"
+                            className="flex items-center gap-2 text-sm"
                           >
-                            {month}/{day}({dayName})
-                          </span>
+                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                              {month}/{day}({dayName}) {timeStr}
+                            </span>
+                          </div>
                         );
                       })}
                       {testPreviewDates.length > 5 && (
-                        <span className="inline-block px-2 py-1 text-gray-500 text-xs">
-                          외 {testPreviewDates.length - 5}일
-                        </span>
+                        <p className="text-xs text-gray-500 mt-1">
+                          외 {testPreviewDates.length - 5}개 일정 더 있음
+                        </p>
                       )}
                     </div>
                   </div>
