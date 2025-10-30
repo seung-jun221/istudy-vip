@@ -59,7 +59,7 @@ export default function CampaignDetail() {
     );
   }
 
-  const { campaign, attendees, consultings, consultingSlots, tests, testSlots } = campaignData;
+  const { campaign, attendees, consultings, consultingSlots, tests, testSlots, seminarSlots } = campaignData;
 
   // 통계 계산
   const stats = {
@@ -127,7 +127,7 @@ export default function CampaignDetail() {
 
       {/* 탭 컨텐츠 */}
       <div className="tab-content">
-        {activeTab === 'attendees' && <AttendeesTab attendees={attendees} campaign={campaign} />}
+        {activeTab === 'attendees' && <AttendeesTab attendees={attendees} campaign={campaign} seminarSlots={seminarSlots || []} />}
         {activeTab === 'consultings' && (
           <ConsultingsTab
             consultings={consultings}
