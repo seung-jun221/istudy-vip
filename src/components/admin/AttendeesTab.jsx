@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import './AdminTabs.css';
 
-export default function AttendeesTab({ attendees, campaign }) {
+export default function AttendeesTab({ attendees, campaign, seminarSlots }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedSlotId, setSelectedSlotId] = useState(null);
@@ -35,11 +35,13 @@ export default function AttendeesTab({ attendees, campaign }) {
     return Object.values(groups);
   }, [attendees]);
 
-  // 슬롯 데이터가 없으면 campaign.seminar_slots에서 찾기
+  // 슬롯 데이터가 없으면 campaign.seminar_slots 또는 seminarSlots prop에서 찾기
   const enrichedSlotGroups = useMemo(() => {
     return slotGroups.map(group => {
-      if (!group.slotData && campaign?.seminar_slots) {
-        const slot = campaign.seminar_slots.find(s => s.id === group.slotId);
+      if (!group.slotData) {
+        // campaign.seminar_slots 또는 seminarSlots prop에서 찾기
+        const slots = campaign?.seminar_slots || seminarSlots || [];
+        const slot = slots.find(s => s.id === group.slotId);
         if (slot) {
           group.slotData = slot;
         }
@@ -51,7 +53,7 @@ export default function AttendeesTab({ attendees, campaign }) {
       const dateB = b.slotData?.date || '';
       return dateA.localeCompare(dateB);
     });
-  }, [slotGroups, campaign]);
+  }, [slotGroups, campaign, seminarSlots]);
 
   // 첫 번째 슬롯을 기본 선택
   if (selectedSlotId === null && enrichedSlotGroups.length > 0) {
@@ -92,8 +94,16 @@ export default function AttendeesTab({ attendees, campaign }) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
   };
 
+  const formatSlotDateTime = (date, time) => {
+    const d = new Date(date);
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const timeStr = time ? time.slice(0, 5) : '';
+    return `${month}/${day} ${timeStr}`;
+  };
+
   const handleExportExcel = () => {
-    // 엑셀 데이터 준비
+    // 엑셀 데이터 준비 (선택된 슬롯만)
     const excelData = filteredAttendees.map((attendee) => ({
       예약일시: formatDateForExcel(attendee.registered_at),
       학생명: attendee.student_name || '',
@@ -125,7 +135,8 @@ export default function AttendeesTab({ attendees, campaign }) {
     // 파일명 생성 (현재 날짜 포함)
     const today = new Date();
     const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
-    const filename = `설명회_예약자_${dateStr}.xlsx`;
+    const slotInfo = formatSlotDateTime(currentSlot?.date, currentSlot?.time);
+    const filename = `설명회_예약자_${slotInfo.replace(/\//g, '')}_${dateStr}.xlsx`;
 
     // 파일 다운로드
     XLSX.writeFile(workbook, filename);
@@ -229,7 +240,7 @@ export default function AttendeesTab({ attendees, campaign }) {
           <option value="취소">취소</option>
         </select>
         <button className="btn-excel" onClick={handleExportExcel}>
-          📊 엑셀 다운로드
+          엑셀 다운로드
         </button>
       </div>
 
