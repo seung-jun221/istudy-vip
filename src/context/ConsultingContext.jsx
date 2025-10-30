@@ -161,9 +161,10 @@ export function ConsultingProvider({ children }) {
         .eq('status', 'active')
         .gte('date', today);
 
+      // ⭐ consulting_slots의 location과 정확히 매칭하기 위해 원본 location 사용
       const mappedActiveLocations =
         activeSeminars
-          ?.map((s) => getSimpleLocation(s.location))
+          ?.map((s) => s.location)
           .filter(Boolean) || [];
 
       const { data: availableSlots } = await supabase
