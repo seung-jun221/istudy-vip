@@ -139,6 +139,7 @@ export default function CampaignDetail() {
         {activeTab === 'settings' && (
           <SettingsTab
             campaign={campaign}
+            seminarSlots={campaign.seminar_slots || []}
             consultingSlots={consultingSlots}
             testSlots={testSlots}
             onUpdate={fetchCampaignDetail}
