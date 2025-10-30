@@ -471,7 +471,14 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
 
       {/* 기타 설정 */}
       <div className="settings-section">
-        <h3>기타 설정</h3>
+        <div className="settings-header">
+          <h3>기타 설정</h3>
+          {!editing && authMode === 'super' && (
+            <button className="btn btn-primary" onClick={() => setEditing(true)}>
+              수정하기
+            </button>
+          )}
+        </div>
         <div className="settings-form">
           {/* 상태 */}
           <div className="form-group">
@@ -800,16 +807,16 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                             </div>
                             <div className="slot-actions" style={{ display: 'flex', gap: '8px' }}>
                               <button
-                                className="btn-toggle"
+                                className="btn btn-primary"
                                 onClick={() => startEditingSeminarSlot(slot)}
-                                style={{ padding: '6px 12px', fontSize: '13px' }}
+                                style={{ padding: '6px 12px', fontSize: '13px', minWidth: '60px' }}
                               >
                                 수정
                               </button>
                               <button
                                 className="btn-delete"
                                 onClick={() => handleDeleteSeminarSlot(slot.id)}
-                                style={{ fontSize: '13px' }}
+                                style={{ fontSize: '13px', padding: '6px 12px' }}
                               >
                                 삭제
                               </button>
