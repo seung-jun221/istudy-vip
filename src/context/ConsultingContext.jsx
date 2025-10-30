@@ -378,8 +378,12 @@ export function ConsultingProvider({ children }) {
 
       if (error) throw error;
 
-      // RPC 함수가 TABLE을 반환하므로 배열의 첫 번째 요소에서 ID 추출
-      const newReservationId = data?.[0]?.reservation_id || data;
+      // RPC 함수가 json_build_object를 반환하므로 reservation_id 직접 추출
+      const newReservationId = data?.reservation_id;
+
+      if (!newReservationId) {
+        throw new Error('예약 ID를 받지 못했습니다.');
+      }
 
       const { data: reservation, error: fetchError } = await supabase
         .from('consulting_reservations')
