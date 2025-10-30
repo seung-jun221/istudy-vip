@@ -44,8 +44,8 @@ export function ReservationProvider({ children }) {
           if (slot.date >= today && slot.status === 'active') {
             allSlots.push({
               ...slot,
-              // ⭐ 각 슬롯마다 고유한 title 생성 (예: "대치캠퍼스 1차 설명회")
-              title: `${campaign.location} ${slot.session_number || 1}차 설명회`,
+              // ⭐ 슬롯 title 사용 (없으면 자동 생성)
+              title: slot.title || `${campaign.location} ${slot.session_number || 1}차 설명회`,
               // 캠페인 정보 추가
               campaign_id: campaign.id,
               campaign_title: campaign.title,
