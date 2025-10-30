@@ -31,7 +31,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     season: campaign.season || '',
     status: campaign.status || 'active',
     access_password: campaign.access_password || '',
-    test_method: campaign.test_method || 'home', // ⭐ 진단검사 방식
+    test_method: seminarSlots?.[0]?.test_method || 'home', // ⭐ seminar_slots에서 가져오기
   });
 
   // campaign가 업데이트되면 formData도 업데이트
@@ -42,13 +42,13 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
       season: campaign.season || '',
       status: campaign.status || 'active',
       access_password: campaign.access_password || '',
-      test_method: campaign.test_method || 'home', // ⭐ 진단검사 방식
+      test_method: seminarSlots?.[0]?.test_method || 'home', // ⭐ seminar_slots에서 가져오기
     });
 
     const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
     const threshold = settings[campaign.id]?.auto_open_threshold || 0;
     setAutoOpenThreshold(threshold);
-  }, [campaign]);
+  }, [campaign, seminarSlots]); // ⭐ seminarSlots 의존성 추가
 
   // 컨설팅 슬롯 생성기 상태
   const [consultingGenerator, setConsultingGenerator] = useState({
@@ -125,7 +125,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
       season: campaign.season || '',
       status: campaign.status || 'active',
       access_password: campaign.access_password || '',
-      test_method: campaign.test_method || 'home', // ⭐ 진단검사 방식
+      test_method: seminarSlots?.[0]?.test_method || 'home', // ⭐ seminar_slots에서 가져오기
     });
     // autoOpenThreshold도 원래 값으로 되돌리기
     const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
