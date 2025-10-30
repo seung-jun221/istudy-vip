@@ -26,6 +26,8 @@ export default function ConsultingPage() {
     useState(null);
   // ⭐ 진단검사 마감 동의
   const [agreed, setAgreed] = useState(false);
+  // ⭐ 진단검사 가능 날짜 미리보기
+  const [testPreviewDates, setTestPreviewDates] = useState([]);
 
   const {
     createConsultingReservation,
@@ -35,6 +37,7 @@ export default function ConsultingPage() {
     setSelectedSeminarId,
     loadAvailableDates,
     // ⭐ 진단검사 관련
+    loadTestMethod,
     loadAvailableTestDates,
     availableTestDates, // ⭐ 추가
     selectedTestDate,
@@ -56,6 +59,34 @@ export default function ConsultingPage() {
 
     // 설명회 ID 설정 (시간 슬롯 조회에 사용)
     setSelectedSeminarId(attendeeData.linkedSeminarId);
+
+    // ⭐ 진단검사 방식 및 가능 날짜 미리 로드
+    try {
+      const testMethodResult = await loadTestMethod(attendeeData.location);
+
+      // onsite(학원 방문)인 경우만 날짜 미리보기 제공
+      if (testMethodResult === 'onsite') {
+        const today = new Date().toISOString().split('T')[0];
+
+        // 모든 진단검사 가능 날짜 조회 (컨설팅 날짜 제약 없이)
+        const { data: testSlots } = await supabase
+          .from('test_slots')
+          .select('date')
+          .eq('location', attendeeData.location)
+          .eq('status', 'active')
+          .gte('date', today)
+          .order('date', { ascending: true });
+
+        if (testSlots && testSlots.length > 0) {
+          // 중복 제거 후 날짜만 추출
+          const uniqueDates = [...new Set(testSlots.map(slot => slot.date))];
+          setTestPreviewDates(uniqueDates);
+        }
+      }
+    } catch (error) {
+      console.error('진단검사 일정 로드 실패:', error);
+      // 에러가 나도 예약 플로우는 계속 진행
+    }
 
     // 캠페인 ID로 날짜 로드 (location이 아닌 linked_seminar_id 사용)
     await loadAvailableDates(attendeeData.linkedSeminarId, true);
@@ -378,6 +409,54 @@ export default function ConsultingPage() {
                   <p className="text-sm text-gray-600 ml-7">
                     <strong>{userInfo.location}</strong> 전용 컨설팅 날짜만
                     표시됩니다.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ⭐ 진단검사 일정 안내 */}
+            {userInfo?.isSeminarAttendee && testPreviewDates.length > 0 && (
+              <div style={{ maxWidth: '800px', margin: '0 auto 1.5rem auto' }}>
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">📝</span>
+                    <span className="font-bold text-blue-800">
+                      진단검사 일정 안내
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-2">
+                    컨설팅을 위해 사전 진단검사가 필수입니다.<br />
+                    <strong className="text-blue-700">진단검사는 컨설팅 날짜 이전에 완료</strong>해야 하므로,<br />
+                    아래 진단검사 가능 날짜를 확인하여 컨설팅 날짜를 선택해주세요.
+                  </p>
+                  <div className="bg-white rounded p-3 mt-2">
+                    <p className="text-xs text-gray-600 mb-1">진단검사 가능 날짜:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {testPreviewDates.slice(0, 5).map((date, index) => {
+                        const dateObj = new Date(date);
+                        const month = dateObj.getMonth() + 1;
+                        const day = dateObj.getDate();
+                        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+                        const dayName = dayNames[dateObj.getDay()];
+
+                        return (
+                          <span
+                            key={index}
+                            className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium"
+                          >
+                            {month}/{day}({dayName})
+                          </span>
+                        );
+                      })}
+                      {testPreviewDates.length > 5 && (
+                        <span className="inline-block px-2 py-1 text-gray-500 text-xs">
+                          외 {testPreviewDates.length - 5}일
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 컨설팅 날짜를 먼저 선택하시면, 그 이전 날짜에 진단검사 예약이 가능합니다.
                   </p>
                 </div>
               </div>
