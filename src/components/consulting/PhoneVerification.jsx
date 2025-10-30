@@ -73,10 +73,16 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
       // ========================================
       const { data: seminarAttendance, error: seminarError } = await supabase
         .from('reservations')
-        .select('*, seminars!inner(*)')
+        .select(`
+          *,
+          seminar_slots!inner(
+            *,
+            campaigns(*)
+          )
+        `)
         .eq('parent_phone', phone)
         .in('status', ['예약', '참석'])
-        .eq('seminars.status', 'active')
+        .eq('seminar_slots.status', 'active')
         .order('id', { ascending: false })
         .limit(1);
 
@@ -88,37 +94,29 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
       if (seminarAttendance && seminarAttendance.length > 0) {
         // 🎯 설명회 예약자 (예약 또는 참석)
         const attendeeInfo = seminarAttendance[0];
-        const seminar = attendeeInfo.seminars;
+        const seminarSlot = attendeeInfo.seminar_slots;
+        const campaign = seminarSlot?.campaigns;
 
-        // 설명회 location을 지역명으로 매핑
-        const locationMapping = {
-          '수학의 아침 수내캠퍼스': '분당점',
-          '넥스트닥 (대치동 912-31, 대치스터디타워 5층)': '대치점',
-          '강남점 2층 세미나실': '강남점',
-          '서초점 3층 강의실': '서초점',
-          '역삼점 1층 컨설팅룸': '역삼점',
-        };
-
-        const mappedLocation =
-          locationMapping[seminar.location] || seminar.location;
+        // ⭐ location은 원본 그대로 사용 (매핑 제거)
+        const location = seminarSlot.location;
+        const campaignId = campaign?.id;
 
         // Context에 지역 자동 선택
-        setSelectedLocation(mappedLocation);
+        setSelectedLocation(location);
 
         setLoading(false);
 
         // 예약자 정보와 함께 다음 단계로 (LocationSelector 건너뛰기)
-        showToast(`${seminar.title} 예약자로 확인되었습니다.`, 'success', 3000);
+        showToast(`${campaign?.title || '설명회'} 예약자로 확인되었습니다.`, 'success', 3000);
 
         onAttendeeNext(phone, {
           studentName: attendeeInfo.student_name,
           school: attendeeInfo.school,
           grade: attendeeInfo.grade,
-          mathLevel: attendeeInfo.math_level, // ⭐ 설명회 예약 시 입력한 선행정도 정보
-          password: attendeeInfo.password, // ⭐ 설명회 예약 시 설정한 비밀번호
-          location: mappedLocation, // 표시용
-          originalLocation: seminar.location, // DB 조회용
-          linkedSeminarId: seminar.id,
+          mathLevel: attendeeInfo.math_level,
+          password: attendeeInfo.password,
+          location: location, // ⭐ 원본 location 사용
+          linkedSeminarId: campaignId, // ⭐ campaign ID 사용
           isSeminarAttendee: true,
         });
       } else {
