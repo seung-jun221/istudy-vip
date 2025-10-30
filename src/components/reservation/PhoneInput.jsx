@@ -6,7 +6,6 @@ import DuplicateReservationModal from './DuplicateReservationModal';
 
 export default function PhoneInput({
   onNext,
-  onLoadPrevious,
   onNavigateToCheck,
 }) {
   const [phone, setPhone] = useState('');
@@ -97,36 +96,6 @@ export default function PhoneInput({
     }
   };
 
-  // [이전 정보 불러오기] 버튼 클릭
-  const handleLoadPrevious = async () => {
-    if (!validatePhone(phone)) {
-      showToast('전화번호를 먼저 입력해주세요.', 'error');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // 1. 중복 체크 먼저
-      const isDuplicate = await checkDuplicate(phone);
-
-      if (isDuplicate) {
-        // 중복 발견 - 모달 표시
-        setLoading(false);
-        setShowDuplicateModal(true);
-        return;
-      }
-
-      // 2. 중복 없으면 이전 정보 불러오기
-      onLoadPrevious(phone);
-    } catch (error) {
-      console.error('처리 실패:', error);
-      showToast('오류가 발생했습니다.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // 예약 상세보기 핸들러 - 예약 확인 페이지로 이동
   const handleViewDetails = () => {
     setShowDuplicateModal(false);
@@ -159,16 +128,8 @@ export default function PhoneInput({
           />
         </div>
 
-        {/* 버튼 그룹 - 가로 배치 */}
+        {/* 버튼 그룹 */}
         <div className="btn-group">
-          <button
-            type="button"
-            onClick={handleLoadPrevious}
-            className="btn btn-secondary"
-          >
-            이전 정보 불러오기
-          </button>
-
           <button type="submit" className="btn btn-primary">
             다음
           </button>

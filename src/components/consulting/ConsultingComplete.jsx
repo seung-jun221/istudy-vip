@@ -12,8 +12,6 @@ export default function ConsultingComplete({
   const { loadTestMethod } = useConsulting();
   const [testMethod, setTestMethod] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [agreed, setAgreed] = useState(false); // ⭐ 동의 체크박스
-  const [saving, setSaving] = useState(false);
 
   // 예약 날짜 정보
   const slot = reservation.consulting_slots;
@@ -33,44 +31,38 @@ export default function ConsultingComplete({
   useEffect(() => {
     const fetchTestMethod = async () => {
       setLoading(true);
+
+      // ⭐ campaigns와 seminar_slots에서 test_method 가져오기
+      const campaignId = reservation.linked_seminar_id;
+      if (campaignId) {
+        const { data: campaign } = await supabase
+          .from('campaigns')
+          .select(`
+            seminar_slots (test_method)
+          `)
+          .eq('id', campaignId)
+          .single();
+
+        // 첫 번째 슬롯의 test_method 사용
+        const testMethodFromSlot = campaign?.seminar_slots?.[0]?.test_method;
+        if (testMethodFromSlot) {
+          setTestMethod(testMethodFromSlot);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // ⭐ fallback: 기존 test_methods 테이블 조회 (레거시 지원)
       const method = await loadTestMethod(location);
       setTestMethod(method);
       setLoading(false);
     };
 
     fetchTestMethod();
-  }, [location]);
+  }, [location, reservation]);
 
-  // ⭐ 동의 체크 후 DB 저장 & 진단검사 예약 이동
-  const handleProceedToTest = async () => {
-    if (testMethod === 'onsite' && !agreed) {
-      alert('하단의 안내 사항에 동의해주세요.');
-      return;
-    }
-
-    // 역삼점인 경우에만 동의 저장
-    if (testMethod === 'onsite') {
-      try {
-        setSaving(true);
-        const { error } = await supabase
-          .from('consulting_reservations')
-          .update({
-            test_deadline_agreed: true,
-            test_deadline_agreed_at: new Date().toISOString(),
-          })
-          .eq('id', reservation.id);
-
-        if (error) throw error;
-      } catch (error) {
-        console.error('동의 저장 실패:', error);
-        alert('처리 중 오류가 발생했습니다. 다시 시도해주세요.');
-        return;
-      } finally {
-        setSaving(false);
-      }
-    }
-
-    // 진단검사 예약 페이지로 이동
+  // ⭐ 진단검사 예약 페이지로 이동 (동의는 이미 받음)
+  const handleProceedToTest = () => {
     onTestReservation();
   };
 
@@ -98,7 +90,7 @@ export default function ConsultingComplete({
       </div>
 
       {/* 예약 정보 */}
-      <div className="bg-blue-50 rounded-lg p-6 space-y-3 text-left mb-6">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-3 text-left mb-6">
         <div className="flex justify-between">
           <span className="text-gray-600">예약번호</span>
           <span className="font-semibold">{reservationId}</span>
@@ -123,16 +115,16 @@ export default function ConsultingComplete({
         </div>
       </div>
 
-      {/* ⭐ 진단검사 안내 - 지역별 분기 */}
+      {/* ⭐ 진단검사 안내 - 방식별 분기 */}
       {testMethod === 'onsite' ? (
-        // 🏫 역삼점: 학원 방문 응시 (체크박스 + 자정 마감 경고)
-        <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6 text-left">
-          <h4 className="text-lg font-bold text-green-800 mb-3">
+        // 🏫 방문 진단검사만 (학원 방문 응시)
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 text-left">
+          <h4 className="text-lg font-bold text-emerald-800 mb-3">
             📝 다음 단계: 진단검사 예약 (필수)
           </h4>
 
-          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mb-4">
-            <p className="text-sm font-bold text-yellow-900 mb-2">
+          <div className="bg-orange-50 border border-[#FF7846] rounded-lg p-4 mb-4">
+            <p className="text-sm font-bold text-orange-900 mb-2">
               ⚠️ 중요 안내
             </p>
             <ul className="text-sm text-gray-700 space-y-2 list-disc ml-5">
@@ -144,13 +136,13 @@ export default function ConsultingComplete({
               </li>
               <li>
                 진단검사 예약은{' '}
-                <strong className="text-red-600">
+                <strong className="text-[#E94E3D]">
                   당일 자정(23:59)까지만 가능
                 </strong>
                 합니다.
               </li>
               <li>
-                <strong className="text-red-600">
+                <strong className="text-[#E94E3D]">
                   자정까지 진단검사 예약을 하지 않으시면 컨설팅 예약이 자동으로
                   취소됩니다.
                 </strong>
@@ -158,44 +150,51 @@ export default function ConsultingComplete({
             </ul>
           </div>
 
-          {/* 동의 체크박스 */}
-          <label className="flex items-start space-x-3 cursor-pointer mb-4 p-3 border-2 border-gray-300 rounded-lg hover:border-green-500 transition-all">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-1 w-5 h-5 cursor-pointer"
-            />
-            <span className="text-sm text-gray-800">
-              위 내용을 확인했으며,{' '}
-              <strong>당일 자정까지 진단검사 예약을 완료</strong>하겠습니다.
-            </span>
-          </label>
-
           {/* 진단검사 예약 버튼 */}
           <button
             onClick={handleProceedToTest}
-            disabled={!agreed || saving}
-            className={`w-full py-3 rounded-lg font-semibold transition-all ${
-              agreed && !saving
-                ? 'bg-green-500 text-white hover:bg-green-600'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
+            className="w-full py-3 rounded-lg font-semibold transition-all bg-emerald-700 text-white hover:bg-emerald-800"
           >
-            {saving ? '처리 중...' : '진단검사 예약하러 가기 →'}
+            진단검사 예약하러 가기 →
           </button>
 
           <button
             onClick={onHome}
-            className="w-full mt-3 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+            className="w-full mt-3 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+          >
+            나중에 하기 (홈으로)
+          </button>
+        </div>
+      ) : testMethod === 'both' ? (
+        // 🔄 둘 다 가능 (사용자 선택)
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 text-left">
+          <h4 className="text-lg font-bold text-purple-800 mb-3">
+            📝 다음 단계: 진단검사 방식 선택 (필수)
+          </h4>
+
+          <p className="text-sm text-gray-700 mb-4">
+            진단검사는 <strong>방문 또는 가정</strong> 중 선택하실 수 있습니다.
+          </p>
+
+          {/* 진단검사 방식 선택 버튼 */}
+          <button
+            onClick={handleProceedToTest}
+            className="w-full py-3 rounded-lg font-semibold transition-all bg-purple-700 text-white hover:bg-purple-800"
+          >
+            진단검사 방식 선택하기 →
+          </button>
+
+          <button
+            onClick={onHome}
+            className="w-full mt-3 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
           >
             나중에 하기 (홈으로)
           </button>
         </div>
       ) : (
         // 🏠 대치점: 가정 셀프테스트 (단순 안내)
-        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 text-left">
-          <h4 className="text-lg font-bold text-yellow-800 mb-3">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-left">
+          <h4 className="text-lg font-bold text-orange-800 mb-3">
             📝 다음 단계: 진단검사 응시 (필수)
           </h4>
           <p className="text-sm text-gray-700 mb-3">
@@ -216,14 +215,14 @@ export default function ConsultingComplete({
             )}&verified=true`}
             className="block mb-3"
           >
-            <button className="w-full py-3 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all">
+            <button className="w-full py-3 bg-[#FF7846] text-white rounded-lg font-semibold hover:bg-[#E94E3D] transition-all">
               시험지 다운로드하러 가기 →
             </button>
           </a>
 
           <button
             onClick={onHome}
-            className="w-full py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+            className="w-full py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
           >
             나중에 하기 (홈으로)
           </button>

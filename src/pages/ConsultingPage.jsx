@@ -10,6 +10,7 @@ import ConsultingComplete from '../components/consulting/ConsultingComplete';
 import ConsultingCheck from '../components/consulting/ConsultingCheck';
 import ConsultingResult from '../components/consulting/ConsultingResult';
 // ⭐ 진단검사 컴포넌트 import
+import TestMethodSelector from '../components/consulting/TestMethodSelector';
 import TestDateSelector from '../components/consulting/TestDateSelector';
 import TestTimeSelector from '../components/consulting/TestTimeSelector';
 import TestComplete from '../components/consulting/TestComplete';
@@ -23,15 +24,22 @@ export default function ConsultingPage() {
   // ⭐ 진단검사 예약 정보
   const [completedTestReservation, setCompletedTestReservation] =
     useState(null);
+  // ⭐ 진단검사 마감 동의
+  const [agreed, setAgreed] = useState(false);
+  // ⭐ 진단검사 가능 날짜 미리보기
+  const [testPreviewDates, setTestPreviewDates] = useState([]);
 
   const {
     createConsultingReservation,
     selectedDate,
     selectedTime,
     selectedLocation,
+    setSelectedSeminarId,
     loadAvailableDates,
     // ⭐ 진단검사 관련
+    loadTestMethod,
     loadAvailableTestDates,
+    availableTestDates, // ⭐ 추가
     selectedTestDate,
     selectedTestTime,
     testTimeSlots,
@@ -49,8 +57,39 @@ export default function ConsultingPage() {
     setPhone(phoneNumber);
     setUserInfo(attendeeData);
 
-    // 지역이 이미 선택되어 있으므로 바로 날짜 로드
-    await loadAvailableDates(attendeeData.location);
+    // 설명회 ID 설정 (시간 슬롯 조회에 사용)
+    setSelectedSeminarId(attendeeData.linkedSeminarId);
+
+    // ⭐ 진단검사 방식 및 가능 날짜 미리 로드
+    try {
+      const testMethodResult = await loadTestMethod(attendeeData.location);
+
+      // onsite(학원 방문)인 경우만 날짜 미리보기 제공
+      if (testMethodResult === 'onsite') {
+        const today = new Date().toISOString().split('T')[0];
+
+        // 모든 진단검사 가능 날짜/시간 조회 (컨설팅 날짜 제약 없이)
+        const { data: testSlots } = await supabase
+          .from('test_slots')
+          .select('date, time')
+          .eq('location', attendeeData.location)
+          .eq('status', 'active')
+          .gte('date', today)
+          .order('date', { ascending: true })
+          .order('time', { ascending: true });
+
+        if (testSlots && testSlots.length > 0) {
+          // 날짜와 시간 모두 포함
+          setTestPreviewDates(testSlots);
+        }
+      }
+    } catch (error) {
+      console.error('진단검사 일정 로드 실패:', error);
+      // 에러가 나도 예약 플로우는 계속 진행
+    }
+
+    // 캠페인 ID로 날짜 로드 (location이 아닌 linked_seminar_id 사용)
+    await loadAvailableDates(attendeeData.linkedSeminarId, true);
 
     setStep('date');
   };
@@ -65,6 +104,34 @@ export default function ConsultingPage() {
   // 개인정보 입력 완료
   const handleInfoNext = async (infoData) => {
     setUserInfo(infoData);
+
+    // ⭐ 진단검사 방식 및 가능 날짜 미리 로드
+    try {
+      const testMethodResult = await loadTestMethod(infoData.location);
+
+      // onsite(학원 방문)인 경우만 날짜 미리보기 제공
+      if (testMethodResult === 'onsite') {
+        const today = new Date().toISOString().split('T')[0];
+
+        // 모든 진단검사 가능 날짜/시간 조회 (컨설팅 날짜 제약 없이)
+        const { data: testSlots } = await supabase
+          .from('test_slots')
+          .select('date, time')
+          .eq('location', infoData.location)
+          .eq('status', 'active')
+          .gte('date', today)
+          .order('date', { ascending: true })
+          .order('time', { ascending: true });
+
+        if (testSlots && testSlots.length > 0) {
+          // 날짜와 시간 모두 포함
+          setTestPreviewDates(testSlots);
+        }
+      }
+    } catch (error) {
+      console.error('진단검사 일정 로드 실패:', error);
+      // 에러가 나도 예약 플로우는 계속 진행
+    }
 
     // 지역이 선택되어 있으므로 날짜 로드
     await loadAvailableDates(infoData.location);
@@ -83,22 +150,19 @@ export default function ConsultingPage() {
         studentName: userInfo.studentName,
         school: userInfo.school,
         grade: userInfo.grade,
-        mathLevel: userInfo.mathLevel, // ⭐ 이 줄 추가!
+        mathLevel: userInfo.mathLevel,
+        password: userInfo.password, // ⭐ 비밀번호 추가
         isSeminarAttendee: userInfo.isSeminarAttendee || false,
         linkedSeminarId: userInfo.linkedSeminarId || null,
         privacyConsent: userInfo.isSeminarAttendee ? null : 'Y',
+        // ⭐ 동의 정보 추가
+        testDeadlineAgreed: agreed,
+        testDeadlineAgreedAt: agreed ? new Date().toISOString() : null,
       });
 
-      const reservationWithSlot = {
-        ...reservation,
-        consulting_slots: {
-          date: selectedDate,
-          time: selectedTime + ':00',
-          location: selectedLocation,
-        },
-      };
-
-      setCompletedReservation(reservationWithSlot);
+      // reservation 객체에 이미 consulting_slots가 join되어 있으므로 그대로 사용
+      // (실제 DB location 값이 포함되어 있음)
+      setCompletedReservation(reservation);
       setStep('complete');
     } catch (error) {
       console.error('예약 실패:', error);
@@ -109,7 +173,7 @@ export default function ConsultingPage() {
   // ⭐ 진단검사 예약 플로우 (신규)
   // ========================================
 
-  // 진단검사 예약 시작 (컨설팅 완료 → 진단검사 날짜 선택)
+  // 진단검사 예약 시작 (컨설팅 완료 → 진단검사 방식 선택 or 날짜 선택)
   const handleStartTestReservation = async () => {
     // 예약 정보가 있는지 확인
     const reservation = completedReservation || checkedReservation;
@@ -142,9 +206,35 @@ export default function ConsultingPage() {
       setCompletedReservation(reservation);
     }
 
-    // 컨설팅 날짜보다 이전 날짜만 로드
-    await loadAvailableTestDates(location, consultingDate);
-    setStep('test-date');
+    // ⭐ campaign의 test_method 확인
+    const seminarId = reservation.linked_seminar_id;
+    let testMethod = 'home'; // 기본값
+
+    if (seminarId) {
+      const { data: campaign } = await supabase
+        .from('seminars')
+        .select('test_method')
+        .eq('id', seminarId)
+        .single();
+
+      testMethod = campaign?.test_method || 'home';
+    }
+
+    // test_method에 따라 분기
+    if (testMethod === 'both') {
+      // 방문/가정 선택 화면으로
+      await loadAvailableTestDates(location, consultingDate);
+      setStep('test-method-select');
+    } else if (testMethod === 'onsite') {
+      // 바로 방문 테스트 날짜 선택으로
+      await loadAvailableTestDates(location, consultingDate);
+      setStep('test-date');
+    } else {
+      // 가정 테스트 - TestGuide 페이지로 리다이렉트
+      window.location.href = `/test-guide?phone=${encodeURIComponent(
+        reservation.parent_phone
+      )}&name=${encodeURIComponent(reservation.student_name)}&verified=true`;
+    }
   };
 
   // 진단검사 날짜 선택 완료
@@ -216,6 +306,19 @@ export default function ConsultingPage() {
       console.error('진단검사 예약 실패:', error);
       showToast('진단검사 예약 처리 중 오류가 발생했습니다.', 'error');
     }
+  };
+
+  // 진단검사 방식 선택: 방문 선택
+  const handleSelectOnsite = () => {
+    setStep('test-date');
+  };
+
+  // 진단검사 방식 선택: 가정 선택
+  const handleSelectHome = () => {
+    const reservation = completedReservation || checkedReservation;
+    window.location.href = `/test-guide?phone=${encodeURIComponent(
+      reservation.parent_phone
+    )}&name=${encodeURIComponent(reservation.student_name)}&verified=true`;
   };
 
   // ========================================
@@ -339,6 +442,57 @@ export default function ConsultingPage() {
               </div>
             )}
 
+            {/* ⭐ 진단검사 일정 안내 (모든 사용자에게 표시) */}
+            {testPreviewDates.length > 0 && (
+              <div style={{ maxWidth: '800px', margin: '0 auto 1.5rem auto' }}>
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">📝</span>
+                    <span className="font-bold text-blue-800">
+                      진단검사 일정 안내 (소요시간: 80분)
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-2">
+                    컨설팅을 위해 사전 진단검사가 필수입니다.<br />
+                    <strong className="text-blue-700">진단검사는 컨설팅 날짜 이전에 완료</strong>해야 하므로,<br />
+                    아래 진단검사 가능 일정을 확인하여 컨설팅 날짜를 선택해주세요.
+                  </p>
+                  <div className="bg-white rounded p-3 mt-2">
+                    <p className="text-xs text-gray-600 mb-2">진단검사 가능 일정:</p>
+                    <div className="space-y-1">
+                      {testPreviewDates.slice(0, 5).map((slot, index) => {
+                        const dateObj = new Date(slot.date);
+                        const month = dateObj.getMonth() + 1;
+                        const day = dateObj.getDate();
+                        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+                        const dayName = dayNames[dateObj.getDay()];
+                        const timeStr = slot.time.slice(0, 5);
+
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 text-sm"
+                          >
+                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                              {month}/{day}({dayName}) {timeStr}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {testPreviewDates.length > 5 && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          외 {testPreviewDates.length - 5}개 일정 더 있음
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 컨설팅 날짜를 먼저 선택하시면, 그 이전 날짜에 진단검사 예약이 가능합니다.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <DateSelector
               onNext={handleDateNext}
               onBack={() =>
@@ -365,6 +519,9 @@ export default function ConsultingPage() {
                   <strong>학년:</strong> {userInfo?.grade}
                 </div>
                 <div>
+                  <strong>수학 선행정도:</strong> {userInfo?.mathLevel || '상담 시 확인'}
+                </div>
+                <div>
                   <strong>지역:</strong> {selectedLocation}
                 </div>
               </div>
@@ -373,6 +530,8 @@ export default function ConsultingPage() {
             <TimeSelector
               onNext={handleTimeNext}
               onBack={() => setStep('date')}
+              agreed={agreed}
+              onAgreeChange={setAgreed}
             />
           </div>
         )}
@@ -384,6 +543,20 @@ export default function ConsultingPage() {
               reservation={completedReservation}
               onHome={handleHome}
               onTestReservation={handleStartTestReservation}
+            />
+          </div>
+        )}
+
+        {/* ⭐ 진단검사 방식 선택 */}
+        {step === 'test-method-select' && (
+          <div className="card">
+            <h1 className="mb-6">진단검사 예약하기</h1>
+
+            <TestMethodSelector
+              testSlotsAvailable={availableTestDates.length > 0}
+              onSelectOnsite={handleSelectOnsite}
+              onSelectHome={handleSelectHome}
+              onBack={() => setStep('complete')}
             />
           </div>
         )}

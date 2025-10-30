@@ -21,8 +21,66 @@ export default function StudentInfoForm({
     privacyConsent: false,
   });
 
+  const [surname, setSurname] = useState('');
+  const [loadingPrevious, setLoadingPrevious] = useState(false);
+
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // 이전 정보 불러오기
+  const handleLoadPrevious = async () => {
+    if (!surname || surname.length < 1) {
+      showToast('성을 입력해주세요.', 'error');
+      return;
+    }
+
+    setLoadingPrevious(true);
+
+    try {
+      // 전화번호와 성(학생명 첫 글자)으로 이전 예약 조회
+      const { data: reservations, error } = await supabase
+        .from('reservations')
+        .select('*')
+        .eq('parent_phone', phone)
+        .neq('status', '취소')
+        .order('registered_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!reservations || reservations.length === 0) {
+        showToast('이전 예약 정보를 찾을 수 없습니다.', 'info');
+        setLoadingPrevious(false);
+        return;
+      }
+
+      // 성씨가 일치하는 예약 찾기
+      const matchingReservation = reservations.find((r) =>
+        r.student_name?.startsWith(surname)
+      );
+
+      if (!matchingReservation) {
+        showToast(`성이 "${surname}"인 예약을 찾을 수 없습니다.`, 'info');
+        setLoadingPrevious(false);
+        return;
+      }
+
+      // 이전 정보 자동 입력 (선행정도는 비움)
+      setFormData((prev) => ({
+        ...prev,
+        studentName: matchingReservation.student_name,
+        school: matchingReservation.school,
+        grade: matchingReservation.grade,
+        mathLevel: '', // 선행정도는 비움
+      }));
+
+      showToast('이전 정보를 불러왔습니다.', 'success');
+    } catch (error) {
+      console.error('이전 정보 로드 실패:', error);
+      showToast('이전 정보를 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoadingPrevious(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -65,7 +123,9 @@ export default function StudentInfoForm({
       // 예약 데이터 생성 (중복 체크는 이미 2단계에서 완료!)
       const reservationData = {
         reservation_id: 'R' + Date.now(),
-        seminar_id: selectedSeminar.id,
+        seminar_id: selectedSeminar.id, // ⭐ 레거시 호환성 유지
+        seminar_slot_id: selectedSeminar.id, // ⭐ 새 구조: seminar_slot ID
+        campaign_id: selectedSeminar.campaign_id, // ⭐ 새 구조: campaign ID
         student_name: formData.studentName,
         parent_phone: phone,
         school: formData.school,
@@ -96,6 +156,38 @@ export default function StudentInfoForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* 이전 정보 불러오기 */}
+      {!previousInfo && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-blue-800 mb-2">
+            📂 이전 정보 불러오기
+          </h4>
+          <p className="text-xs text-blue-700 mb-3">
+            이전에 설명회 예약을 하신 적이 있다면, 학생 성을 입력하여 정보를
+            불러올 수 있습니다.
+          </p>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              type="text"
+              value={surname}
+              onChange={(e) => setSurname(e.target.value)}
+              placeholder="예: 홍"
+              className="px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-primary"
+              style={{ width: '80px', flexShrink: 0 }}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleLoadPrevious}
+              disabled={loadingPrevious}
+              style={{ whiteSpace: 'nowrap', flex: '1', minWidth: '0' }}
+            >
+              {loadingPrevious ? '조회중...' : '불러오기'}
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* 이전 정보 로드 알림 */}
       {previousInfo && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">

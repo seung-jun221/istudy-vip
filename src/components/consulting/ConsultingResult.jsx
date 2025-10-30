@@ -364,7 +364,7 @@ export default function ConsultingResult({
       </div>
 
       {/* ========== 컨설팅 예약 정보 ========== */}
-      <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h3 className="text-lg font-bold text-blue-800 mb-4 flex items-center">
           📘 컨설팅 예약
         </h3>
@@ -377,6 +377,18 @@ export default function ConsultingResult({
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">학생명</span>
             <span className="font-semibold">{reservation.student_name}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">학교</span>
+            <span className="font-semibold">{reservation.school}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">학년</span>
+            <span className="font-semibold">{reservation.grade}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">수학 선행정도</span>
+            <span className="font-semibold">{reservation.math_level || '상담 시 확인'}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">날짜</span>
@@ -396,7 +408,7 @@ export default function ConsultingResult({
 
         <button
           onClick={handleCancelConsulting}
-          className="w-full mt-4 py-2.5 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition-all"
+          className="w-full mt-4 py-2.5 bg-[#E94E3D] text-white rounded-lg font-semibold hover:bg-[#C62828] transition-all"
         >
           컨설팅 예약 취소
         </button>
@@ -404,13 +416,13 @@ export default function ConsultingResult({
 
       {/* ========== 진단검사 정보 ========== */}
       {loadingTest ? (
-        <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 text-center">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
           <p className="text-gray-600">진단검사 정보 확인 중...</p>
         </div>
       ) : testMethod === 'onsite' ? (
         testReservation ? (
-          <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
-            <h3 className="text-lg font-bold text-green-800 mb-4 flex items-center">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
+            <h3 className="text-lg font-bold text-emerald-800 mb-4 flex items-center">
               📗 진단검사 예약 (학원 방문)
             </h3>
 
@@ -443,14 +455,14 @@ export default function ConsultingResult({
 
             <button
               onClick={handleCancelTest}
-              className="w-full mt-4 py-2.5 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all"
+              className="w-full mt-4 py-2.5 bg-[#E94E3D] text-white rounded-lg font-semibold hover:bg-[#C62828] transition-all"
             >
               진단검사 예약 취소
             </button>
           </div>
         ) : (
-          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6">
-            <h3 className="text-lg font-bold text-yellow-800 mb-3 flex items-center">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+            <h3 className="text-lg font-bold text-orange-800 mb-3 flex items-center">
               ⚠️ 진단검사 예약 필요
             </h3>
 
@@ -461,13 +473,13 @@ export default function ConsultingResult({
             {onStartTestReservation ? (
               <button
                 onClick={onStartTestReservation}
-                className="w-full py-2.5 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all"
+                className="w-full py-2.5 bg-[#FF7846] text-white rounded-lg font-semibold hover:bg-[#E94E3D] transition-all"
               >
                 진단검사 예약하러 가기 →
               </button>
             ) : (
               <a href="/consulting" className="block">
-                <button className="w-full py-2.5 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all">
+                <button className="w-full py-2.5 bg-[#FF7846] text-white rounded-lg font-semibold hover:bg-[#E94E3D] transition-all">
                   진단검사 예약하러 가기 →
                 </button>
               </a>
@@ -476,15 +488,15 @@ export default function ConsultingResult({
         )
       ) : testMethod === 'home' ? (
         testApplication ? (
-          <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
-            <h3 className="text-lg font-bold text-green-800 mb-4 flex items-center">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
+            <h3 className="text-lg font-bold text-emerald-800 mb-4 flex items-center">
               ✅ 진단검사 (가정 응시)
             </h3>
 
             <div className="space-y-3 text-left">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">시험지 다운로드</span>
-                <span className="font-semibold text-green-700">✅ 완료</span>
+                <span className="font-semibold text-emerald-700">✅ 완료</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">다운로드 일시</span>
@@ -517,8 +529,8 @@ export default function ConsultingResult({
             </div>
           </div>
         ) : (
-          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6">
-            <h3 className="text-lg font-bold text-yellow-800 mb-3 flex items-center">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+            <h3 className="text-lg font-bold text-orange-800 mb-3 flex items-center">
               ⚠️ 진단검사 시험지 다운로드 필요
             </h3>
 
@@ -534,7 +546,7 @@ export default function ConsultingResult({
               )}&verified=true`}
               className="block"
             >
-              <button className="w-full py-2.5 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all">
+              <button className="w-full py-2.5 bg-[#FF7846] text-white rounded-lg font-semibold hover:bg-[#E94E3D] transition-all">
                 시험지 다운로드하러 가기 →
               </button>
             </a>

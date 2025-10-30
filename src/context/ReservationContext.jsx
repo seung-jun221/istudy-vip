@@ -25,28 +25,57 @@ export function ReservationProvider({ children }) {
     try {
       const today = new Date().toISOString().split('T')[0];
 
-      const { data, error } = await supabase
-        .from('seminars')
-        .select('*')
-        .gte('date', today)
-        .eq('status', 'active')
-        .order('date', { ascending: true });
+      // campaigns와 seminar_slots join해서 조회
+      const { data: campaignsData, error } = await supabase
+        .from('campaigns')
+        .select(`
+          *,
+          seminar_slots (*)
+        `)
+        .eq('status', 'active');
 
       if (error) throw error;
 
+      // seminar_slots를 평탄화 (각 슬롯을 개별 설명회처럼 표시)
+      const allSlots = [];
+      campaignsData?.forEach(campaign => {
+        campaign.seminar_slots?.forEach(slot => {
+          // 미래 날짜만 포함
+          if (slot.date >= today && slot.status === 'active') {
+            allSlots.push({
+              ...slot,
+              // ⭐ 호환성을 위해 title 필드 추가 (UI에서 사용)
+              title: campaign.title,
+              // 캠페인 정보 추가
+              campaign_id: campaign.id,
+              campaign_title: campaign.title,
+              campaign_location: campaign.location,
+              campaign_season: campaign.season,
+            });
+          }
+        });
+      });
+
+      // 날짜순 정렬
+      allSlots.sort((a, b) => {
+        const dateCompare = new Date(a.date) - new Date(b.date);
+        if (dateCompare !== 0) return dateCompare;
+        return (a.time || '').localeCompare(b.time || '');
+      });
+
       const seminarsWithAvailability = await Promise.all(
-        data.map(async (seminar) => {
+        allSlots.map(async (slot) => {
           const { count } = await supabase
             .from('reservations')
             .select('*', { count: 'exact', head: true })
-            .eq('seminar_id', seminar.id)
+            .eq('seminar_slot_id', slot.id)
             .in('status', ['예약', '참석']);
 
           const reserved = count || 0;
-          const available = seminar.max_capacity - reserved;
+          const available = slot.max_capacity - reserved;
 
           return {
-            ...seminar,
+            ...slot,
             reserved,
             available,
             isFull: available <= 0,

@@ -1,6 +1,6 @@
 // src/context/ConsultingContext.jsx - 진단검사 기능 추가
 import { createContext, useContext, useState } from 'react';
-import { supabase } from '../utils/supabase';
+import { supabase, hashPassword } from '../utils/supabase';
 
 const ConsultingContext = createContext();
 
@@ -19,6 +19,8 @@ export function ConsultingProvider({ children }) {
   // 컨설팅 예약 관련
   const [availableLocations, setAvailableLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedSeminarId, setSelectedSeminarId] = useState(null); // 설명회 예약자용
+  const [selectedSlotId, setSelectedSlotId] = useState(null); // 선택한 슬롯 ID
   const [availableDates, setAvailableDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -30,6 +32,104 @@ export function ConsultingProvider({ children }) {
   const [selectedTestDate, setSelectedTestDate] = useState(null);
   const [selectedTestTime, setSelectedTestTime] = useState(null);
   const [testTimeSlots, setTestTimeSlots] = useState([]);
+
+  // 자동 슬롯 오픈 체크 (비동기, 에러 발생해도 예약은 성공)
+  const checkAndOpenNextSlots = async (campaignId) => {
+    try {
+      console.log('🔍 자동 슬롯 오픈 체크 시작...', campaignId);
+
+      // localStorage에서 auto_open_threshold 가져오기
+      const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
+      const threshold = settings[campaignId]?.auto_open_threshold;
+
+      if (!threshold || threshold <= 0) {
+        console.log('⏭️ 자동 슬롯 오픈 설정이 없습니다.');
+        return;
+      }
+
+      console.log('📊 임계값:', threshold);
+
+      // 1. 해당 캠페인의 모든 컨설팅 슬롯 조회
+      const { data: allSlots, error: slotsError } = await supabase
+        .from('consulting_slots')
+        .select('*')
+        .eq('linked_seminar_id', campaignId)
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      if (slotsError) throw slotsError;
+      if (!allSlots || allSlots.length === 0) {
+        console.log('⏭️ 슬롯이 없습니다.');
+        return;
+      }
+
+      // 2. 현재 오픈된 슬롯만 필터링
+      const availableSlots = allSlots.filter((slot) => slot.is_available);
+
+      // 3. 예약된 슬롯 조회
+      const { data: reservations, error: reservationsError } = await supabase
+        .from('consulting_reservations')
+        .select('slot_id')
+        .eq('linked_seminar_id', campaignId)
+        .neq('status', 'cancelled');
+
+      if (reservationsError) throw reservationsError;
+
+      // 4. 남은 슬롯 수 계산
+      const reservedSlotIds = new Set(reservations?.map((r) => r.slot_id) || []);
+      const remainingSlots = availableSlots.filter((slot) => !reservedSlotIds.has(slot.id));
+      const remainingCount = remainingSlots.length;
+
+      console.log(`📈 전체 슬롯: ${allSlots.length}개`);
+      console.log(`📈 오픈된 슬롯: ${availableSlots.length}개`);
+      console.log(`📈 예약된 슬롯: ${reservedSlotIds.size}개`);
+      console.log(`📈 남은 슬롯: ${remainingCount}개`);
+
+      // 5. 임계값 체크
+      if (remainingCount > threshold) {
+        console.log('✅ 남은 슬롯이 충분합니다.');
+        return;
+      }
+
+      console.log('🚨 임계값 이하! 다음 날짜 슬롯 오픈 필요');
+
+      // 6. 현재 오픈된 슬롯의 마지막 날짜 찾기
+      const openedDates = [...new Set(availableSlots.map((slot) => slot.date))].sort();
+      const lastOpenedDate = openedDates[openedDates.length - 1];
+
+      console.log('📅 마지막 오픈 날짜:', lastOpenedDate);
+
+      // 7. 다음 날짜의 슬롯 찾기
+      const closedSlots = allSlots.filter((slot) => !slot.is_available);
+      const closedDates = [...new Set(closedSlots.map((slot) => slot.date))].sort();
+      const nextDate = closedDates.find((date) => date > lastOpenedDate);
+
+      if (!nextDate) {
+        console.log('⚠️ 오픈할 다음 날짜가 없습니다.');
+        return;
+      }
+
+      console.log('🎯 다음 오픈 날짜:', nextDate);
+
+      // 8. 해당 날짜의 슬롯을 모두 오픈
+      const slotsToOpen = closedSlots.filter((slot) => slot.date === nextDate);
+      const slotIdsToOpen = slotsToOpen.map((slot) => slot.id);
+
+      console.log(`🔓 ${slotIdsToOpen.length}개 슬롯 오픈 중...`);
+
+      const { error: updateError } = await supabase
+        .from('consulting_slots')
+        .update({ is_available: true })
+        .in('id', slotIdsToOpen);
+
+      if (updateError) throw updateError;
+
+      console.log(`✅ ${nextDate} 날짜의 ${slotIdsToOpen.length}개 슬롯이 자동 오픈되었습니다!`);
+    } catch (error) {
+      console.error('❌ 자동 슬롯 오픈 체크 실패:', error);
+      // 실패해도 예약은 계속 진행되도록 에러를 던지지 않음
+    }
+  };
 
   // 지역 매핑 함수
   const getSimpleLocation = (location) => {
@@ -55,15 +155,20 @@ export function ConsultingProvider({ children }) {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
 
-      const { data: activeSeminars } = await supabase
-        .from('seminars')
-        .select('location')
+      // ⭐ campaigns와 seminar_slots에서 active 캠페인의 location 조회
+      const { data: activeCampaigns } = await supabase
+        .from('campaigns')
+        .select(`
+          location,
+          seminar_slots!inner (date)
+        `)
         .eq('status', 'active')
-        .gte('date', today);
+        .gte('seminar_slots.date', today);
 
+      // ⭐ consulting_slots의 location과 정확히 매칭하기 위해 원본 location 사용
       const mappedActiveLocations =
-        activeSeminars
-          ?.map((s) => getSimpleLocation(s.location))
+        activeCampaigns
+          ?.map((c) => c.location)
           .filter(Boolean) || [];
 
       const { data: availableSlots } = await supabase
@@ -77,8 +182,11 @@ export function ConsultingProvider({ children }) {
         return;
       }
 
+      // ⭐ 'active' 상태의 설명회 지역에 속하고, 예약 가능한 슬롯만 필터링
       const bookableSlots = availableSlots.filter(
-        (slot) => slot.current_bookings < slot.max_capacity
+        (slot) =>
+          slot.current_bookings < slot.max_capacity &&
+          mappedActiveLocations.includes(slot.location)
       );
 
       const locationMap = new Map();
@@ -88,7 +196,7 @@ export function ConsultingProvider({ children }) {
           locationMap.set(slot.location, {
             location: slot.location,
             nextAvailableDate: slot.date,
-            availableDateCount: 0,
+            availableDates: new Set(), // 고유한 날짜를 Set으로 수집
           });
         }
 
@@ -96,16 +204,18 @@ export function ConsultingProvider({ children }) {
         if (slot.date < locInfo.nextAvailableDate) {
           locInfo.nextAvailableDate = slot.date;
         }
+        // 날짜를 Set에 추가 (자동으로 중복 제거)
+        locInfo.availableDates.add(slot.date);
       });
 
-      bookableSlots.forEach((slot) => {
-        const locInfo = locationMap.get(slot.location);
-        locInfo.availableDateCount++;
-      });
-
-      const locations = Array.from(locationMap.values()).sort(
-        (a, b) => new Date(a.nextAvailableDate) - new Date(b.nextAvailableDate)
-      );
+      // Set 크기를 날짜 개수로 변환
+      const locations = Array.from(locationMap.values())
+        .map((loc) => ({
+          location: loc.location,
+          nextAvailableDate: loc.nextAvailableDate,
+          availableDateCount: loc.availableDates.size, // Set 크기 = 고유한 날짜 개수
+        }))
+        .sort((a, b) => new Date(a.nextAvailableDate) - new Date(b.nextAvailableDate));
 
       setAvailableLocations(locations);
     } catch (error) {
@@ -117,18 +227,26 @@ export function ConsultingProvider({ children }) {
   };
 
   // 날짜 로드
-  const loadAvailableDates = async (location) => {
+  const loadAvailableDates = async (locationOrSeminarId, useSeminarId = false) => {
     try {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
 
-      const { data: slots, error } = await supabase
+      let query = supabase
         .from('consulting_slots')
         .select('*')
-        .eq('location', location)
         .gte('date', today)
         .eq('is_available', true)
-        .order('date', { ascending: true });
+        .order('date', { ascending: true});
+
+      // 설명회 예약자는 linked_seminar_id로, 미예약자는 location으로 검색
+      if (useSeminarId) {
+        query = query.eq('linked_seminar_id', locationOrSeminarId);
+      } else {
+        query = query.eq('location', locationOrSeminarId);
+      }
+
+      const { data: slots, error } = await query;
 
       if (error) throw error;
 
@@ -173,15 +291,23 @@ export function ConsultingProvider({ children }) {
   const loadTimeSlots = async (date, location) => {
     try {
       setLoading(true);
-      console.log('⏰ 시간 슬롯 로드 시작:', { date, location });
+      console.log('⏰ 시간 슬롯 로드 시작:', { date, location, selectedSeminarId });
 
-      const { data: slots, error } = await supabase
+      let query = supabase
         .from('consulting_slots')
         .select('*')
         .eq('date', date)
-        .eq('location', location)
         .eq('is_available', true) // ⭐ 활성화된 슬롯만
         .order('time');
+
+      // 설명회 예약자는 linked_seminar_id로, 미예약자는 location으로 검색
+      if (selectedSeminarId) {
+        query = query.eq('linked_seminar_id', selectedSeminarId);
+      } else {
+        query = query.eq('location', location);
+      }
+
+      const { data: slots, error } = await query;
 
       if (error) throw error;
 
@@ -220,32 +346,75 @@ export function ConsultingProvider({ children }) {
     try {
       setLoading(true);
 
+      // 선택한 슬롯 찾기 (실제 location 정보 필요)
+      const selectedSlot = timeSlots.find(
+        (slot) => slot.time.slice(0, 5) === selectedTime
+      );
+
+      if (!selectedSlot) {
+        throw new Error('선택한 슬롯을 찾을 수 없습니다.');
+      }
+
+      console.log('📝 예약 생성 파라미터:', {
+        date: selectedDate,
+        time: selectedTime,
+        location: selectedSlot.location, // 실제 DB location 사용
+        slotId: selectedSlot.id,
+        isSeminarAttendee: reservationData.isSeminarAttendee,
+      });
+
+      // ⭐ 설명회 예약자는 이미 해싱된 비밀번호를 가져오므로 재해싱 방지
+      const passwordToUse = reservationData.isSeminarAttendee
+        ? reservationData.password // 이미 해싱됨
+        : hashPassword(reservationData.password); // 미예약자는 해싱 필요
+
       const { data, error } = await supabase.rpc(
         'create_consulting_reservation',
         {
+          p_slot_id: selectedSlot.id, // ⭐ slot_id 추가
           p_slot_date: selectedDate,
           p_slot_time: selectedTime + ':00',
-          p_slot_location: selectedLocation,
+          p_slot_location: selectedSlot.location, // 실제 슬롯의 location 사용
           p_student_name: reservationData.studentName,
           p_parent_phone: reservationData.parentPhone,
           p_school: reservationData.school || 'UNKNOWN',
           p_grade: reservationData.grade || 'UNKNOWN',
-          p_math_level: reservationData.mathLevel || '상담 시 확인', // ⭐ 추가
+          p_math_level: reservationData.mathLevel || '상담 시 확인',
+          p_password: passwordToUse, // ⭐ 조건부 해싱 적용
           p_is_seminar_attendee: reservationData.isSeminarAttendee || false,
           p_linked_seminar_id: reservationData.linkedSeminarId || null,
           p_privacy_consent: reservationData.privacyConsent || null,
+          // ⭐ 동의 정보 추가
+          p_test_deadline_agreed: reservationData.testDeadlineAgreed || false,
+          p_test_deadline_agreed_at: reservationData.testDeadlineAgreedAt || null,
         }
       );
 
       if (error) throw error;
 
+      console.log('RPC 반환 데이터:', data);
+
+      // ⭐ RPC 함수가 반환하는 값 형식에 따라 처리 (배열/객체/문자열 모두 대응)
+      const reservationId = Array.isArray(data)
+        ? (data[0]?.reservation_id || data[0])
+        : (typeof data === 'string' ? data : data?.reservation_id || data);
+
+      console.log('예약 ID:', reservationId);
+
       const { data: reservation, error: fetchError } = await supabase
         .from('consulting_reservations')
         .select('*, consulting_slots(*)')
-        .eq('id', data.reservation_id)
+        .eq('id', reservationId)
         .single();
 
       if (fetchError) throw fetchError;
+
+      // 자동 슬롯 오픈 체크 (비동기로 실행, 실패해도 예약은 성공)
+      if (checkAndOpenNextSlots && reservationData.linkedSeminarId) {
+        checkAndOpenNextSlots(reservationData.linkedSeminarId).catch((err) =>
+          console.error('자동 슬롯 오픈 체크 중 오류:', err)
+        );
+      }
 
       showToast('예약이 완료되었습니다!', 'success');
       return reservation;
@@ -294,6 +463,12 @@ export function ConsultingProvider({ children }) {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
 
+      console.log('🧪 진단검사 날짜 로드 시작:', {
+        location,
+        consultingDate,
+        today,
+      });
+
       const { data: slots, error } = await supabase
         .from('test_slots')
         .select('*')
@@ -304,6 +479,9 @@ export function ConsultingProvider({ children }) {
         .order('date', { ascending: true });
 
       if (error) throw error;
+
+      console.log('✅ 로드된 test_slots:', slots);
+      console.log('📊 test_slots 개수:', slots?.length || 0);
 
       const dateMap = new Map();
 
@@ -333,6 +511,7 @@ export function ConsultingProvider({ children }) {
             : 'available',
       }));
 
+      console.log('📅 최종 진단검사 날짜 목록:', dates);
       setAvailableTestDates(dates);
     } catch (error) {
       console.error('진단검사 날짜 로드 실패:', error);
@@ -453,6 +632,8 @@ export function ConsultingProvider({ children }) {
     loadAvailableLocations,
     selectedLocation,
     setSelectedLocation,
+    selectedSeminarId,
+    setSelectedSeminarId,
     availableDates,
     loadAvailableDates,
     selectedDate,
