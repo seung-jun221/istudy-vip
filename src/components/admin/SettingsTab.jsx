@@ -27,11 +27,8 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
 
   const [formData, setFormData] = useState({
     title: campaign.title || '',
-    date: campaign.date || '',
-    time: campaign.time || '',
     location: campaign.location || '',
-    max_capacity: campaign.max_capacity || 0,
-    display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
+    season: campaign.season || '',
     status: campaign.status || 'active',
     access_password: campaign.access_password || '',
     test_method: campaign.test_method || 'home', // ⭐ 진단검사 방식
@@ -41,11 +38,8 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
   useEffect(() => {
     setFormData({
       title: campaign.title || '',
-      date: campaign.date || '',
-      time: campaign.time || '',
       location: campaign.location || '',
-      max_capacity: campaign.max_capacity || 0,
-      display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
+      season: campaign.season || '',
       status: campaign.status || 'active',
       access_password: campaign.access_password || '',
       test_method: campaign.test_method || 'home', // ⭐ 진단검사 방식
@@ -77,7 +71,14 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
 
   // 설명회 슬롯 편집 상태
   const [editingSeminarSlot, setEditingSeminarSlot] = useState(null);
-  const [seminarSlotTitle, setSeminarSlotTitle] = useState('');
+  const [seminarSlotFormData, setSeminarSlotFormData] = useState({
+    title: '',
+    date: '',
+    time: '',
+    location: '',
+    max_capacity: 100,
+    display_capacity: 100,
+  });
 
   // 진단검사 슬롯 생성기 상태
   const [testGenerator, setTestGenerator] = useState({
@@ -120,11 +121,8 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
   const handleCancel = () => {
     setFormData({
       title: campaign.title || '',
-      date: campaign.date || '',
-      time: campaign.time || '',
       location: campaign.location || '',
-      max_capacity: campaign.max_capacity || 0,
-      display_capacity: campaign.display_capacity || campaign.max_capacity || 0,
+      season: campaign.season || '',
       status: campaign.status || 'active',
       access_password: campaign.access_password || '',
       test_method: campaign.test_method || 'home', // ⭐ 진단검사 방식
@@ -279,26 +277,62 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     }
   };
 
-  // 설명회 슬롯 제목 수정 시작
+  // 설명회 슬롯 수정 시작
   const startEditingSeminarSlot = (slot) => {
     setEditingSeminarSlot(slot.id);
-    setSeminarSlotTitle(slot.title || '');
+    setSeminarSlotFormData({
+      title: slot.title || '',
+      date: slot.date || '',
+      time: slot.time || '',
+      location: slot.location || '',
+      max_capacity: slot.max_capacity || 100,
+      display_capacity: slot.display_capacity || 100,
+    });
   };
 
-  // 설명회 슬롯 제목 저장
-  const saveSeminarSlotTitle = async (slotId) => {
-    const success = await updateSeminarSlot(slotId, { title: seminarSlotTitle });
+  // 설명회 슬롯 저장
+  const saveSeminarSlot = async (slotId) => {
+    const { title, date, time, location, max_capacity, display_capacity } = seminarSlotFormData;
+
+    if (!date || !time || !location) {
+      alert('날짜, 시간, 장소는 필수 항목입니다.');
+      return;
+    }
+
+    const success = await updateSeminarSlot(slotId, {
+      title: title || null,
+      date,
+      time,
+      location,
+      max_capacity: parseInt(max_capacity),
+      display_capacity: parseInt(display_capacity),
+    });
+
     if (success) {
       setEditingSeminarSlot(null);
-      setSeminarSlotTitle('');
+      setSeminarSlotFormData({
+        title: '',
+        date: '',
+        time: '',
+        location: '',
+        max_capacity: 100,
+        display_capacity: 100,
+      });
       onUpdate();
     }
   };
 
-  // 설명회 슬롯 제목 수정 취소
+  // 설명회 슬롯 수정 취소
   const cancelEditingSeminarSlot = () => {
     setEditingSeminarSlot(null);
-    setSeminarSlotTitle('');
+    setSeminarSlotFormData({
+      title: '',
+      date: '',
+      time: '',
+      location: '',
+      max_capacity: 100,
+      display_capacity: 100,
+    });
   };
 
   // 설명회 슬롯 삭제
@@ -350,143 +384,116 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
 
   return (
     <div className="tab-container settings-tab">
-      <div className="settings-header">
-        <h3>캠페인 기본 설정</h3>
-        {!editing && authMode === 'super' && (
-          <button className="btn btn-primary" onClick={() => setEditing(true)}>
-            수정하기
-          </button>
-        )}
+      {/* 캠페인 기본 정보 */}
+      <div className="settings-section">
+        <div className="settings-header">
+          <h3>캠페인 기본 정보</h3>
+          {!editing && authMode === 'super' && (
+            <button className="btn btn-primary" onClick={() => setEditing(true)}>
+              수정하기
+            </button>
+          )}
+        </div>
+
+        <div className="settings-form">
+          {/* 캠페인명 */}
+          <div className="form-group">
+            <label className="form-label">캠페인명</label>
+            {editing ? (
+              <input
+                type="text"
+                name="title"
+                className="form-input"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="예: 아이스터디 VIP 학부모 설명회 - 분당 캠페인"
+              />
+            ) : (
+              <div className="form-value">{campaign.title || '-'}</div>
+            )}
+          </div>
+
+          {/* 지역 */}
+          <div className="form-group">
+            <label className="form-label">지역</label>
+            {editing ? (
+              <input
+                type="text"
+                name="location"
+                className="form-input"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="예: 분당캠퍼스, 대치캠퍼스"
+              />
+            ) : (
+              <div className="form-value">{campaign.location}</div>
+            )}
+          </div>
+
+          {/* 시즌 */}
+          <div className="form-group">
+            <label className="form-label">시즌</label>
+            {editing ? (
+              <input
+                type="text"
+                name="season"
+                className="form-input"
+                value={formData.season}
+                onChange={handleChange}
+                placeholder="예: 2025 겨울방학"
+              />
+            ) : (
+              <div className="form-value">{campaign.season || '-'}</div>
+            )}
+          </div>
+
+          {/* 버튼 영역 */}
+          {editing && (
+            <div className="form-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={handleCancel}
+                disabled={saving}
+              >
+                취소
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="settings-form">
-        {/* 설명회명 */}
-        <div className="form-group">
-          <label className="form-label">설명회명</label>
-          {editing ? (
-            <input
-              type="text"
-              name="title"
-              className="form-input"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="예: i.study VIP 수학설명회"
-            />
-          ) : (
-            <div className="form-value">{campaign.title || '-'}</div>
-          )}
-        </div>
-
-        {/* 날짜 */}
-        <div className="form-group">
-          <label className="form-label">날짜</label>
-          {editing ? (
-            <input
-              type="date"
-              name="date"
-              className="form-input"
-              value={formData.date}
-              onChange={handleChange}
-            />
-          ) : (
-            <div className="form-value">{campaign.date}</div>
-          )}
-        </div>
-
-        {/* 시간 */}
-        <div className="form-group">
-          <label className="form-label">시간</label>
-          {editing ? (
-            <input
-              type="time"
-              name="time"
-              className="form-input"
-              value={formData.time}
-              onChange={handleChange}
-            />
-          ) : (
-            <div className="form-value">{campaign.time}</div>
-          )}
-        </div>
-
-        {/* 장소 */}
-        <div className="form-group">
-          <label className="form-label">장소</label>
-          {editing ? (
-            <input
-              type="text"
-              name="location"
-              className="form-input"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="예: 분당점, 대치점"
-            />
-          ) : (
-            <div className="form-value">{campaign.location}</div>
-          )}
-        </div>
-
-        {/* 정원 (실제 수용 인원) */}
-        <div className="form-group">
-          <label className="form-label">정원 (실제 수용 인원)</label>
-          {editing ? (
-            <input
-              type="number"
-              name="max_capacity"
-              className="form-input"
-              value={formData.max_capacity}
-              onChange={handleChange}
-              min="0"
-            />
-          ) : (
-            <div className="form-value">{campaign.max_capacity}명</div>
-          )}
-          <div className="form-hint">실제로 수용 가능한 최대 인원 수입니다.</div>
-        </div>
-
-        {/* 정원 (노출용) */}
-        <div className="form-group">
-          <label className="form-label">정원 (노출용)</label>
-          {editing ? (
-            <input
-              type="number"
-              name="display_capacity"
-              className="form-input"
-              value={formData.display_capacity}
-              onChange={handleChange}
-              min="0"
-            />
-          ) : (
-            <div className="form-value">
-              {campaign.display_capacity || campaign.max_capacity}명
-            </div>
-          )}
-          <div className="form-hint">
-            고객에게 보여지는 정원 수입니다. 실제보다 작게 설정 가능합니다.
+      {/* 기타 설정 */}
+      <div className="settings-section">
+        <h3>기타 설정</h3>
+        <div className="settings-form">
+          {/* 상태 */}
+          <div className="form-group">
+            <label className="form-label">캠페인 상태</label>
+            {editing ? (
+              <select
+                name="status"
+                className="form-select"
+                value={formData.status}
+                onChange={handleChange}
+              >
+                <option value="active">진행중</option>
+                <option value="inactive">종료</option>
+              </select>
+            ) : (
+              <div className="form-value">
+                <span className={`status-badge status-${campaign.status}`}>
+                  {campaign.status === 'active' ? '진행중' : '종료'}
+                </span>
+              </div>
+            )}
           </div>
-        </div>
-
-        {/* 상태 */}
-        <div className="form-group">
-          <label className="form-label">상태</label>
-          {editing ? (
-            <select
-              name="status"
-              className="form-select"
-              value={formData.status}
-              onChange={handleChange}
-            >
-              <option value="active">진행중</option>
-              <option value="inactive">종료</option>
-            </select>
-          ) : (
-            <div className="form-value">
-              <span className={`status-badge status-${campaign.status}`}>
-                {campaign.status === 'active' ? '진행중' : '종료'}
-              </span>
-            </div>
-          )}
-        </div>
 
         {/* 자동 슬롯 오픈 임계값 */}
         <div className="form-group">
@@ -600,6 +607,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
             </button>
           </div>
         )}
+        </div>
       </div>
 
       {/* 수퍼 관리자 전용 기능 */}
@@ -685,68 +693,129 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                       return (a.time || '').localeCompare(b.time || '');
                     })
                     .map((slot) => (
-                      <div key={slot.id} className="slot-row">
-                        <div className="slot-info" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                            <span className="slot-date">{formatDate(slot.date)}</span>
-                            <span className="slot-time">{formatTime(slot.time)}</span>
-                            <span className="slot-location">{slot.location}</span>
-                            <span className="slot-capacity">정원 {slot.max_capacity}명 (노출: {slot.display_capacity}명)</span>
-                            <span className={`slot-status ${slot.status === 'active' ? 'open' : 'closed'}`}>
-                              {slot.status === 'active' ? '활성' : '비활성'}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                            <label style={{ fontSize: '13px', fontWeight: 500, color: '#666', minWidth: '40px' }}>제목:</label>
-                            {editingSeminarSlot === slot.id ? (
-                              <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
+                      <div key={slot.id} className="slot-row" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                        {editingSeminarSlot === slot.id ? (
+                          /* 편집 모드 */
+                          <div style={{ padding: '16px', background: '#f8f9fa', borderRadius: '4px' }}>
+                            <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600 }}>슬롯 정보 수정</h5>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label" style={{ fontSize: '13px' }}>제목</label>
                                 <input
                                   type="text"
                                   className="form-input"
-                                  value={seminarSlotTitle}
-                                  onChange={(e) => setSeminarSlotTitle(e.target.value)}
+                                  value={seminarSlotFormData.title}
+                                  onChange={(e) => setSeminarSlotFormData({ ...seminarSlotFormData, title: e.target.value })}
                                   placeholder="예: 대치점 1차 설명회"
-                                  style={{ flex: 1, padding: '6px 12px', fontSize: '14px' }}
+                                  style={{ fontSize: '14px' }}
                                 />
-                                <button
-                                  className="btn btn-primary"
-                                  onClick={() => saveSeminarSlotTitle(slot.id)}
-                                  style={{ padding: '6px 12px', fontSize: '13px' }}
-                                >
-                                  저장
-                                </button>
-                                <button
-                                  className="btn btn-secondary"
-                                  onClick={cancelEditingSeminarSlot}
-                                  style={{ padding: '6px 12px', fontSize: '13px' }}
-                                >
-                                  취소
-                                </button>
                               </div>
-                            ) : (
-                              <div style={{ display: 'flex', gap: '8px', flex: 1, alignItems: 'center' }}>
-                                <span style={{ fontSize: '14px', color: slot.title ? '#333' : '#999', flex: 1 }}>
-                                  {slot.title || '(제목 없음 - 자동 생성됨)'}
-                                </span>
-                                <button
-                                  className="btn-toggle"
-                                  onClick={() => startEditingSeminarSlot(slot)}
-                                  style={{ padding: '6px 12px', fontSize: '13px' }}
-                                >
-                                  수정
-                                </button>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label" style={{ fontSize: '13px' }}>날짜</label>
+                                <input
+                                  type="date"
+                                  className="form-input"
+                                  value={seminarSlotFormData.date}
+                                  onChange={(e) => setSeminarSlotFormData({ ...seminarSlotFormData, date: e.target.value })}
+                                  style={{ fontSize: '14px' }}
+                                />
                               </div>
-                            )}
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label" style={{ fontSize: '13px' }}>시간</label>
+                                <input
+                                  type="time"
+                                  className="form-input"
+                                  value={seminarSlotFormData.time}
+                                  onChange={(e) => setSeminarSlotFormData({ ...seminarSlotFormData, time: e.target.value })}
+                                  style={{ fontSize: '14px' }}
+                                />
+                              </div>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label" style={{ fontSize: '13px' }}>장소</label>
+                                <input
+                                  type="text"
+                                  className="form-input"
+                                  value={seminarSlotFormData.location}
+                                  onChange={(e) => setSeminarSlotFormData({ ...seminarSlotFormData, location: e.target.value })}
+                                  placeholder="예: 분당점 3층"
+                                  style={{ fontSize: '14px' }}
+                                />
+                              </div>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label" style={{ fontSize: '13px' }}>정원 (실제)</label>
+                                <input
+                                  type="number"
+                                  className="form-input"
+                                  value={seminarSlotFormData.max_capacity}
+                                  onChange={(e) => setSeminarSlotFormData({ ...seminarSlotFormData, max_capacity: parseInt(e.target.value) })}
+                                  min="1"
+                                  style={{ fontSize: '14px' }}
+                                />
+                              </div>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label" style={{ fontSize: '13px' }}>정원 (노출)</label>
+                                <input
+                                  type="number"
+                                  className="form-input"
+                                  value={seminarSlotFormData.display_capacity}
+                                  onChange={(e) => setSeminarSlotFormData({ ...seminarSlotFormData, display_capacity: parseInt(e.target.value) })}
+                                  min="1"
+                                  style={{ fontSize: '14px' }}
+                                />
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'flex-end' }}>
+                              <button
+                                className="btn btn-secondary"
+                                onClick={cancelEditingSeminarSlot}
+                                style={{ padding: '6px 16px', fontSize: '13px' }}
+                              >
+                                취소
+                              </button>
+                              <button
+                                className="btn btn-primary"
+                                onClick={() => saveSeminarSlot(slot.id)}
+                                style={{ padding: '6px 16px', fontSize: '13px' }}
+                              >
+                                저장
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                        <div className="slot-actions">
-                          <button
-                            className="btn-delete"
-                            onClick={() => handleDeleteSeminarSlot(slot.id)}
-                          >
-                            삭제
-                          </button>
-                        </div>
+                        ) : (
+                          /* 일반 모드 */
+                          <>
+                            <div className="slot-info" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', flex: 1 }}>
+                              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                <span className="slot-date">{formatDate(slot.date)}</span>
+                                <span className="slot-time">{formatTime(slot.time)}</span>
+                                <span className="slot-location">{slot.location}</span>
+                                <span className="slot-capacity">정원 {slot.max_capacity}명 (노출: {slot.display_capacity}명)</span>
+                                <span className={`slot-status ${slot.status === 'active' ? 'open' : 'closed'}`}>
+                                  {slot.status === 'active' ? '활성' : '비활성'}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '14px', color: slot.title ? '#333' : '#999' }}>
+                                <strong>제목:</strong> {slot.title || '(제목 없음 - 자동 생성됨)'}
+                              </div>
+                            </div>
+                            <div className="slot-actions" style={{ display: 'flex', gap: '8px' }}>
+                              <button
+                                className="btn-toggle"
+                                onClick={() => startEditingSeminarSlot(slot)}
+                                style={{ padding: '6px 12px', fontSize: '13px' }}
+                              >
+                                수정
+                              </button>
+                              <button
+                                className="btn-delete"
+                                onClick={() => handleDeleteSeminarSlot(slot.id)}
+                                style={{ fontSize: '13px' }}
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))}
                 </div>
