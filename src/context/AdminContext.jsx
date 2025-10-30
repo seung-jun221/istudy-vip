@@ -629,8 +629,9 @@ export function AdminProvider({ children }) {
       console.log('✅ 캠페인 업데이트 성공:', data);
 
       // seminar_slots 업데이트 (필요시 - 일반적으로 슬롯은 별도 관리)
-      // 기본 슬롯 정보 업데이트 (date, time, max_capacity 등)
-      if (campaignData.date || campaignData.time || campaignData.max_capacity !== undefined) {
+      // 기본 슬롯 정보 업데이트 (date, time, max_capacity, test_method 등)
+      if (campaignData.date || campaignData.time || campaignData.max_capacity !== undefined ||
+          campaignData.testMethod || campaignData.test_method) {
         console.log('📅 설명회 슬롯 업데이트 중...');
 
         const slotUpdateData = {};
@@ -638,7 +639,9 @@ export function AdminProvider({ children }) {
         if (campaignData.time) slotUpdateData.time = campaignData.time;
         if (campaignData.max_capacity !== undefined) slotUpdateData.max_capacity = campaignData.max_capacity;
         if (campaignData.display_capacity !== undefined) slotUpdateData.display_capacity = campaignData.display_capacity;
+        // ⭐ snake_case와 camelCase 둘 다 지원
         if (campaignData.testMethod) slotUpdateData.test_method = campaignData.testMethod;
+        if (campaignData.test_method) slotUpdateData.test_method = campaignData.test_method;
 
         if (Object.keys(slotUpdateData).length > 0) {
           const { error: slotError } = await supabase
@@ -942,6 +945,98 @@ export function AdminProvider({ children }) {
     }
   };
 
+  // ========================================
+  // 설명회 슬롯 관리
+  // ========================================
+
+  // 설명회 슬롯 생성 (배치)
+  const createSeminarSlots = async (campaignId, slots) => {
+    try {
+      setLoading(true);
+
+      const slotsToInsert = slots.map((slot, index) => ({
+        campaign_id: campaignId,
+        session_number: slot.session_number || index + 1,
+        title: slot.title || null,
+        date: slot.date,
+        time: slot.time,
+        location: slot.location,
+        max_capacity: slot.max_capacity || 100,
+        display_capacity: slot.display_capacity || slot.max_capacity || 100,
+        current_bookings: 0,
+        status: 'active',
+        test_method: slot.test_method || 'home',
+      }));
+
+      const { error } = await supabase.from('seminar_slots').insert(slotsToInsert);
+
+      if (error) throw error;
+
+      showToast(`${slots.length}개의 설명회 슬롯이 추가되었습니다.`, 'success');
+      return true;
+    } catch (error) {
+      console.error('설명회 슬롯 생성 실패:', error);
+      showToast('설명회 슬롯 추가에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 설명회 슬롯 수정
+  const updateSeminarSlot = async (slotId, slotData) => {
+    try {
+      setLoading(true);
+
+      const { error } = await supabase
+        .from('seminar_slots')
+        .update(slotData)
+        .eq('id', slotId);
+
+      if (error) throw error;
+
+      showToast('설명회 슬롯이 수정되었습니다.', 'success');
+      return true;
+    } catch (error) {
+      console.error('설명회 슬롯 수정 실패:', error);
+      showToast('설명회 슬롯 수정에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 설명회 슬롯 삭제
+  const deleteSeminarSlot = async (slotId) => {
+    try {
+      setLoading(true);
+
+      // 해당 슬롯에 예약이 있는지 확인
+      const { count } = await supabase
+        .from('reservations')
+        .select('*', { count: 'exact', head: true })
+        .eq('seminar_slot_id', slotId);
+
+      if (count > 0) {
+        showToast('예약이 있는 슬롯은 삭제할 수 없습니다.', 'error');
+        return false;
+      }
+
+      const { error } = await supabase.from('seminar_slots').delete().eq('id', slotId);
+
+      if (error) throw error;
+
+      showToast('설명회 슬롯이 삭제되었습니다.', 'success');
+      return true;
+    } catch (error) {
+      console.error('설명회 슬롯 삭제 실패:', error);
+      showToast('설명회 슬롯 삭제에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 자동 슬롯 오픈 체크 (컨설팅 예약 생성 시 호출)
   const checkAndOpenNextSlots = async (campaignId) => {
     try {
@@ -1060,6 +1155,9 @@ export function AdminProvider({ children }) {
     updateCampaign,
     createCampaign,
     deleteCampaign,
+    createSeminarSlots,
+    updateSeminarSlot,
+    deleteSeminarSlot,
     createConsultingSlots,
     updateConsultingSlot,
     deleteConsultingSlot,

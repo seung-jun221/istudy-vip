@@ -44,8 +44,8 @@ export function ReservationProvider({ children }) {
           if (slot.date >= today && slot.status === 'active') {
             allSlots.push({
               ...slot,
-              // ⭐ 호환성을 위해 title 필드 추가 (UI에서 사용)
-              title: campaign.title,
+              // ⭐ 슬롯 title 사용 (없으면 자동 생성)
+              title: slot.title || `${campaign.location} ${slot.session_number || 1}차 설명회`,
               // 캠페인 정보 추가
               campaign_id: campaign.id,
               campaign_title: campaign.title,
