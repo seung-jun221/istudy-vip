@@ -177,8 +177,11 @@ export function ConsultingProvider({ children }) {
         return;
       }
 
+      // ⭐ 'active' 상태의 설명회 지역에 속하고, 예약 가능한 슬롯만 필터링
       const bookableSlots = availableSlots.filter(
-        (slot) => slot.current_bookings < slot.max_capacity
+        (slot) =>
+          slot.current_bookings < slot.max_capacity &&
+          mappedActiveLocations.includes(slot.location)
       );
 
       const locationMap = new Map();
