@@ -1,9 +1,9 @@
 -- 캠페인 location을 진단검사 슬롯의 location과 일치시키기
 -- 목적: test_slots 조회 시 location 기반 매칭이 정상 작동하도록
 
--- 1. 분당캠퍼스 → 분당점
+-- 1. 분당캠퍼스 → 수학의 아침 수내캠퍼스
 UPDATE campaigns
-SET location = '분당점'
+SET location = '수학의 아침 수내캠퍼스'
 WHERE id = '15d9b5be-086b-46fe-ac33-aa5192e51b2d_campaign';
 
 -- 2. 대치캠퍼스 → 넥스트닥 대치점
