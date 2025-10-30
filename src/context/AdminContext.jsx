@@ -629,8 +629,9 @@ export function AdminProvider({ children }) {
       console.log('✅ 캠페인 업데이트 성공:', data);
 
       // seminar_slots 업데이트 (필요시 - 일반적으로 슬롯은 별도 관리)
-      // 기본 슬롯 정보 업데이트 (date, time, max_capacity 등)
-      if (campaignData.date || campaignData.time || campaignData.max_capacity !== undefined) {
+      // 기본 슬롯 정보 업데이트 (date, time, max_capacity, test_method 등)
+      if (campaignData.date || campaignData.time || campaignData.max_capacity !== undefined ||
+          campaignData.testMethod || campaignData.test_method) {
         console.log('📅 설명회 슬롯 업데이트 중...');
 
         const slotUpdateData = {};
@@ -638,7 +639,9 @@ export function AdminProvider({ children }) {
         if (campaignData.time) slotUpdateData.time = campaignData.time;
         if (campaignData.max_capacity !== undefined) slotUpdateData.max_capacity = campaignData.max_capacity;
         if (campaignData.display_capacity !== undefined) slotUpdateData.display_capacity = campaignData.display_capacity;
+        // ⭐ snake_case와 camelCase 둘 다 지원
         if (campaignData.testMethod) slotUpdateData.test_method = campaignData.testMethod;
+        if (campaignData.test_method) slotUpdateData.test_method = campaignData.test_method;
 
         if (Object.keys(slotUpdateData).length > 0) {
           const { error: slotError } = await supabase
