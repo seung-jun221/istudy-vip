@@ -105,6 +105,34 @@ export default function ConsultingPage() {
   const handleInfoNext = async (infoData) => {
     setUserInfo(infoData);
 
+    // ⭐ 진단검사 방식 및 가능 날짜 미리 로드
+    try {
+      const testMethodResult = await loadTestMethod(infoData.location);
+
+      // onsite(학원 방문)인 경우만 날짜 미리보기 제공
+      if (testMethodResult === 'onsite') {
+        const today = new Date().toISOString().split('T')[0];
+
+        // 모든 진단검사 가능 날짜/시간 조회 (컨설팅 날짜 제약 없이)
+        const { data: testSlots } = await supabase
+          .from('test_slots')
+          .select('date, time')
+          .eq('location', infoData.location)
+          .eq('status', 'active')
+          .gte('date', today)
+          .order('date', { ascending: true })
+          .order('time', { ascending: true });
+
+        if (testSlots && testSlots.length > 0) {
+          // 날짜와 시간 모두 포함
+          setTestPreviewDates(testSlots);
+        }
+      }
+    } catch (error) {
+      console.error('진단검사 일정 로드 실패:', error);
+      // 에러가 나도 예약 플로우는 계속 진행
+    }
+
     // 지역이 선택되어 있으므로 날짜 로드
     await loadAvailableDates(infoData.location);
 
@@ -414,8 +442,8 @@ export default function ConsultingPage() {
               </div>
             )}
 
-            {/* ⭐ 진단검사 일정 안내 */}
-            {userInfo?.isSeminarAttendee && testPreviewDates.length > 0 && (
+            {/* ⭐ 진단검사 일정 안내 (모든 사용자에게 표시) */}
+            {testPreviewDates.length > 0 && (
               <div style={{ maxWidth: '800px', margin: '0 auto 1.5rem auto' }}>
                 <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
