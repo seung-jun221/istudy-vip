@@ -96,13 +96,23 @@ export default function ReservationCheck({
 
       const reservation = matchingReservation;
 
-      const { data: seminar, error: seminarError } = await supabase
-        .from('seminars')
-        .select('*')
-        .eq('id', reservation.seminar_id)
+      // seminar_slot_id로 슬롯 및 캠페인 정보 조회
+      const { data: seminarSlot, error: slotError } = await supabase
+        .from('seminar_slots')
+        .select(`
+          *,
+          campaigns (*)
+        `)
+        .eq('id', reservation.seminar_slot_id)
         .single();
 
-      if (seminarError) throw seminarError;
+      if (slotError) throw slotError;
+
+      // 호환성을 위해 seminar 형식으로 전달 (슬롯 + 캠페인 정보 병합)
+      const seminar = {
+        ...seminarSlot,
+        ...seminarSlot.campaigns,
+      };
 
       onResult({ ...reservation, seminar });
     } catch (error) {

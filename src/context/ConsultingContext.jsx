@@ -155,16 +155,20 @@ export function ConsultingProvider({ children }) {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
 
-      const { data: activeSeminars } = await supabase
-        .from('seminars')
-        .select('location')
+      // ⭐ campaigns와 seminar_slots에서 active 캠페인의 location 조회
+      const { data: activeCampaigns } = await supabase
+        .from('campaigns')
+        .select(`
+          location,
+          seminar_slots!inner (date)
+        `)
         .eq('status', 'active')
-        .gte('date', today);
+        .gte('seminar_slots.date', today);
 
       // ⭐ consulting_slots의 location과 정확히 매칭하기 위해 원본 location 사용
       const mappedActiveLocations =
-        activeSeminars
-          ?.map((s) => s.location)
+        activeCampaigns
+          ?.map((c) => c.location)
           .filter(Boolean) || [];
 
       const { data: availableSlots } = await supabase

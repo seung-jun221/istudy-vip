@@ -606,21 +606,55 @@ export function AdminProvider({ children }) {
       console.log('📝 캠페인 업데이트 시작:', campaignId);
       console.log('📊 업데이트할 데이터:', campaignData);
 
+      // campaigns 테이블 업데이트 (campaign 레벨 데이터만)
+      const campaignUpdateData = {
+        title: campaignData.title,
+        location: campaignData.location,
+        season: campaignData.season,
+        status: campaignData.status,
+        access_password: campaignData.access_password,
+      };
+
       const { data, error } = await supabase
-        .from('seminars')
-        .update(campaignData)
+        .from('campaigns')
+        .update(campaignUpdateData)
         .eq('id', campaignId)
         .select();
 
       if (error) {
         console.error('❌ 업데이트 DB 오류:', error);
-        console.error('에러 코드:', error.code);
-        console.error('에러 메시지:', error.message);
-        console.error('에러 details:', error.details);
         throw error;
       }
 
-      console.log('✅ 업데이트 성공:', data);
+      console.log('✅ 캠페인 업데이트 성공:', data);
+
+      // seminar_slots 업데이트 (필요시 - 일반적으로 슬롯은 별도 관리)
+      // 기본 슬롯 정보 업데이트 (date, time, max_capacity 등)
+      if (campaignData.date || campaignData.time || campaignData.max_capacity !== undefined) {
+        console.log('📅 설명회 슬롯 업데이트 중...');
+
+        const slotUpdateData = {};
+        if (campaignData.date) slotUpdateData.date = campaignData.date;
+        if (campaignData.time) slotUpdateData.time = campaignData.time;
+        if (campaignData.max_capacity !== undefined) slotUpdateData.max_capacity = campaignData.max_capacity;
+        if (campaignData.display_capacity !== undefined) slotUpdateData.display_capacity = campaignData.display_capacity;
+        if (campaignData.testMethod) slotUpdateData.test_method = campaignData.testMethod;
+
+        if (Object.keys(slotUpdateData).length > 0) {
+          const { error: slotError } = await supabase
+            .from('seminar_slots')
+            .update(slotUpdateData)
+            .eq('campaign_id', campaignId);
+
+          if (slotError) {
+            console.error('⚠️ 슬롯 업데이트 실패:', slotError);
+            // 슬롯 업데이트 실패해도 캠페인은 업데이트됨
+          } else {
+            console.log('✅ 슬롯 업데이트 완료');
+          }
+        }
+      }
+
       showToast('캠페인 정보가 업데이트되었습니다.', 'success');
       return true;
     } catch (error) {
@@ -636,13 +670,15 @@ export function AdminProvider({ children }) {
     try {
       setLoading(true);
       console.log('🗑️ 캠페인 삭제 시작:', campaignId);
-      console.log('📊 캠페인 ID 타입:', typeof campaignId, campaignId);
 
-      // 0. 캠페인 정보 조회 (location 정보 필요)
+      // 0. 캠페인 정보 및 슬롯 조회
       console.log('0️⃣ 캠페인 정보 조회 중...');
       const { data: campaign, error: campaignFetchError } = await supabase
-        .from('seminars')
-        .select('*')
+        .from('campaigns')
+        .select(`
+          *,
+          seminar_slots (id)
+        `)
         .eq('id', campaignId)
         .single();
 
@@ -652,7 +688,7 @@ export function AdminProvider({ children }) {
       }
 
       console.log('✅ 캠페인 정보:', campaign);
-      const campaignLocation = campaign.location;
+      const slotIds = campaign.seminar_slots?.map(s => s.id) || [];
 
       // 1. 컨설팅 예약 조회 (test_reservations 삭제를 위해)
       console.log('1️⃣ 컨설팅 예약 조회 중...');
@@ -707,88 +743,62 @@ export function AdminProvider({ children }) {
       }
       console.log('✅ 컨설팅 슬롯 삭제 완료:', slotsCount + '개');
 
-      // 5. 설명회 참석자 삭제
-      console.log('5️⃣ 설명회 참석자 삭제 중...');
-      const { error: attendeesError, count: attendeesCount } = await supabase
-        .from('reservations')
-        .delete({ count: 'exact' })
-        .eq('seminar_id', campaignId);
+      // 5. 설명회 참석자 삭제 (seminar_slots 기반)
+      if (slotIds.length > 0) {
+        console.log('5️⃣ 설명회 참석자 삭제 중...');
+        const { error: attendeesError, count: attendeesCount } = await supabase
+          .from('reservations')
+          .delete({ count: 'exact' })
+          .in('seminar_slot_id', slotIds);
 
-      if (attendeesError) {
-        console.error('❌ 설명회 참석자 삭제 실패:', attendeesError);
-        throw attendeesError;
+        if (attendeesError) {
+          console.error('❌ 설명회 참석자 삭제 실패:', attendeesError);
+          throw attendeesError;
+        }
+        console.log('✅ 설명회 참석자 삭제 완료:', attendeesCount + '개');
+      } else {
+        console.log('⏭️ 설명회 슬롯이 없습니다.');
       }
-      console.log('✅ 설명회 참석자 삭제 완료:', attendeesCount + '개');
 
-      // 6. 진단검사 방식 삭제 (location 기반 - 다른 캠페인도 같은 location을 사용할 수 있으므로 주의)
-      console.log('6️⃣ 진단검사 방식 확인 중 (location: ' + campaignLocation + ')...');
+      // 6. 진단검사 방식 확인 (location 기반 - 다른 캠페인도 같은 location을 사용할 수 있으므로 주의)
+      console.log('6️⃣ 진단검사 방식 확인 중 (location: ' + campaign.location + ')...');
 
       // 같은 location을 사용하는 다른 캠페인이 있는지 확인
-      const { data: otherCampaigns, error: otherCampaignsError } = await supabase
-        .from('seminars')
+      const { data: otherCampaigns } = await supabase
+        .from('campaigns')
         .select('id')
-        .eq('location', campaignLocation)
+        .eq('location', campaign.location)
         .neq('id', campaignId);
 
-      if (otherCampaignsError) {
-        console.error('❌ 다른 캠페인 확인 실패:', otherCampaignsError);
-      } else if (otherCampaigns && otherCampaigns.length > 0) {
+      if (otherCampaigns && otherCampaigns.length > 0) {
         console.log('⚠️ 같은 location을 사용하는 다른 캠페인이 있어 test_methods는 유지합니다:', otherCampaigns.length + '개');
       } else {
         console.log('🗑️ 같은 location을 사용하는 다른 캠페인이 없으므로 test_methods 삭제...');
         const { error: testMethodsError } = await supabase
           .from('test_methods')
           .delete()
-          .eq('location', campaignLocation);
+          .eq('location', campaign.location);
 
         if (testMethodsError) {
           console.error('⚠️ test_methods 삭제 실패 (무시):', testMethodsError);
-          // test_methods 삭제 실패는 무시하고 계속 진행
         } else {
           console.log('✅ test_methods 삭제 완료');
         }
       }
 
-      // 7. 캠페인 자체 삭제
+      // 7. 캠페인 자체 삭제 (seminar_slots는 CASCADE로 자동 삭제됨)
       console.log('7️⃣ 캠페인 자체 삭제 중...');
-      console.log('📍 삭제 대상 ID:', campaignId, '(타입:', typeof campaignId + ')');
-
-      const { data: deleteResult, error: deleteError, count: deleteCount } = await supabase
-        .from('seminars')
-        .delete({ count: 'exact' })
-        .eq('id', campaignId)
-        .select();
+      const { error: deleteError } = await supabase
+        .from('campaigns')
+        .delete()
+        .eq('id', campaignId);
 
       if (deleteError) {
-        console.error('❌ 캠페인 삭제 실패 - 전체 에러 객체:', deleteError);
-        console.error('에러 코드:', deleteError.code);
-        console.error('에러 메시지:', deleteError.message);
-        console.error('에러 details:', deleteError.details);
-        console.error('에러 hint:', deleteError.hint);
+        console.error('❌ 캠페인 삭제 실패:', deleteError);
         throw deleteError;
       }
 
-      console.log('📊 삭제 결과 count:', deleteCount);
-      console.log('📊 삭제된 데이터:', deleteResult);
-
-      if (!deleteCount || deleteCount === 0) {
-        console.error('⚠️ 캠페인이 삭제되지 않았습니다! (count: ' + deleteCount + ')');
-        console.error('캠페인 ID가 존재하지 않거나 이미 삭제되었을 수 있습니다.');
-
-        // 실제로 레코드가 남아있는지 재확인
-        const { data: verifyData, error: verifyError } = await supabase
-          .from('seminars')
-          .select('*')
-          .eq('id', campaignId)
-          .single();
-
-        if (verifyError && verifyError.code === 'PGRST116') {
-          console.log('✅ 캠페인이 존재하지 않음 - 삭제된 것으로 간주');
-        } else if (verifyData) {
-          console.error('❌ 캠페인이 여전히 존재합니다!', verifyData);
-          throw new Error('캠페인 삭제가 실행되었으나 레코드가 남아있습니다.');
-        }
-      }
+      console.log('✅ 캠페인 삭제 완료 (seminar_slots도 CASCADE로 자동 삭제됨)');
 
       console.log('🎉 캠페인 삭제 완료!');
 

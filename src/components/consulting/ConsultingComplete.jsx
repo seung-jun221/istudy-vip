@@ -32,17 +32,21 @@ export default function ConsultingComplete({
     const fetchTestMethod = async () => {
       setLoading(true);
 
-      // ⭐ seminars 테이블에서 campaign 정보 가져오기
-      const seminarId = reservation.linked_seminar_id;
-      if (seminarId) {
+      // ⭐ campaigns와 seminar_slots에서 test_method 가져오기
+      const campaignId = reservation.linked_seminar_id;
+      if (campaignId) {
         const { data: campaign } = await supabase
-          .from('seminars')
-          .select('test_method')
-          .eq('id', seminarId)
+          .from('campaigns')
+          .select(`
+            seminar_slots (test_method)
+          `)
+          .eq('id', campaignId)
           .single();
 
-        if (campaign?.test_method) {
-          setTestMethod(campaign.test_method);
+        // 첫 번째 슬롯의 test_method 사용
+        const testMethodFromSlot = campaign?.seminar_slots?.[0]?.test_method;
+        if (testMethodFromSlot) {
+          setTestMethod(testMethodFromSlot);
           setLoading(false);
           return;
         }
