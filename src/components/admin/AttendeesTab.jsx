@@ -2,12 +2,21 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import './AdminTabs.css';
 
-export default function AttendeesTab({ attendees, campaign }) {
+export default function AttendeesTab({ attendees, campaign, seminarSlots }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedSlotId, setSelectedSlotId] = useState(seminarSlots[0]?.id || null);
 
-  // 필터링
-  const filteredAttendees = attendees.filter((attendee) => {
+  // 선택된 슬롯 정보
+  const selectedSlot = seminarSlots.find(slot => slot.id === selectedSlotId) || seminarSlots[0];
+
+  // 선택된 슬롯의 예약자만 필터링
+  const slotAttendees = attendees.filter(
+    attendee => attendee.seminar_slot_id === selectedSlotId
+  );
+
+  // 검색 및 상태 필터링
+  const filteredAttendees = slotAttendees.filter((attendee) => {
     const matchesSearch =
       attendee.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       attendee.parent_phone?.includes(searchTerm);
@@ -17,10 +26,10 @@ export default function AttendeesTab({ attendees, campaign }) {
     return matchesSearch && matchesStatus;
   });
 
-  // 통계 계산
-  const confirmedCount = attendees.filter(a => ['예약', '참석'].includes(a.status)).length;
-  const maxCapacity = campaign?.max_capacity || 0;
-  const displayCapacity = campaign?.display_capacity || maxCapacity;
+  // 통계 계산 (선택된 슬롯 기준)
+  const confirmedCount = slotAttendees.filter(a => ['예약', '참석'].includes(a.status)).length;
+  const maxCapacity = selectedSlot?.max_capacity || 0;
+  const displayCapacity = selectedSlot?.display_capacity || maxCapacity;
   const reservationRate = maxCapacity > 0 ? Math.round((confirmedCount / maxCapacity) * 100) : 0;
 
   const formatDate = (dateStr) => {
@@ -35,8 +44,16 @@ export default function AttendeesTab({ attendees, campaign }) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
   };
 
+  const formatSlotDateTime = (date, time) => {
+    const d = new Date(date);
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const timeStr = time ? time.slice(0, 5) : '';
+    return `${month}/${day} ${timeStr}`;
+  };
+
   const handleExportExcel = () => {
-    // 엑셀 데이터 준비
+    // 엑셀 데이터 준비 (선택된 슬롯만)
     const excelData = filteredAttendees.map((attendee) => ({
       예약일시: formatDateForExcel(attendee.registered_at),
       학생명: attendee.student_name || '',
@@ -68,7 +85,8 @@ export default function AttendeesTab({ attendees, campaign }) {
     // 파일명 생성 (현재 날짜 포함)
     const today = new Date();
     const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
-    const filename = `설명회_예약자_${dateStr}.xlsx`;
+    const slotInfo = formatSlotDateTime(selectedSlot?.date, selectedSlot?.time);
+    const filename = `설명회_예약자_${slotInfo.replace(/\//g, '')}_${dateStr}.xlsx`;
 
     // 파일 다운로드
     XLSX.writeFile(workbook, filename);
@@ -76,6 +94,21 @@ export default function AttendeesTab({ attendees, campaign }) {
 
   return (
     <div className="tab-container">
+      {/* 슬롯 탭 */}
+      {seminarSlots.length > 1 && (
+        <div className="slot-tabs">
+          {seminarSlots.map((slot, index) => (
+            <button
+              key={slot.id}
+              className={`slot-tab-btn ${selectedSlotId === slot.id ? 'active' : ''}`}
+              onClick={() => setSelectedSlotId(slot.id)}
+            >
+              {index + 1}차 - {formatSlotDateTime(slot.date, slot.time)}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* 통계 정보 */}
       <div className="stats-info-bar">
         <div className="stat-info-item">
@@ -113,7 +146,7 @@ export default function AttendeesTab({ attendees, campaign }) {
           <option value="취소">취소</option>
         </select>
         <button className="btn-excel" onClick={handleExportExcel}>
-          📊 엑셀 다운로드
+          엑셀 다운로드
         </button>
       </div>
 
