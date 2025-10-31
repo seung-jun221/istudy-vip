@@ -49,14 +49,11 @@ export function ConsultingProvider({ children }) {
 
       console.log('📊 임계값:', threshold);
 
-      // ⭐ campaign_id에서 '_campaign' 접미사 제거 (UUID만 추출)
-      const cleanCampaignId = campaignId?.replace('_campaign', '') || campaignId;
-
       // 1. 해당 캠페인의 모든 컨설팅 슬롯 조회
       const { data: allSlots, error: slotsError } = await supabase
         .from('consulting_slots')
         .select('*')
-        .eq('linked_seminar_id', cleanCampaignId)
+        .eq('linked_seminar_id', campaignId) // ⭐ 원본 그대로 사용 (_campaign 포함)
         .order('date', { ascending: true })
         .order('time', { ascending: true });
 
@@ -73,7 +70,7 @@ export function ConsultingProvider({ children }) {
       const { data: reservations, error: reservationsError } = await supabase
         .from('consulting_reservations')
         .select('slot_id')
-        .eq('linked_seminar_id', cleanCampaignId)
+        .eq('linked_seminar_id', campaignId) // ⭐ 원본 그대로 사용 (_campaign 포함)
         .neq('status', 'cancelled');
 
       if (reservationsError) throw reservationsError;
@@ -244,9 +241,7 @@ export function ConsultingProvider({ children }) {
 
       // 설명회 예약자는 linked_seminar_id로, 미예약자는 location으로 검색
       if (useSeminarId) {
-        // ⭐ campaign_id에서 '_campaign' 접미사 제거 (UUID만 추출)
-        const cleanSeminarId = locationOrSeminarId?.replace('_campaign', '') || locationOrSeminarId;
-        query = query.eq('linked_seminar_id', cleanSeminarId);
+        query = query.eq('linked_seminar_id', locationOrSeminarId); // ⭐ 원본 그대로 사용 (_campaign 포함)
       } else {
         query = query.eq('location', locationOrSeminarId);
       }
@@ -307,9 +302,7 @@ export function ConsultingProvider({ children }) {
 
       // 설명회 예약자는 linked_seminar_id로, 미예약자는 location으로 검색
       if (selectedSeminarId) {
-        // ⭐ campaign_id에서 '_campaign' 접미사 제거 (UUID만 추출)
-        const cleanSeminarId = selectedSeminarId?.replace('_campaign', '') || selectedSeminarId;
-        query = query.eq('linked_seminar_id', cleanSeminarId);
+        query = query.eq('linked_seminar_id', selectedSeminarId); // ⭐ 원본 그대로 사용 (_campaign 포함)
       } else {
         query = query.eq('location', location);
       }
@@ -375,11 +368,6 @@ export function ConsultingProvider({ children }) {
         ? reservationData.password // 이미 해싱됨
         : hashPassword(reservationData.password); // 미예약자는 해싱 필요
 
-      // ⭐ campaign_id에서 '_campaign' 접미사 제거 (UUID만 추출)
-      const cleanLinkedSeminarId = reservationData.linkedSeminarId
-        ? reservationData.linkedSeminarId.replace('_campaign', '')
-        : null;
-
       const { data, error } = await supabase.rpc(
         'create_consulting_reservation',
         {
@@ -394,7 +382,7 @@ export function ConsultingProvider({ children }) {
           p_math_level: reservationData.mathLevel || '상담 시 확인',
           p_password: passwordToUse, // ⭐ 조건부 해싱 적용
           p_is_seminar_attendee: reservationData.isSeminarAttendee || false,
-          p_linked_seminar_id: cleanLinkedSeminarId, // ⭐ UUID만 전달 (_campaign 제거)
+          p_linked_seminar_id: reservationData.linkedSeminarId || null, // ⭐ 원본 그대로 전달 (_campaign 포함)
           p_privacy_consent: reservationData.privacyConsent || null,
           // ⭐ 동의 정보 추가
           p_test_deadline_agreed: reservationData.testDeadlineAgreed || false,
