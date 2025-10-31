@@ -40,7 +40,8 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
           .from('consulting_reservations')
           .select('*, consulting_slots(*)')
           .eq('parent_phone', phone)
-          .not('status', 'in', '(cancelled,auto_cancelled)') // ⭐ 취소된 예약 모두 제외
+          .neq('status', 'cancelled') // ⭐ 취소된 예약 제외
+          .neq('status', 'auto_cancelled') // ⭐ 자동 취소된 예약 제외
           .order('created_at', { ascending: false });
 
       if (consultingError) throw consultingError;
@@ -101,6 +102,9 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
         const location = seminarSlot.location;
         const campaignId = campaign?.id;
 
+        // ⭐ campaign_id에서 '_campaign' 접미사 제거 (UUID만 추출)
+        const cleanCampaignId = campaignId?.replace('_campaign', '') || null;
+
         // Context에 지역 자동 선택
         setSelectedLocation(location);
 
@@ -116,7 +120,7 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
           mathLevel: attendeeInfo.math_level,
           password: attendeeInfo.password,
           location: location, // ⭐ 원본 location 사용
-          linkedSeminarId: campaignId, // ⭐ campaign ID 사용
+          linkedSeminarId: cleanCampaignId, // ⭐ UUID만 사용 (_campaign 접미사 제거)
           isSeminarAttendee: true,
         });
       } else {
