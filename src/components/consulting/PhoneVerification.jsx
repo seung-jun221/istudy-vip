@@ -100,10 +100,7 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
 
         // ⭐ location은 원본 그대로 사용 (매핑 제거)
         const location = seminarSlot.location;
-        const campaignId = campaign?.id;
-
-        // ⭐ campaign_id에서 '_campaign' 접미사 제거 (UUID만 추출)
-        const cleanCampaignId = campaignId?.replace('_campaign', '') || null;
+        const campaignId = campaign?.id; // ⭐ 원본 그대로 유지 (_campaign 포함)
 
         // Context에 지역 자동 선택
         setSelectedLocation(location);
@@ -120,7 +117,7 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
           mathLevel: attendeeInfo.math_level,
           password: attendeeInfo.password,
           location: location, // ⭐ 원본 location 사용
-          linkedSeminarId: cleanCampaignId, // ⭐ UUID만 사용 (_campaign 접미사 제거)
+          linkedSeminarId: campaignId, // ⭐ 원본 campaign ID 사용 (_campaign 포함)
           isSeminarAttendee: true,
         });
       } else {
