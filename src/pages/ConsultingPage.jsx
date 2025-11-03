@@ -211,13 +211,21 @@ export default function ConsultingPage() {
     let testMethod = 'home'; // 기본값
 
     if (seminarId) {
-      const { data: campaign } = await supabase
-        .from('seminars')
-        .select('test_method')
+      const { data: campaign, error } = await supabase
+        .from('campaigns')
+        .select(`
+          seminar_slots (test_method)
+        `)
         .eq('id', seminarId)
         .single();
 
-      testMethod = campaign?.test_method || 'home';
+      if (error) {
+        console.error('test_method 조회 실패:', error);
+      }
+
+      // 첫 번째 슬롯의 test_method 사용
+      testMethod = campaign?.seminar_slots?.[0]?.test_method || 'home';
+      console.log('✅ test_method 확인:', testMethod, 'from campaign:', seminarId);
     }
 
     // test_method에 따라 분기
@@ -233,7 +241,9 @@ export default function ConsultingPage() {
       // 가정 테스트 - TestGuide 페이지로 리다이렉트
       window.location.href = `/test-guide?phone=${encodeURIComponent(
         reservation.parent_phone
-      )}&name=${encodeURIComponent(reservation.student_name)}&verified=true`;
+      )}&name=${encodeURIComponent(reservation.student_name)}&seminarId=${encodeURIComponent(
+        seminarId || ''
+      )}&verified=true`;
     }
   };
 

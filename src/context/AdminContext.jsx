@@ -371,6 +371,7 @@ export function AdminProvider({ children }) {
         consultingSlots: allConsultingSlots || [],
         tests: testsWithSlots || [],
         testSlots: allTestSlots || [],
+        seminarSlots: campaign.seminar_slots || [], // ⭐ 설명회 슬롯 명시적 추가
       };
     } catch (error) {
       console.error('💥 캠페인 상세 조회 실패:', error);

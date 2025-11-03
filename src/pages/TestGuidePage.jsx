@@ -33,22 +33,30 @@ export default function TestGuidePage() {
     const verifiedParam = searchParams.get('verified');
     const phoneParam = searchParams.get('phone');
     const nameParam = searchParams.get('name');
+    const seminarIdParam = searchParams.get('seminarId');
 
     if (verifiedParam === 'true' && phoneParam && nameParam) {
-      handleAutoVerify(phoneParam, nameParam);
+      handleAutoVerify(phoneParam, nameParam, seminarIdParam);
     }
   }, [searchParams]);
 
   // ⭐ 자동 인증 함수
-  const handleAutoVerify = async (phone, name) => {
+  const handleAutoVerify = async (phone, name, seminarId = null) => {
     setLoading(true);
 
     try {
-      // ⭐ 1. 기존 다운로드 이력 먼저 확인
-      const { data: existingTest } = await supabase
+      // ⭐ 1. 기존 다운로드 이력 먼저 확인 (현재 컨설팅에 대한 것만)
+      let query = supabase
         .from('test_applications')
         .select('*')
-        .eq('parent_phone', phone)
+        .eq('parent_phone', phone);
+
+      // seminarId가 있으면 해당 컨설팅에 대한 다운로드만 체크
+      if (seminarId) {
+        query = query.eq('seminar_id', seminarId);
+      }
+
+      const { data: existingTest } = await query
         .order('id', { ascending: false })
         .limit(1);
 

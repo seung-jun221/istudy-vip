@@ -69,6 +69,21 @@ export default function CampaignDetail() {
     enrolled: consultings.filter((c) => c.enrollment_status === '확정').length,
   };
 
+  // 설명회 슬롯 정보 포맷팅
+  const formatSeminarSlotsInfo = () => {
+    if (!seminarSlots || seminarSlots.length === 0) {
+      return campaign.location || '';
+    }
+
+    if (seminarSlots.length === 1) {
+      const slot = seminarSlots[0];
+      return `${formatDate(slot.date)} ${formatTime(slot.time)} | ${slot.location || campaign.location || ''}`;
+    }
+
+    // 여러 개의 슬롯이 있는 경우
+    return `${seminarSlots.length}개 일정 | ${campaign.location || ''}`;
+  };
+
   const handleLogout = () => {
     if (window.confirm('로그아웃 하시겠습니까?')) {
       logout();
@@ -91,9 +106,7 @@ export default function CampaignDetail() {
         )}
         <div className="campaign-header-info">
           <h1>{campaign.title || campaign.location}</h1>
-          <p>
-            {formatDate(campaign.date)} {formatTime(campaign.time)} | {campaign.location}
-          </p>
+          <p>{formatSeminarSlotsInfo()}</p>
         </div>
       </header>
 

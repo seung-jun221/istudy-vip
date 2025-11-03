@@ -44,7 +44,8 @@ export default function ConsultingCheck({ onBack, onResult }) {
         .from('consulting_reservations')
         .select('*, consulting_slots(*)')
         .eq('parent_phone', phone)
-        .not('status', 'in', '(cancelled,auto_cancelled)') // ⭐ 취소된 예약 모두 제외
+        .neq('status', 'cancelled') // ⭐ 취소된 예약 제외
+        .neq('status', 'auto_cancelled') // ⭐ 자동 취소된 예약 제외
         .order('created_at', { ascending: false });
 
       if (error) throw error;
