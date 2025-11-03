@@ -48,7 +48,8 @@ export default function ConsultingInfoForm({ phone, onNext, onBack }) {
         .from('consulting_reservations')
         .select('*')
         .eq('parent_phone', phone)
-        .neq('status', 'cancelled')
+        .neq('status', 'cancelled') // ⭐ 취소된 예약 제외
+        .neq('status', 'auto_cancelled') // ⭐ 자동 취소된 예약 제외
         .order('created_at', { ascending: false });
 
       if (error) throw error;
