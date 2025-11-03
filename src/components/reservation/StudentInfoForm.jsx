@@ -123,9 +123,8 @@ export default function StudentInfoForm({
       // 예약 데이터 생성 (중복 체크는 이미 2단계에서 완료!)
       const reservationData = {
         reservation_id: 'R' + Date.now(),
-        seminar_id: selectedSeminar.id, // ⭐ 레거시 호환성 유지
-        seminar_slot_id: selectedSeminar.id, // ⭐ 새 구조: seminar_slot ID
-        campaign_id: selectedSeminar.campaign_id, // ⭐ 새 구조: campaign ID
+        seminar_slot_id: selectedSeminar.id, // ⭐ seminar_slot ID
+        campaign_id: selectedSeminar.campaign_id, // ⭐ campaign ID
         student_name: formData.studentName,
         parent_phone: phone,
         school: formData.school,
