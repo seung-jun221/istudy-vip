@@ -34,20 +34,9 @@ export default function PhoneInput({
     try {
       const { data, error } = await supabase
         .from('reservations')
-        .select(
-          `
-          *,
-          seminars:seminar_id (
-            id,
-            title,
-            date,
-            time,
-            location
-          )
-        `
-        )
+        .select('*')
         .eq('parent_phone', phoneNumber)
-        .eq('seminar_id', selectedSeminar.id)
+        .eq('seminar_slot_id', selectedSeminar.id)
         .in('status', ['예약', '대기']);
 
       if (error) throw error;
@@ -56,9 +45,9 @@ export default function PhoneInput({
       if (data && data.length > 0) {
         const reservationWithSeminar = {
           ...data[0],
-          seminar_title: data[0].seminars?.title || selectedSeminar.title,
-          seminar_date: data[0].seminars?.date || selectedSeminar.date,
-          seminar_time: data[0].seminars?.time || selectedSeminar.time,
+          seminar_title: selectedSeminar.title,
+          seminar_date: selectedSeminar.date,
+          seminar_time: selectedSeminar.time,
         };
         setDuplicateReservation(reservationWithSeminar);
         return true;
