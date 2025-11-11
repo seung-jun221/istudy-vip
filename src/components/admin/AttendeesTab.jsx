@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
+import { useAdmin } from '../../context/AdminContext';
 import './AdminTabs.css';
 
-export default function AttendeesTab({ attendees, campaign, seminarSlots }) {
+export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpdate }) {
+  const { updateReservationStatus } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedSlotId, setSelectedSlotId] = useState(null);
@@ -160,6 +162,14 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots }) {
     return `${dateStr} ${time} ${slot.session_number}차`;
   };
 
+  // 상태 변경 핸들러
+  const handleStatusChange = async (reservationId, newStatus) => {
+    const success = await updateReservationStatus(reservationId, newStatus);
+    if (success && onUpdate) {
+      onUpdate(); // 데이터 새로고침
+    }
+  };
+
   return (
     <div className="tab-container">
       {/* 설명회 슬롯 선택 탭 */}
@@ -275,9 +285,28 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots }) {
                   <td>{attendee.math_level || '-'}</td>
                   <td>{attendee.parent_phone}</td>
                   <td>
-                    <span className={`status-badge status-${attendee.status}`}>
-                      {attendee.status}
-                    </span>
+                    <select
+                      value={attendee.status}
+                      onChange={(e) => handleStatusChange(attendee.id, e.target.value)}
+                      className={`status-select status-${attendee.status}`}
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        border: '1px solid #ddd',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        backgroundColor:
+                          attendee.status === '참석' ? '#d4edda' :
+                          attendee.status === '예약' ? '#d1ecf1' :
+                          attendee.status === '불참' ? '#f8d7da' :
+                          attendee.status === '취소' ? '#f5c6cb' : '#fff',
+                      }}
+                    >
+                      <option value="예약">예약</option>
+                      <option value="참석">참석</option>
+                      <option value="불참">불참</option>
+                      <option value="취소">취소</option>
+                    </select>
                   </td>
                 </tr>
               ))
