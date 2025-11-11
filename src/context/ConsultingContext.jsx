@@ -53,7 +53,7 @@ export function ConsultingProvider({ children }) {
       const { data: allSlots, error: slotsError } = await supabase
         .from('consulting_slots')
         .select('*')
-        .eq('linked_seminar_id', campaignId)
+        .eq('linked_seminar_id', campaignId) // ⭐ 원본 그대로 사용 (_campaign 포함)
         .order('date', { ascending: true })
         .order('time', { ascending: true });
 
@@ -70,7 +70,7 @@ export function ConsultingProvider({ children }) {
       const { data: reservations, error: reservationsError } = await supabase
         .from('consulting_reservations')
         .select('slot_id')
-        .eq('linked_seminar_id', campaignId)
+        .eq('linked_seminar_id', campaignId) // ⭐ 원본 그대로 사용 (_campaign 포함)
         .neq('status', 'cancelled');
 
       if (reservationsError) throw reservationsError;
@@ -241,7 +241,7 @@ export function ConsultingProvider({ children }) {
 
       // 설명회 예약자는 linked_seminar_id로, 미예약자는 location으로 검색
       if (useSeminarId) {
-        query = query.eq('linked_seminar_id', locationOrSeminarId);
+        query = query.eq('linked_seminar_id', locationOrSeminarId); // ⭐ 원본 그대로 사용 (_campaign 포함)
       } else {
         query = query.eq('location', locationOrSeminarId);
       }
@@ -302,7 +302,7 @@ export function ConsultingProvider({ children }) {
 
       // 설명회 예약자는 linked_seminar_id로, 미예약자는 location으로 검색
       if (selectedSeminarId) {
-        query = query.eq('linked_seminar_id', selectedSeminarId);
+        query = query.eq('linked_seminar_id', selectedSeminarId); // ⭐ 원본 그대로 사용 (_campaign 포함)
       } else {
         query = query.eq('location', location);
       }
@@ -382,7 +382,7 @@ export function ConsultingProvider({ children }) {
           p_math_level: reservationData.mathLevel || '상담 시 확인',
           p_password: passwordToUse, // ⭐ 조건부 해싱 적용
           p_is_seminar_attendee: reservationData.isSeminarAttendee || false,
-          p_linked_seminar_id: reservationData.linkedSeminarId || null,
+          p_linked_seminar_id: reservationData.linkedSeminarId || null, // ⭐ 원본 그대로 전달 (_campaign 포함)
           p_privacy_consent: reservationData.privacyConsent || null,
           // ⭐ 동의 정보 추가
           p_test_deadline_agreed: reservationData.testDeadlineAgreed || false,

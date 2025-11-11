@@ -271,18 +271,39 @@ export function AdminProvider({ children }) {
       }
       console.log('✅ 컨설팅 예약 수:', consultings?.length || 0);
 
-      // 3-1. 컨설팅 슬롯 정보 추가
+      // 3-1. 컨설팅 슬롯 정보 및 진단검사 정보 추가
       const consultingsWithSlots = await Promise.all(
         (consultings || []).map(async (consulting) => {
+          let result = { ...consulting };
+
+          // 슬롯 정보 추가
           if (consulting.slot_id) {
             const { data: slot } = await supabase
               .from('consulting_slots')
               .select('*')
               .eq('id', consulting.slot_id)
               .single();
-            return { ...consulting, consulting_slots: slot };
+            result.consulting_slots = slot;
           }
-          return consulting;
+
+          // 진단검사 정보 추가
+          const { data: testReservations } = await supabase
+            .from('test_reservations')
+            .select(`
+              *,
+              test_slots (
+                date,
+                time
+              )
+            `)
+            .eq('consulting_reservation_id', consulting.id)
+            .in('status', ['confirmed', '예약'])
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          result.test_reservation = testReservations?.[0] || null;
+
+          return result;
         })
       );
 
@@ -371,6 +392,7 @@ export function AdminProvider({ children }) {
         consultingSlots: allConsultingSlots || [],
         tests: testsWithSlots || [],
         testSlots: allTestSlots || [],
+        seminarSlots: campaign.seminar_slots || [], // ⭐ 설명회 슬롯 명시적 추가
       };
     } catch (error) {
       console.error('💥 캠페인 상세 조회 실패:', error);

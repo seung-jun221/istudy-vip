@@ -32,21 +32,25 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
     setLoading(true);
 
     try {
+      const today = new Date().toISOString().split('T')[0];
+
       // ========================================
-      // 1단계: 컨설팅 중복 예약 확인
+      // 1단계: 컨설팅 중복 예약 확인 (미래 날짜만)
       // ========================================
       const { data: existingReservations, error: consultingError } =
         await supabase
           .from('consulting_reservations')
-          .select('*, consulting_slots(*)')
+          .select('*, consulting_slots!inner(*)') // ⭐ inner join으로 슬롯 정보 필수
           .eq('parent_phone', phone)
-          .not('status', 'in', '(cancelled,auto_cancelled)') // ⭐ 취소된 예약 모두 제외
+          .neq('status', 'cancelled') // ⭐ 취소된 예약 제외
+          .neq('status', 'auto_cancelled') // ⭐ 자동 취소된 예약 제외
+          .gte('consulting_slots.date', today) // ⭐ 오늘 이후 예약만
           .order('created_at', { ascending: false });
 
       if (consultingError) throw consultingError;
 
       if (existingReservations && existingReservations.length > 0) {
-        // 중복 예약 있음
+        // 중복 예약 있음 (미래 날짜)
         const latest = existingReservations[0];
         const slot = latest.consulting_slots;
 
@@ -99,7 +103,7 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
 
         // ⭐ location은 원본 그대로 사용 (매핑 제거)
         const location = seminarSlot.location;
-        const campaignId = campaign?.id;
+        const campaignId = campaign?.id; // ⭐ 원본 그대로 유지 (_campaign 포함)
 
         // Context에 지역 자동 선택
         setSelectedLocation(location);
@@ -116,7 +120,7 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
           mathLevel: attendeeInfo.math_level,
           password: attendeeInfo.password,
           location: location, // ⭐ 원본 location 사용
-          linkedSeminarId: campaignId, // ⭐ campaign ID 사용
+          linkedSeminarId: campaignId, // ⭐ 원본 campaign ID 사용 (_campaign 포함)
           isSeminarAttendee: true,
         });
       } else {

@@ -76,6 +76,16 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
       // 해당 예약의 슬롯 찾기
       const slot = consultingSlots?.find((s) => s.id === consulting.slot_id);
 
+      // 진단검사 정보 포맷팅
+      let testInfo = '미예약';
+      if (consulting.test_reservation?.test_slots) {
+        const testSlot = consulting.test_reservation.test_slots;
+        const date = new Date(testSlot.date);
+        const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+        const timeStr = testSlot.time ? testSlot.time.slice(0, 5) : '';
+        testInfo = `${dateStr} ${timeStr}`;
+      }
+
       return {
         컨설팅날짜: slot?.date || '',
         컨설팅시간: formatTime(slot?.time),
@@ -85,6 +95,7 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
         학교: consulting.school || '',
         '학부모 연락처': consulting.parent_phone || '',
         '수학 선행정도': consulting.math_level || '',
+        '진단검사 예약': testInfo,
         '등록 상태': consulting.enrollment_status || '미정',
         '컨설팅 완료': consulting.consulted_at ? 'O' : 'X',
       };
@@ -103,6 +114,7 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
       { wch: 20 }, // 학교
       { wch: 15 }, // 학부모 연락처
       { wch: 15 }, // 수학 선행정도
+      { wch: 15 }, // 진단검사 예약
       { wch: 12 }, // 등록 상태
       { wch: 12 }, // 컨설팅 완료
     ];
@@ -203,32 +215,53 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
                 <div className="empty-slot">예약 없음</div>
               ) : (
                 <div className="reservations-list">
-                  {reservations.map((consulting) => (
-                    <div key={consulting.id} className="reservation-item">
-                      <div className="reservation-info">
-                        <div className="student-name">{consulting.student_name}</div>
-                        <div className="student-details">
-                          {consulting.school} · {consulting.grade} · {consulting.parent_phone}
+                  {reservations.map((consulting) => {
+                    // 진단검사 정보 포맷팅
+                    const formatTestInfo = () => {
+                      if (consulting.test_reservation?.test_slots) {
+                        const testSlot = consulting.test_reservation.test_slots;
+                        const date = new Date(testSlot.date);
+                        const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+                        const timeStr = testSlot.time ? testSlot.time.slice(0, 5) : '';
+                        return `${dateStr} ${timeStr} 진단검사 예약`;
+                      }
+                      return '진단검사 미예약';
+                    };
+
+                    return (
+                      <div key={consulting.id} className="reservation-item">
+                        <div className="reservation-info">
+                          <div className="student-name">{consulting.student_name}</div>
+                          <div className="student-details">
+                            {consulting.school} · {consulting.grade} · {consulting.parent_phone}
+                          </div>
+                          {consulting.math_level && (
+                            <div className="math-level">수학 선행: {consulting.math_level}</div>
+                          )}
+                          <div className="test-info" style={{
+                            fontSize: '13px',
+                            color: consulting.test_reservation ? '#10b981' : '#ef4444',
+                            marginTop: '4px'
+                          }}>
+                            {formatTestInfo()}
+                          </div>
                         </div>
-                        {consulting.math_level && (
-                          <div className="math-level">수학 선행: {consulting.math_level}</div>
-                        )}
+                        <div className="reservation-actions">
+                          <span
+                            className={`status-badge enrollment-${consulting.enrollment_status || '미정'}`}
+                          >
+                            {consulting.enrollment_status || '미정'}
+                          </span>
+                          <button
+                            className="btn-action"
+                            onClick={() => handleWriteResult(consulting)}
+                          >
+                            {consulting.consulted_at ? '결과 수정' : '결과 작성'}
+                          </button>
+                        </div>
                       </div>
-                      <div className="reservation-actions">
-                        <span
-                          className={`status-badge enrollment-${consulting.enrollment_status || '미정'}`}
-                        >
-                          {consulting.enrollment_status || '미정'}
-                        </span>
-                        <button
-                          className="btn-action"
-                          onClick={() => handleWriteResult(consulting)}
-                        >
-                          {consulting.consulted_at ? '결과 수정' : '결과 작성'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
