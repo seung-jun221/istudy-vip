@@ -140,7 +140,7 @@ export default function CampaignDetail() {
 
       {/* 탭 컨텐츠 */}
       <div className="tab-content">
-        {activeTab === 'attendees' && <AttendeesTab attendees={attendees} campaign={campaign} seminarSlots={seminarSlots || []} />}
+        {activeTab === 'attendees' && <AttendeesTab attendees={attendees} campaign={campaign} seminarSlots={seminarSlots || []} onUpdate={fetchCampaignDetail} />}
         {activeTab === 'consultings' && (
           <ConsultingsTab
             consultings={consultings}
