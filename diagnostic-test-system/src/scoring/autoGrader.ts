@@ -50,7 +50,7 @@ export class AutoGrader {
     // 5. 등급 계산
     const percentile = GradeCalculator.calculatePercentile(submission.testType, totalEarnedScore);
     const grade9 = GradeCalculator.calculate9Grade(submission.testType, totalEarnedScore);
-    const grade5 = GradeCalculator.convert9To5Grade(grade9);
+    const grade5 = GradeCalculator.calculate5Grade(percentile); // 2028 대입제도 개편안
     const expectedHighSchoolGrade = GradeCalculator.calculateExpectedHighSchoolGrade(submission.testType, grade9);
 
     // 6. 통계 정보

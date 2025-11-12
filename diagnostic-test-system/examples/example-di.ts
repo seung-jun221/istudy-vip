@@ -77,7 +77,7 @@ console.log('--- 종합 성적 ---');
 console.log(`총점: ${result.overallScore.earnedScore}점 / ${result.overallScore.totalScore}점`);
 console.log(`백분위: 상위 ${(100 - result.overallScore.percentile).toFixed(1)}% (${result.overallScore.percentile.toFixed(1)} percentile)`);
 console.log(`9등급제: ${result.overallScore.grade9}등급`);
-console.log(`5등급제: ${result.overallScore.grade5}등급`);
+console.log(`5등급제: ${result.overallScore.grade5}등급 (2028 대입제도 개편안)`);
 console.log(`고1 예상 등급: ${result.overallScore.expectedHighSchoolGrade}\n`);
 
 console.log('--- 영역별 성적 ---');

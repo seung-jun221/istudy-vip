@@ -90,7 +90,7 @@ export interface GradingResult {
     earnedScore: number; // 획득 점수
     percentile: number; // 백분위 (0-100)
     grade9: number; // 9등급제 (1-9)
-    grade5: string; // 5등급제 (A-E)
+    grade5: number; // 5등급제 (1-5, 2028 대입제도 개편안)
     expectedHighSchoolGrade: string; // 고1 예상 등급 (예: "2~3등급")
   };
   areaResults: AreaResult[];

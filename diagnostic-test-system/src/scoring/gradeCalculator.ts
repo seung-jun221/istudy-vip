@@ -97,14 +97,23 @@ export class GradeCalculator {
   }
 
   /**
-   * 9등급 → 5등급 변환
+   * 백분위 → 5등급 계산 (2028 대입제도 개편안)
+   * 1등급: 상위 10% (0-10%)
+   * 2등급: 상위 11~34% (누적 34%)
+   * 3등급: 상위 35~66% (누적 66%)
+   * 4등급: 상위 67~90% (누적 90%)
+   * 5등급: 상위 91~100% (누적 100%)
    */
-  static convert9To5Grade(grade9: number): string {
-    if (grade9 <= 2) return 'A';
-    if (grade9 <= 4) return 'B';
-    if (grade9 <= 6) return 'C';
-    if (grade9 <= 8) return 'D';
-    return 'E';
+  static calculate5Grade(percentile: number): number {
+    // percentile은 누적 백분위 (0-100)
+    // 상위 몇 %인지 계산
+    const topPercent = 100 - percentile;
+
+    if (topPercent <= 10) return 1;      // 상위 10%
+    if (topPercent <= 34) return 2;      // 상위 11~34%
+    if (topPercent <= 66) return 3;      // 상위 35~66%
+    if (topPercent <= 90) return 4;      // 상위 67~90%
+    return 5;                             // 상위 91~100%
   }
 
   /**

@@ -11,7 +11,12 @@
 
 ### 2. 등급 산출
 - ✅ 9등급제 환산 (1~9등급)
-- ✅ 5등급제 환산 (A~E등급)
+- ✅ 5등급제 환산 (1~5등급, 2028 대입제도 개편안)
+  - 1등급: 상위 10%
+  - 2등급: 상위 11~34%
+  - 3등급: 상위 35~66%
+  - 4등급: 상위 67~90%
+  - 5등급: 상위 91~100%
 - ✅ 백분위 계산 (정규분포 기반)
 - ✅ T-Score 계산 (영역별)
 - ✅ 고1 예상 등급 산출
@@ -96,13 +101,13 @@ import { GradeCalculator } from './src/index.js';
 const grade9 = GradeCalculator.calculate9Grade('DI', 72);
 console.log(\`9등급: \${grade9}등급\`); // 2등급
 
-// 5등급 변환
-const grade5 = GradeCalculator.convert9To5Grade(grade9);
-console.log(\`5등급: \${grade5}\`); // A등급
-
 // 백분위 계산
 const percentile = GradeCalculator.calculatePercentile('DI', 72);
 console.log(\`백분위: 상위 \${(100 - percentile).toFixed(1)}%\`);
+
+// 5등급 계산 (2028 대입제도 개편안)
+const grade5 = GradeCalculator.calculate5Grade(percentile);
+console.log(\`5등급: \${grade5}등급\`); // 1등급 (상위 10%)
 
 // T-Score 계산
 const tScore = GradeCalculator.calculateTScore('DI', '함수', 18.25);
@@ -171,7 +176,7 @@ diagnostic-test-system/
     earnedScore: 72.0,
     percentile: 92.5,
     grade9: 2,                    // 2등급
-    grade5: "A",                  // A등급
+    grade5: 1,                    // 1등급 (2028 대입제도, 상위 10%)
     expectedHighSchoolGrade: "1~2등급"
   },
   areaResults: [
