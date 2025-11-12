@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>i.study 수리탐구 진단검사 결과 보고서</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            margin: 0 auto 20px;
+            padding: 12mm 20mm 15mm 20mm;
+            page-break-after: always;
+            position: relative;
+        }
+
+        /* ============= 공통 요소 ============= */
+        .report-header {
+            border-bottom: 3px solid #2C3E50;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+
+        .report-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #2C3E50;
+            margin-bottom: 5px;
+        }
+
+        .report-subtitle {
+            font-size: 13px;
+            color: #7F8C8D;
+            font-weight: 500;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2C3E50;
+            margin: 15px 0 10px 0;
+            padding-left: 12px;
+            border-left: 4px solid #3498DB;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+
+        .info-table th {
+            background: #ECF0F1;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #2C3E50;
+            border: 1px solid #BDC3C7;
+        }
+
+        .info-table td {
+            padding: 10px;
+            border: 1px solid #BDC3C7;
+        }
+
+        /* ============= Page 1: Overview ============= */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .score-card {
+            padding: 15px 10px;
+            border-radius: 10px;
+            text-align: center;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .score-card.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .score-card.secondary {
+            background: white;
+            border: 2px solid #3498DB;
+            color: #2C3E50;
+        }
+
+        .score-label {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .score-value {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 3px;
+        }
+
+        .score-unit {
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .score-subtext {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        /* 정규분포 그래프 */
+        .distribution-section {
+            margin: 12px 0;
+            background: #FAFAFA;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .distribution-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #2C3E50;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .distribution-canvas-wrapper {
+            position: relative;
+            height: 140px;
+            margin: 0 auto;
+        }
+
+        #distributionCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* T-Score 프로필 차트 */
+        .profile-chart {
+            margin: 12px 0;
+            background: #FAFAFA;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 10px;
+            color: #7F8C8D;
+            font-weight: 600;
+        }
+
+        .chart-scale {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 0 50px;
+            font-size: 9px;
+            color: #95A5A6;
+        }
+
+        .chart-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .chart-label {
+            width: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #2C3E50;
+        }
+
+        .chart-bar-container {
+            flex: 1;
+            height: 26px;
+            background: white;
+            border: 1px solid #E0E0E0;
+            border-radius: 4px;
+            position: relative;
+            overflow: visible;
+        }
+
+        .chart-bar-container::before {
+            content: '';
+            position: absolute;
+            left: 20%;
+            right: 20%;
+            top: 0;
+            bottom: 0;
+            background: #E8F5E9;
+            z-index: 0;
+        }
+
+        .chart-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, #E74C3C 0%, #C0392B 100%);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            z-index: 1;
+        }
+
+        .chart-bar.good {
+            background: linear-gradient(90deg, #3498DB 0%, #2980B9 100%);
+        }
+
+        .chart-bar.excellent {
+            background: linear-gradient(90deg, #27AE60 0%, #229954 100%);
+        }
+
+        .chart-value {
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .t-score-table {
+            margin: 10px 0;
+            font-size: 11px;
+        }
+
+        .t-score-table th {
+            background: #34495E;
+            color: white;
+            padding: 8px;
+            font-weight: 600;
+        }
+
+        .t-score-table td {
+            padding: 6px;
+            text-align: center;
+        }
+
+        .t-score-table td.excellent {
+            background: #D5F4E6;
+            font-weight: 700;
+            color: #27AE60;
+        }
+
+        .t-score-table td.good {
+            background: #D6EAF8;
+            font-weight: 700;
+            color: #2980B9;
+        }
+
+        .t-score-table td.weak {
+            background: #FADBD8;
+            font-weight: 700;
+            color: #C0392B;
+        }
+
+        /* ============= 고교 유형별 경쟁력 ============= */
+        .school-comp-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 15px 0;
+        }
+
+        .school-comp-box {
+            background: white;
+            border: 1px solid #E8E8E8;
+            padding: 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .school-comp-box:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: #D0D0D0;
+        }
+
+        .school-comp-type {
+            font-size: 12px;
+            color: #95A5A6;
+            font-weight: 500;
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        /* 가로 배치 배지 스타일 */
+        .school-comp-badges {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge-percentile {
+            background: linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%);
+            color: #E74C3C;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid #FFCDD2;
+        }
+
+        .badge-grade {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            color: #2196F3;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid #90CAF9;
+        }
+
+        .badge-diff {
+            background: #F5F5F5;
+            color: #757575;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        /* 프로그레스 바 */
+        .school-comp-bar {
+            height: 6px;
+            background: #F5F5F5;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .school-comp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498DB 0%, #5DADE2 100%);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* 하단 부가 정보 */
+        .school-comp-footer {
+            font-size: 10px;
+            color: #B0B0B0;
+            text-align: right;
+        }
+
+        /* 기존 CSS 제거용 */
+        .school-comp-main,
+        .school-comp-percentile,
+        .school-comp-grade,
+        .school-comp-rank,
+        .school-comp-stats,
+        .school-comp-label,
+        .school-comp-value {
+            display: none;
+        }
+
+        /* ============= Page 2: 영역별 상세 ============= */
+        .area-detail-card {
+            background: #FAFAFA;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498DB;
+            page-break-inside: avoid;
+        }
+
+        .area-detail-card.weak {
+            border-left-color: #E74C3C;
+        }
+
+        .area-detail-card.excellent {
+            border-left-color: #27AE60;
+        }
+
+        .area-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .area-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #2C3E50;
+        }
+
+        .area-stats {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #7F8C8D;
+            margin-bottom: 3px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 800;
+            color: #2C3E50;
+        }
+
+        .distribution-container {
+            margin: 10px 0;
+        }
+
+        .distribution-curve {
+            height: 30px;
+            background: linear-gradient(to right, #FADBD8, #FCF3CF, #D5F4E6);
+            border-radius: 15px;
+            position: relative;
+            margin-bottom: 5px;
+        }
+
+        .distribution-marker {
+            position: absolute;
+            top: -8px;
+            transform: translateX(-50%);
+        }
+
+        .distribution-label {
+            background: #E74C3C;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .distribution-scale {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #95A5A6;
+            padding: 0 10px;
+        }
+
+        /* ============= 학습 전략 멘트 ============= */
+        .ment-box {
+            background: #FAFAFA;
+            border-left: 4px solid #3498DB;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            page-break-inside: avoid;
+        }
+
+        .ment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .ment-category {
+            background: #3498DB;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .ment-number {
+            font-size: 10px;
+            color: #95A5A6;
+        }
+
+        .ment-title {
+            font-size: 14px;
+            color: #2C3E50;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .ment-content {
+            font-size: 12px;
+            color: #555;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+
+        .ment-summary {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #3498DB;
+            border: 1px solid #E9ECEF;
+        }
+
+        /* ============= 페이지 번호 ============= */
+        .page-number {
+            position: absolute;
+            bottom: 10mm;
+            right: 20mm;
+            font-size: 11px;
+            color: #95A5A6;
+        }
+
+        /* ============= 인쇄 설정 ============= */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .page {
+                margin: 0;
+                box-shadow: none;
+                page-break-after: always;
+            }
+
+            .page:last-child {
+                page-break-after: auto;
+            }
+
+            /* 인쇄 시 색상 및 배경 강제 출력 */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            /* 그라데이션 배경 강제 출력 */
+            .score-card,
+            .score-card.primary,
+            .score-card.secondary {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* 차트 색상 강제 출력 */
+            .chart-bar,
+            .chart-bar.good,
+            .chart-bar.excellent {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* 테이블 배경 색상 강제 출력 */
+            .t-score-table td.excellent,
+            .t-score-table td.good,
+            .t-score-table td.weak,
+            .info-table th {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* 캔버스 그래프 출력 */
+            canvas {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- ==================== Page 1: 종합 결과 ==================== -->
+    <div class="page">
+        <div class="report-header">
+            <div class="report-title">i.study 수리탐구 진단검사 결과 보고서</div>
+            <div class="report-subtitle">DI 진단검사 | 중1 김민석</div>
+        </div>
+
+        <div class="section-title">01. 종합 성적 및 등급</div>
+
+        <!-- 점수, 백분위, 등급 4개 그리드 -->
+        <div class="overview-grid">
+            <div class="score-card primary">
+                <div class="score-label">원점수</div>
+                <div class="score-value">72<span class="score-unit">점</span></div>
+                <div class="score-subtext">100점 만점 / 25문항</div>
+            </div>
+            <div class="score-card secondary">
+                <div class="score-label">전국 백분위</div>
+                <div class="score-value"><span class="score-unit">상위</span> 7.5<span class="score-unit">%</span></div>
+                <div class="score-subtext">92.5 percentile</div>
+            </div>
+            <div class="score-card secondary">
+                <div class="score-label">9등급제 환산</div>
+                <div class="score-value">2<span class="score-unit">등급</span></div>
+                <div class="score-subtext">상위 4~11% (63~74점)</div>
+            </div>
+            <div class="score-card secondary">
+                <div class="score-label">5등급제 환산</div>
+                <div class="score-value">1<span class="score-unit">등급</span></div>
+                <div class="score-subtext">상위 10% (2028 대입)</div>
+            </div>
+        </div>
+
+        <!-- 정규분포 그래프 -->
+        <div class="distribution-section">
+            <div class="distribution-title">전체 수험생 점수 분포 (정규분포)</div>
+            <div class="distribution-canvas-wrapper">
+                <canvas id="distributionCanvas"></canvas>
+            </div>
+        </div>
+
+        <table class="info-table">
+            <tr>
+                <th>전국 평균</th>
+                <th>표준편차</th>
+                <th>고1 예상 등급</th>
+            </tr>
+            <tr>
+                <td style="text-align: center; font-weight: 700; color: #3498DB;">47.0점</td>
+                <td style="text-align: center; font-weight: 700; color: #3498DB;">20.0</td>
+                <td style="text-align: center; font-weight: 700; color: #E74C3C; font-size: 16px;">2~3등급</td>
+            </tr>
+        </table>
+
+        <div class="section-title">02. 자기주도 학습역량 주요 요인 프로파일</div>
+
+        <div class="profile-chart">
+            <div class="chart-header">
+                <span>T Score</span>
+                <span style="margin-left: auto;">위험 (30 이하)</span>
+                <span>주의 (30-40)</span>
+                <span>보통 (40-60)</span>
+                <span>우수 (60-70)</span>
+                <span>최상 (70 이상)</span>
+            </div>
+            
+            <div class="chart-scale">
+                <span>10</span>
+                <span>20</span>
+                <span>30</span>
+                <span>40</span>
+                <span>50</span>
+                <span>60</span>
+                <span>70</span>
+                <span>80</span>
+                <span>90</span>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-label">수와 연산</div>
+                <div class="chart-bar-container">
+                    <div class="chart-bar good" style="width: 61.7%;">
+                        <span class="chart-value">61.7</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-label">식의 계산</div>
+                <div class="chart-bar-container">
+                    <div class="chart-bar excellent" style="width: 75%;">
+                        <span class="chart-value">75.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-label">방정식</div>
+                <div class="chart-bar-container">
+                    <div class="chart-bar good" style="width: 55.8%;">
+                        <span class="chart-value">55.8</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-label">함수</div>
+                <div class="chart-bar-container">
+                    <div class="chart-bar" style="width: 32.4%;">
+                        <span class="chart-value">32.4</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <table class="t-score-table info-table">
+            <tr>
+                <th>영역</th>
+                <th>원점수</th>
+                <th>T-Score</th>
+                <th>백분위</th>
+                <th>평가</th>
+            </tr>
+            <tr>
+                <td><strong>수와 연산</strong></td>
+                <td>21.5/30.5</td>
+                <td class="good">61.7</td>
+                <td>75%</td>
+                <td class="good">우수</td>
+            </tr>
+            <tr>
+                <td><strong>식의 계산</strong></td>
+                <td>15.5/15.5</td>
+                <td class="excellent">75.0</td>
+                <td>100%</td>
+                <td class="excellent">최상</td>
+            </tr>
+            <tr>
+                <td><strong>방정식</strong></td>
+                <td>13.5/17.5</td>
+                <td class="good">55.8</td>
+                <td>75%</td>
+                <td class="good">우수</td>
+            </tr>
+            <tr>
+                <td><strong>함수</strong></td>
+                <td>21.5/36.5</td>
+                <td class="weak">32.4</td>
+                <td>44%</td>
+                <td class="weak">주의</td>
+            </tr>
+        </table>
+
+        <div class="page-number">Page 1 of 7</div>
+    </div>
+
+    <!-- ==================== Page 2: 고교 유형별 경쟁력 ==================== -->
+    <div class="page">
+        <div class="report-header">
+            <div class="report-title">i.study 수리탐구 진단검사 결과 보고서</div>
+            <div class="report-subtitle">고교 유형별 내신 경쟁력 분석</div>
+        </div>
+
+        <div class="section-title">03. 고교 유형별 내신 경쟁력 분석</div>
+
+        <div class="school-comp-grid">
+            <!-- 전사고 -->
+            <div class="school-comp-box">
+                <div class="school-comp-type">전국 자사고/특목고</div>
+                <div class="school-comp-badges">
+                    <span class="badge-percentile">상위 32%</span>
+                    <span class="badge-grade">4등급 초반</span>
+                    <span class="badge-diff">+10점</span>
+                </div>
+                <div class="school-comp-bar">
+                    <div class="school-comp-fill" style="width: 68%;"></div>
+                </div>
+                <div class="school-comp-footer">평균 62점 (표준편차 10)</div>
+            </div>
+
+            <!-- 대치 일반고 -->
+            <div class="school-comp-box">
+                <div class="school-comp-type">대치동 일반고</div>
+                <div class="school-comp-badges">
+                    <span class="badge-percentile">상위 22%</span>
+                    <span class="badge-grade">3등급</span>
+                    <span class="badge-diff">+16점</span>
+                </div>
+                <div class="school-comp-bar">
+                    <div class="school-comp-fill" style="width: 78%;"></div>
+                </div>
+                <div class="school-comp-footer">평균 56점 (표준편차 13)</div>
+            </div>
+
+            <!-- 수도권 학군지 -->
+            <div class="school-comp-box">
+                <div class="school-comp-type">수도권 학군지</div>
+                <div class="school-comp-badges">
+                    <span class="badge-percentile">상위 15%</span>
+                    <span class="badge-grade">2등급</span>
+                    <span class="badge-diff">+22점</span>
+                </div>
+                <div class="school-comp-bar">
+                    <div class="school-comp-fill" style="width: 85%;"></div>
+                </div>
+                <div class="school-comp-footer">평균 50점 (표준편차 15)</div>
+            </div>
+
+            <!-- 비학군지 -->
+            <div class="school-comp-box">
+                <div class="school-comp-type">비학군지 일반고</div>
+                <div class="school-comp-badges">
+                    <span class="badge-percentile">상위 8%</span>
+                    <span class="badge-grade">1~2등급</span>
+                    <span class="badge-diff">+30점</span>
+                </div>
+                <div class="school-comp-bar">
+                    <div class="school-comp-fill" style="width: 92%;"></div>
+                </div>
+                <div class="school-comp-footer">평균 42점 (표준편차 22)</div>
+            </div>
+        </div>
+
+        <div style="background: #FFF9E6; padding: 12px; border-radius: 6px; margin-top: 15px; border: 1px solid #F9E79F;">
+            <p style="font-size: 11px; color: #856404; line-height: 1.6; margin-bottom: 6px;">
+                <strong style="color: #3498DB;">▶ 해석 가이드:</strong><br>
+                위 분석은 2024년 고1 9월 모의고사 데이터를 기반으로 한 예상치입니다.
+                고교 유형별 평균과 표준편차를 고려하여 산출했으며, 실제 내신 등급은
+                학교별 시험 난이도와 학생 구성에 따라 달라질 수 있습니다.
+            </p>
+            <p style="font-size: 11px; color: #E74C3C; font-weight: 600; margin-top: 6px;">
+                ▶ 현재 성적 수준을 유지할 경우, 학군지 일반고에서 2등급권, 비학군지에서는 1~2등급권 내신이 예상됩니다.
+            </p>
+        </div>
+
+        <div class="section-title">04. 고1 모의고사 예상 등급</div>
+
+        <table class="info-table">
+            <tr>
+                <th style="text-align: center;">현재 진단검사 등급</th>
+                <th style="text-align: center;">고1 예상 등급</th>
+                <th style="text-align: center;">학습 조언</th>
+            </tr>
+            <tr>
+                <td style="text-align: center; font-size: 16px; font-weight: 700; color: #3498DB;">2등급</td>
+                <td style="text-align: center; font-size: 16px; font-weight: 700; color: #E74C3C;">2~3등급</td>
+                <td style="font-size: 11px; line-height: 1.6;">
+                    중난도 완벽 대응력 우수. 고난도 문제(21~25번) 집중 훈련으로 2등급 달성 가능
+                </td>
+            </tr>
+        </table>
+
+        <div class="section-title">05. 주요 대학 정시 등급컷 참고 (2024학년도)</div>
+
+        <table class="info-table">
+            <tr>
+                <th>대학</th>
+                <th>계열</th>
+                <th>수학 등급컷</th>
+            </tr>
+            <tr>
+                <td><strong>서울대</strong></td>
+                <td>자연계</td>
+                <td style="color: #E74C3C; font-weight: 700;">1등급 (88~92점)</td>
+            </tr>
+            <tr>
+                <td><strong>연세대</strong></td>
+                <td>자연계</td>
+                <td style="color: #E74C3C; font-weight: 700;">1등급 초반 (85~89점)</td>
+            </tr>
+            <tr>
+                <td><strong>고려대</strong></td>
+                <td>자연계</td>
+                <td style="color: #E67E22; font-weight: 700;">1~2등급 (82~87점)</td>
+            </tr>
+            <tr>
+                <td><strong>서강대/성균관대</strong></td>
+                <td>자연계</td>
+                <td style="color: #F39C12; font-weight: 700;">2등급 (78~83점)</td>
+            </tr>
+            <tr>
+                <td><strong>한양대/중앙대</strong></td>
+                <td>자연계</td>
+                <td style="color: #F39C12; font-weight: 700;">2~3등급 (75~80점)</td>
+            </tr>
+            <tr>
+                <td><strong>경희대/이화여대</strong></td>
+                <td>자연계</td>
+                <td style="color: #27AE60; font-weight: 700;">3등급 (70~76점)</td>
+            </tr>
+        </table>
+
+        <div style="margin-top: 10px; padding: 10px; background: #F8F9FA; border-radius: 4px;">
+            <p style="font-size: 10px; color: #7F8C8D; line-height: 1.5;">
+                ※ 위 자료는 2024학년도 수시/정시 결과를 참고한 것으로, 실제 입시 결과는 매년 변동됩니다.<br>
+                ※ SKY(서연고) 진학을 위해서는 수학 1등급이 필수이며, 중상위권 대학은 2~3등급이 요구됩니다.
+            </p>
+        </div>
+
+        <div class="page-number">Page 2 of 7</div>
+    </div>
+
+    <!-- ==================== Page 3: 영역별 상세 분석 ==================== -->
+    <div class="page">
+        <div class="report-header">
+            <div class="report-title">i.study 수리탐구 진단검사 결과 보고서</div>
+            <div class="report-subtitle">영역별 상세 분석</div>
+        </div>
+
+        <div class="section-title">06. 영역별 상세 분석</div>
+
+        <div class="area-detail-card excellent">
+            <div class="area-header">
+                <div class="area-name">식의 계산 (Algebraic Operations)</div>
+                <div class="area-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">T-Score</div>
+                        <div class="stat-value" style="color: #27AE60;">75.0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">정답률</div>
+                        <div class="stat-value" style="color: #27AE60;">100%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="distribution-container">
+                <div class="distribution-curve">
+                    <div class="distribution-marker" style="left: 75%;">
+                        <div class="distribution-label" style="background: #27AE60;">현재 위치</div>
+                    </div>
+                </div>
+                <div class="distribution-scale">
+                    <span>하위</span>
+                    <span>20%</span>
+                    <span>40%</span>
+                    <span>60%</span>
+                    <span>80%</span>
+                    <span>상위</span>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 12px; border-radius: 4px; font-size: 12px; line-height: 1.6; color: #555;">
+                <strong style="color: #27AE60;">✓ 강점 영역</strong><br>
+                단항식과 다항식의 사칙연산을 완벽하게 수행할 수 있으며, 지수법칙 적용도 정확합니다. 대수적 조작 능력이 매우 우수하여 고등 수학의 기초가 탄탄합니다.
+            </div>
+
+            <div style="margin-top: 10px; font-size: 11px; color: #7F8C8D;">
+                <strong>문항별 정답 현황:</strong> 9번 ○ | 10번 ○ | 11번 ○ | 12번 ○
+            </div>
+        </div>
+
+        <div class="area-detail-card">
+            <div class="area-header">
+                <div class="area-name">수와 연산 (Numbers and Operations)</div>
+                <div class="area-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">T-Score</div>
+                        <div class="stat-value" style="color: #3498DB;">61.7</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">정답률</div>
+                        <div class="stat-value" style="color: #3498DB;">75%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="distribution-container">
+                <div class="distribution-curve">
+                    <div class="distribution-marker" style="left: 61.7%;">
+                        <div class="distribution-label" style="background: #3498DB;">현재 위치</div>
+                    </div>
+                </div>
+                <div class="distribution-scale">
+                    <span>하위</span>
+                    <span>20%</span>
+                    <span>40%</span>
+                    <span>60%</span>
+                    <span>80%</span>
+                    <span>상위</span>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 12px; border-radius: 4px; font-size: 12px; line-height: 1.6; color: #555;">
+                유리수와 순환소수에 대한 이해가 우수합니다. 다만 복잡한 유리수 계산에서 일부 실수가 있었으니 계산 정확도 향상이 필요합니다.
+            </div>
+
+            <div style="margin-top: 10px; font-size: 11px; color: #7F8C8D;">
+                <strong>문항별 정답 현황:</strong> 1번 ○ | 2번 ○ | 3번 ✕ | 4번 ○ | 5번 ○ | 6번 ✕ | 7번 ○ | 8번 ○
+            </div>
+        </div>
+
+        <div class="area-detail-card">
+            <div class="area-header">
+                <div class="area-name">방정식 (Equations)</div>
+                <div class="area-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">T-Score</div>
+                        <div class="stat-value" style="color: #3498DB;">55.8</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">정답률</div>
+                        <div class="stat-value" style="color: #3498DB;">75%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="distribution-container">
+                <div class="distribution-curve">
+                    <div class="distribution-marker" style="left: 55.8%;">
+                        <div class="distribution-label" style="background: #3498DB;">현재 위치</div>
+                    </div>
+                </div>
+                <div class="distribution-scale">
+                    <span>하위</span>
+                    <span>20%</span>
+                    <span>40%</span>
+                    <span>60%</span>
+                    <span>80%</span>
+                    <span>상위</span>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 12px; border-radius: 4px; font-size: 12px; line-height: 1.6; color: #555;">
+                연립방정식의 기본 풀이는 우수하나, 문장제 방정식 세우기에서 약간의 어려움이 있습니다. 실생활 문제를 수식으로 전환하는 연습이 필요합니다.
+            </div>
+
+            <div style="margin-top: 10px; font-size: 11px; color: #7F8C8D;">
+                <strong>문항별 정답 현황:</strong> 13번 ○ | 14번 ○ | 15번 ✕ | 16번 ○
+            </div>
+        </div>
+
+        <div class="area-detail-card weak">
+            <div class="area-header">
+                <div class="area-name">함수 (Functions)</div>
+                <div class="area-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">T-Score</div>
+                        <div class="stat-value" style="color: #E74C3C;">32.4</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">정답률</div>
+                        <div class="stat-value" style="color: #E74C3C;">44%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="distribution-container">
+                <div class="distribution-curve">
+                    <div class="distribution-marker" style="left: 32.4%;">
+                        <div class="distribution-label">현재 위치</div>
+                    </div>
+                </div>
+                <div class="distribution-scale">
+                    <span>하위</span>
+                    <span>20%</span>
+                    <span>40%</span>
+                    <span>60%</span>
+                    <span>80%</span>
+                    <span>상위</span>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 12px; border-radius: 4px; font-size: 12px; line-height: 1.6; color: #555;">
+                <strong style="color: #E74C3C;">⚠ 집중 보완 필요</strong><br>
+                일차함수의 기본 개념은 이해하고 있으나, 그래프 해석과 활용 문제에서 어려움을 겪고 있습니다. 특히 고난도 함수 문제는 전혀 해결하지 못하고 있어 개념 재학습과 충분한 연습이 시급합니다.
+            </div>
+
+            <div style="margin-top: 10px; font-size: 11px; color: #7F8C8D;">
+                <strong>문항별 정답 현황:</strong> 17번 ○ | 18번 ○ | 19번 ○ | 20번 ○ | 21번 ✕ | 22번 ✕ | 23번 ✕ | 24번 ✕ | 25번 ✕
+            </div>
+        </div>
+
+        <div class="page-number">Page 3 of 7</div>
+    </div>
+
+    <!-- ==================== Page 4: 학습 전략 멘트 (1~3) ==================== -->
+    <div class="page">
+        <div class="report-header">
+            <div class="report-title">i.study 수리탐구 진단검사 결과 보고서</div>
+            <div class="report-subtitle">맞춤 학습 전략 가이드</div>
+        </div>
+
+        <div class="section-title">07. 맞춤 학습 전략 가이드</div>
+
+        <!-- 1. 선행 VS 심화 -->
+        <div class="ment-box">
+            <div class="ment-header">
+                <span class="ment-category">선행 VS 심화</span>
+                <span class="ment-number">#301</span>
+            </div>
+            <h4 class="ment-title">등급 상승 가능성</h4>
+            <p class="ment-content">
+                초, 중등 수학 등급이 3~4등급인 중1,2 학생들은 아직 고등 진학 전까지 충분히 고등 수학 등급을 올릴 수 있는 가능성이 있습니다. 단, 고등 수학의 경우 고1 내신시험 하나를 2등급 이내로 만들기 위해서는 최소 4~9개월의 시간이 걸리기 때문에 물리적 시간도 많이 소요되고, 학습 완성 시간의 편차도 크게 됩니다.
+            </p>
+            <div class="ment-summary">
+                <strong>핵심:</strong> 고등 진학 전 등급 상승 충분히 가능, 체계적 학습 계획 필요
+            </div>
+        </div>
+
+        <!-- 2. 수능 VS 내신 -->
+        <div class="ment-box">
+            <div class="ment-header">
+                <span class="ment-category">수능 VS 내신</span>
+                <span class="ment-number">#412</span>
+            </div>
+            <h4 class="ment-title">수능 대비 학습 전략</h4>
+            <p class="ment-content">
+                정시 목표 학생은 수능 수학 1등급이 필수입니다. 중등 시기부터 고난도 문제 풀이 능력을 길러야 하며, 특히 함수와 기하 영역의 심화 학습이 중요합니다. 현재 2등급 수준이라면, 고난도 문제(21~25번) 집중 훈련을 통해 1등급 진입이 가능합니다.
+            </p>
+            <div class="ment-summary">
+                <strong>핵심:</strong> 정시 대비는 고난도 문제 해결 능력이 핵심, 함수/기하 심화 필수
+            </div>
+        </div>
+
+        <!-- 3. 문과 VS 이과 -->
+        <div class="ment-box">
+            <div class="ment-header">
+                <span class="ment-category">문과 VS 이과</span>
+                <span class="ment-number">#523</span>
+            </div>
+            <h4 class="ment-title">계열 선택과 수학 학습</h4>
+            <p class="ment-content">
+                이과 진학을 고려한다면 중등 시기부터 수학에 더 많은 시간을 투자해야 합니다. 특히 고등 수학의 핵심인 함수, 미적분, 기하 영역의 기초를 탄탄히 다져야 합니다. 문과 진학 시에도 수능 수학 최소 2등급은 확보해야 상위권 대학 진학이 가능합니다.
+            </p>
+            <div class="ment-summary">
+                <strong>핵심:</strong> 이과는 수학 집중 투자 필수, 문과도 최소 2등급 확보 필요
+            </div>
+        </div>
+
+        <div class="page-number">Page 4 of 7</div>
+    </div>
+
+    <!-- ==================== Page 5: 학습 전략 멘트 (4~6) ==================== -->
+    <div class="page">
+        <div class="report-header">
+            <div class="report-title">i.study 수리탐구 진단검사 결과 보고서</div>
+            <div class="report-subtitle">맞춤 학습 전략 가이드 (계속)</div>
+        </div>
+
+        <div class="section-title">07. 맞춤 학습 전략 가이드 (계속)</div>
+
+        <!-- 4. 학원 VS 과외 -->
+        <div class="ment-box">
+            <div class="ment-header">
+                <span class="ment-category">학원 VS 과외</span>
+                <span class="ment-number">#324</span>
+            </div>
+            <h4 class="ment-title">학원 적응 우선</h4>
+            <p class="ment-content">
+                성적이 중위권 이상인 경우 과외보다는 학원에 적응 시키는 것을 추천 드립니다. 학원은 과외보다 학습 환경이 학교와 유사하기 때문에 '학원 학습 성취도'가 좋아지면, '학교 학습 성취도'도 무리 없이 올릴 수 있습니다. 또한 경쟁 환경 속에서 학습 동기가 더 강화됩니다.
+            </p>
+            <div class="ment-summary">
+                <strong>핵심:</strong> 중위권 이상은 학원 적응 권장, 경쟁 환경에서 동기 부여
+            </div>
+        </div>
+
+        <!-- 5. 일반 VS 몰입 -->
+        <div class="ment-box">
+            <div class="ment-header">
+                <span class="ment-category">일반 VS 몰입</span>
+                <span class="ment-number">#537</span>
+            </div>
+            <h4 class="ment-title">몰입 학습 전략</h4>
+            <p class="ment-content">
+                중1~2 시기가 상위권 도약을 할 수 있는 유일한 시기이기 때문입니다. 그동안 해 왔던 남들과 비슷한 학습으로는 절대 상위권 도약을 할 수 없습니다. 현재까지 사교육을 해 왔던 과목들 중에서 가장 등급이 잘 나오는 과목을 선택하여 '몰입 학습'을 진행 하세요. 수학에 강점이 있다면 수학에 집중하는 것이 효율적입니다.
+            </p>
+            <div class="ment-summary">
+                <strong>핵심:</strong> 중1~2 시기 상위권 도약 골든타임, 수학 몰입 학습 권장
+            </div>
+        </div>
+
+        <!-- 6. 일반 VS 특구 -->
+        <div class="ment-box">
+            <div class="ment-header">
+                <span class="ment-category">일반 VS 특구</span>
+                <span class="ment-number">#642</span>
+            </div>
+            <h4 class="ment-title">학군 특성에 따른 전략</h4>
+            <p class="ment-content">
+                특목고/강남권 학군과 일반 학군의 학습 수준 차이가 크게 납니다. 일반 학군에서 상위권이라도 특목고/강남권으로 전학 시 중하위권으로 떨어질 수 있습니다. 따라서 현재 학군 특성을 고려한 목표 설정이 중요합니다. 일반 학군에서 1~2등급을 유지한다면, 지방 거점 국립대 이상 진학이 충분히 가능합니다.
+            </p>
+            <div class="ment-summary">
+                <strong>핵심:</strong> 학군 특성 고려한 목표 설정, 일반 학군 1~2등급이면 상위권 대학 가능
+            </div>
+        </div>
+
+        <div style="background: #E7F3FF; padding: 15px; border-radius: 6px; margin-top: 15px; border: 2px solid #3498DB;">
+            <h3 style="font-size: 14px; color: #3498DB; margin-bottom: 10px; text-align: center;">
+                ▶ 종합 학습 방향 제안
+            </h3>
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 6px 0; padding-left: 20px; position: relative; font-size: 12px; color: #333; line-height: 1.6;">
+                    <span style="position: absolute; left: 0; color: #3498DB; font-weight: 700;">1.</span>
+                    <strong>단기 목표 (1~2개월):</strong> 함수 영역 집중 보완으로 80점대 진입
+                </li>
+                <li style="padding: 6px 0; padding-left: 20px; position: relative; font-size: 12px; color: #333; line-height: 1.6;">
+                    <span style="position: absolute; left: 0; color: #3498DB; font-weight: 700;">2.</span>
+                    <strong>중기 목표 (3~6개월):</strong> 고난도 문제(21~25번) 2~3개 정답으로 1등급 진입
+                </li>
+                <li style="padding: 6px 0; padding-left: 20px; position: relative; font-size: 12px; color: #333; line-height: 1.6;">
+                    <span style="position: absolute; left: 0; color: #3498DB; font-weight: 700;">3.</span>
+                    <strong>장기 목표 (고1 대비):</strong> 고등 수학 선행과 심화 학습 병행으로 고1 모의고사 1~2등급 확보
+                </li>
+            </ul>
+        </div>
+
+        <div class="page-number">Page 5 of 7</div>
+    </div>
+
+    <!-- ==================== Page 6: 난이도별 분석 ==================== -->
+    <div class="page">
+        <div class="report-header">
+            <div class="report-title">i.study 수리탐구 진단검사 결과 보고서</div>
+            <div class="report-subtitle">난이도별 분석</div>
+        </div>
+
+        <div class="section-title">08. 난이도별 정답률 분석</div>
+
+        <table class="info-table">
+            <tr>
+                <th style="width: 30%;">난이도</th>
+                <th style="width: 20%;">정답률</th>
+                <th style="width: 25%;">정답 수</th>
+                <th>평가</th>
+            </tr>
+            <tr>
+                <td><strong>하난도 (1~10번)</strong></td>
+                <td style="text-align: center; font-size: 18px; font-weight: 700; color: #F39C12;">80%</td>
+                <td style="text-align: center;">8/10</td>
+                <td style="font-size: 11px;">기본 개념 이해 우수. 2문항 실수 주의</td>
+            </tr>
+            <tr>
+                <td><strong>중난도 (11~20번)</strong></td>
+                <td style="text-align: center; font-size: 18px; font-weight: 700; color: #27AE60;">100%</td>
+                <td style="text-align: center;">10/10</td>
+                <td style="font-size: 11px;">완벽한 중급 문제 해결 능력</td>
+            </tr>
+            <tr>
+                <td><strong>고난도 (21~25번)</strong></td>
+                <td style="text-align: center; font-size: 18px; font-weight: 700; color: #E74C3C;">0%</td>
+                <td style="text-align: center;">0/5</td>
+                <td style="font-size: 11px;">집중 훈련 필요. 1등급 진입의 핵심</td>
+            </tr>
+        </table>
+
+        <div style="background: #FFF3E0; padding: 15px; border-radius: 6px; margin-top: 15px; border: 1px solid #FFB74D;">
+            <p style="font-size: 12px; color: #E65100; line-height: 1.7;">
+                <strong>▶ 난이도별 학습 전략:</strong><br>
+                • <strong style="color: #27AE60;">중난도 완벽 대응</strong> - 기본 개념과 중급 문제 해결 능력이 탄탄합니다!<br>
+                • <strong style="color: #E74C3C;">고난도 0%</strong> - 1등급 진입을 위해서는 21~25번 고난도 문제 집중 훈련이 필수입니다.<br>
+                • 고난도 문제 5개 중 2~3개만 맞혀도 <strong>+10~15점</strong>으로 <strong>1등급 진입</strong> 가능!
+            </p>
+        </div>
+
+        <div class="section-title">09. 문항별 정답 현황</div>
+
+        <div style="background: #FAFAFA; padding: 15px; border-radius: 6px; margin-bottom: 12px;">
+            <h4 style="font-size: 13px; color: #27AE60; font-weight: 700; margin-bottom: 8px;">[수와 연산] (1~8번) - 6/8 정답 (75%)</h4>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">①○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">②○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #FADBD8; border: 2px solid #E74C3C; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #E74C3C;">③✕</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">④○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑤○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #FADBD8; border: 2px solid #E74C3C; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #E74C3C;">⑥✕</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑦○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑧○</span>
+            </div>
+        </div>
+
+        <div style="background: #FAFAFA; padding: 15px; border-radius: 6px; margin-bottom: 12px;">
+            <h4 style="font-size: 13px; color: #27AE60; font-weight: 700; margin-bottom: 8px;">[식의 계산] (9~12번) - 4/4 정답 (100%)</h4>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑨○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑩○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑪○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑫○</span>
+            </div>
+        </div>
+
+        <div style="background: #FAFAFA; padding: 15px; border-radius: 6px; margin-bottom: 12px;">
+            <h4 style="font-size: 13px; color: #F39C12; font-weight: 700; margin-bottom: 8px;">[방정식] (13~16번) - 3/4 정답 (75%)</h4>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑬○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑭○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #FADBD8; border: 2px solid #E74C3C; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #E74C3C;">⑮✕</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑯○</span>
+            </div>
+        </div>
+
+        <div style="background: #FAFAFA; padding: 15px; border-radius: 6px;">
+            <h4 style="font-size: 13px; color: #E74C3C; font-weight: 700; margin-bottom: 8px;">[함수] (17~25번) - 4/9 정답 (44%)</h4>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑰○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑱○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑲○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #27AE60;">⑳○</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #FADBD8; border: 2px solid #E74C3C; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #E74C3C;">㉑✕</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #FADBD8; border: 2px solid #E74C3C; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #E74C3C;">㉒✕</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #FADBD8; border: 2px solid #E74C3C; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #E74C3C;">㉓✕</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #FADBD8; border: 2px solid #E74C3C; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #E74C3C;">㉔✕</span>
+                <span style="display: inline-block; width: 32px; height: 32px; background: #FADBD8; border: 2px solid #E74C3C; border-radius: 4px; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #E74C3C;">㉕✕</span>
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background: #FFF9E6; border-radius: 4px; border-left: 3px solid #E74C3C;">
+                <p style="font-size: 11px; color: #856404; line-height: 1.6;">
+                    <strong>▶ 오답 집중 분석:</strong> 함수 영역의 고난도 문제(21~25번) 전체 오답. 일차함수 그래프 해석, 대칭 활용, 수직이등분선, 삼각형 넓이 문제 유형별 집중 훈련이 시급합니다.
+                </p>
+            </div>
+        </div>
+
+        <div class="page-number">Page 6 of 7</div>
+    </div>
+
+    <!-- ==================== Page 7: 학습 로드맵 ==================== -->
+    <div class="page">
+        <div class="report-header">
+            <div class="report-title">i.study 수리탐구 진단검사 결과 보고서</div>
+            <div class="report-subtitle">3개월 맞춤 학습 로드맵</div>
+        </div>
+
+        <div class="section-title">10. 3개월 맞춤 학습 로드맵</div>
+
+        <div class="ment-box" style="border-left-color: #3498DB;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <h4 style="font-size: 14px; color: #2C3E50; font-weight: 700;">1단계 (1~2개월): 취약 영역 집중 보완</h4>
+            </div>
+            <ul style="list-style: none; padding: 0; font-size: 12px; color: #555; line-height: 1.7;">
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #3498DB;">▸</span>
+                    <strong>함수 영역</strong> 개념 재학습 및 기본 문제 완벽 소화
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #3498DB;">▸</span>
+                    일차함수 그래프 해석 문제 반복 훈련 (17~20번 유형)
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #3498DB;">▸</span>
+                    취약 문항 유형 (3, 6, 15번) 집중 반복
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #3498DB;">▸</span>
+                    주 3회 학원 수업 + 주 2회 복습
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative; color: #E74C3C; font-weight: 600; margin-top: 5px;">
+                    <span style="position: absolute; left: 0;">✓</span>
+                    예상 득점 향상: +10~15점 (82~87점)
+                </li>
+            </ul>
+        </div>
+
+        <div class="ment-box" style="border-left-color: #27AE60;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <h4 style="font-size: 14px; color: #2C3E50; font-weight: 700;">2단계 (2~3개월): 고난도 문제 도전</h4>
+            </div>
+            <ul style="list-style: none; padding: 0; font-size: 12px; color: #555; line-height: 1.7;">
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #27AE60;">▸</span>
+                    고난도 사고력 문제 (21~25번) 유형별 훈련
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #27AE60;">▸</span>
+                    대칭 활용 문제, 수직이등분선, 삼각형 넓이 문제 집중
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #27AE60;">▸</span>
+                    실전 모의고사 월 2회 응시 (시간 관리 훈련)
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #27AE60;">▸</span>
+                    틀린 문제 오답노트 정리 및 재풀이
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative; color: #E74C3C; font-weight: 600; margin-top: 5px;">
+                    <span style="position: absolute; left: 0;">✓</span>
+                    예상 득점 향상: +5~10점 (87~92점)
+                </li>
+            </ul>
+        </div>
+
+        <div class="ment-box" style="border-left-color: #F39C12;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <h4 style="font-size: 14px; color: #2C3E50; font-weight: 700;">3단계 (3개월 이후): 고등 선행 준비</h4>
+            </div>
+            <ul style="list-style: none; padding: 0; font-size: 12px; color: #555; line-height: 1.7;">
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #F39C12;">▸</span>
+                    중2 전 과정 완벽 마스터
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #F39C12;">▸</span>
+                    고등 수학 선행 시작 (수학 상)
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #F39C12;">▸</span>
+                    경시대회 기출문제 도전
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative;">
+                    <span style="position: absolute; left: 0; color: #F39C12;">▸</span>
+                    심화 사고력 문제집 병행 학습
+                </li>
+                <li style="padding: 5px 0; padding-left: 15px; position: relative; color: #E74C3C; font-weight: 600; margin-top: 5px;">
+                    <span style="position: absolute; left: 0;">✓</span>
+                    목표: 고1 모의고사 1등급 진입
+                </li>
+            </ul>
+        </div>
+
+        <div style="background: white; border: 3px solid #3498DB; padding: 20px; border-radius: 8px; margin-top: 20px; text-align: center;">
+            <div style="font-size: 13px; color: #7F8C8D; margin-bottom: 8px; font-weight: 600;">최종 목표</div>
+            <div style="font-size: 18px; font-weight: 700; color: #2C3E50; line-height: 1.5;">
+                진단검사 <span style="color: #E74C3C;">88점 이상 (1등급)</span><br>
+                <span style="font-size: 16px; color: #7F8C8D;">+</span><br>
+                고1 모의고사 <span style="color: #3498DB;">1~2등급 달성!</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; padding: 15px; background: #FFF9E6; border-radius: 6px; border: 1px solid #F9E79F;">
+            <h4 style="font-size: 13px; color: #856404; margin-bottom: 10px;">▶ 진단검사 해석 가이드</h4>
+            <p style="font-size: 11px; color: #856404; line-height: 1.6; margin-bottom: 8px;">
+                본 진단검사는 고등과정 적응력 측정 목적으로, 일반 학교 시험보다 높은 난이도로 출제되었습니다.
+            </p>
+            <div style="padding-left: 15px; margin: 8px 0;">
+                <div style="font-size: 10px; color: #856404; margin: 3px 0;">• 일반 학교 시험 평균: 70점대</div>
+                <div style="font-size: 10px; color: #856404; margin: 3px 0;">• 고1 9월 모의고사 평균: 43~45점</div>
+                <div style="font-size: 10px; color: #856404; margin: 3px 0;">• 본 진단검사(DI) 평균: 47점 (예상)</div>
+            </div>
+            <p style="font-size: 11px; color: #E74C3C; font-weight: 600; margin-top: 8px;">
+                ▶ 예상 등급은 현재 실력 기준이며, 체계적이고 꾸준한 학습을 통해 충분히 향상 가능합니다!
+            </p>
+        </div>
+
+        <div style="margin-top: 15px; text-align: center; padding: 12px; background: #F8F9FA; border-radius: 6px;">
+            <p style="font-size: 11px; color: #7F8C8D;">
+                <strong>발행:</strong> i.study 수리탐구<br>
+                <strong>문의:</strong> 02-XXXX-XXXX | info@istudy.com
+            </p>
+        </div>
+
+        <div class="page-number">Page 7 of 7</div>
+    </div>
+
+    <script>
+        // 정규분포 그래프 그리기
+        function drawDistribution() {
+            const canvas = document.getElementById('distributionCanvas');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width = canvas.offsetWidth * 2; // Retina 대응
+            const height = canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+            
+            const actualWidth = width / 2;
+            const actualHeight = height / 2;
+            
+            // DI 기준: 평균 47점, 표준편차 20점
+            const mean = 47;
+            const stdDev = 20;
+            
+            // 정규분포 함수
+            function normalDist(x, mean, stdDev) {
+                const coefficient = 1 / (stdDev * Math.sqrt(2 * Math.PI));
+                const exponent = -Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2));
+                return coefficient * Math.exp(exponent);
+            }
+            
+            // 최대값 계산 (정규화용)
+            const maxY = normalDist(mean, mean, stdDev);
+            
+            // 그래프 그리기
+            ctx.clearRect(0, 0, actualWidth, actualHeight);
+            
+            // 배경 영역 채우기
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.08)';
+            ctx.beginPath();
+            ctx.moveTo(0, actualHeight - 25);
+            
+            for (let x = 0; x <= 100; x += 0.3) {
+                const px = (x / 100) * actualWidth;
+                const y = normalDist(x, mean, stdDev);
+                const py = actualHeight - 25 - ((y / maxY) * (actualHeight - 40));
+                ctx.lineTo(px, py);
+            }
+            
+            ctx.lineTo(actualWidth, actualHeight - 25);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 곡선 그리기
+            ctx.strokeStyle = '#3498DB';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            
+            for (let x = 0; x <= 100; x += 0.3) {
+                const px = (x / 100) * actualWidth;
+                const y = normalDist(x, mean, stdDev);
+                const py = actualHeight - 25 - ((y / maxY) * (actualHeight - 40));
+                
+                if (x === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+            ctx.stroke();
+            
+            // X축
+            ctx.strokeStyle = '#BDC3C7';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, actualHeight - 25);
+            ctx.lineTo(actualWidth, actualHeight - 25);
+            ctx.stroke();
+            
+            // X축 레이블
+            ctx.fillStyle = '#7F8C8D';
+            ctx.font = '10px "Noto Sans KR"';
+            ctx.textAlign = 'center';
+            
+            const labels = [0, 20, 40, 60, 80, 100];
+            labels.forEach(label => {
+                const x = (label / 100) * actualWidth;
+                ctx.fillText(label, x, actualHeight - 8);
+            });
+            
+            // 평균 표시
+            const meanX = (mean / 100) * actualWidth;
+            ctx.strokeStyle = '#F39C12';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(meanX, 15);
+            ctx.lineTo(meanX, actualHeight - 25);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#F39C12';
+            ctx.font = 'bold 10px "Noto Sans KR"';
+            ctx.fillText('평균: ' + mean + '점', meanX, 10);
+            
+            // 학생 점수 표시 (72점)
+            const studentScore = 72;
+            const studentX = (studentScore / 100) * actualWidth;
+            ctx.strokeStyle = '#E74C3C';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(studentX, 15);
+            ctx.lineTo(studentX, actualHeight - 25);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#E74C3C';
+            ctx.font = 'bold 10px "Noto Sans KR"';
+            ctx.fillText('내 점수: ' + studentScore + '점', studentX, 10);
+        }
+        
+        // 페이지 로드 시 그래프 그리기
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(drawDistribution, 100);
+            });
+        } else {
+            setTimeout(drawDistribution, 100);
+        }
+        
+        window.addEventListener('resize', function() {
+            setTimeout(drawDistribution, 100);
+        });
+    </script>
+</body>
+</html>
