@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import {
@@ -35,7 +35,7 @@ export default function DiagnosticGrading() {
   const [result, setResult] = useState(null);
 
   // 시험 목록 로드
-  useState(() => {
+  useEffect(() => {
     loadTests();
   }, []);
 
