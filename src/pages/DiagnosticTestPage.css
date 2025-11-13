@@ -1,0 +1,165 @@
+.diagnostic-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem 1rem;
+}
+
+.diagnostic-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.diagnostic-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+
+.diagnostic-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
+}
+
+.diagnostic-subtitle {
+  font-size: 1rem;
+  margin: 0;
+  opacity: 0.95;
+  line-height: 1.6;
+}
+
+/* 진행 단계 바 */
+.progress-bar {
+  display: flex;
+  align-items: center;
+  padding: 2rem;
+  background: #f8f9fa;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s;
+}
+
+.step-label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.progress-step.active .step-number {
+  background: #667eea;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.progress-step.active .step-label {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.progress-step.completed .step-number {
+  background: #4caf50;
+  color: white;
+}
+
+.progress-step.completed .step-label {
+  color: #4caf50;
+}
+
+.progress-line {
+  flex: 1;
+  height: 2px;
+  background: #e0e0e0;
+  margin: 0 1rem;
+  margin-bottom: 2rem;
+}
+
+.progress-step.completed ~ .progress-line {
+  background: #4caf50;
+}
+
+/* 컨텐츠 영역 */
+.diagnostic-content {
+  padding: 2.5rem 2rem;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .diagnostic-page {
+    padding: 1rem 0.5rem;
+  }
+
+  .diagnostic-container {
+    border-radius: 12px;
+  }
+
+  .diagnostic-header {
+    padding: 2rem 1.5rem;
+  }
+
+  .diagnostic-title {
+    font-size: 1.5rem;
+  }
+
+  .diagnostic-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .progress-bar {
+    padding: 1.5rem 1rem;
+  }
+
+  .step-number {
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
+  }
+
+  .step-label {
+    font-size: 0.75rem;
+  }
+
+  .progress-line {
+    margin: 0 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .diagnostic-content {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .step-label {
+    display: none;
+  }
+
+  .progress-line {
+    margin: 0 0.25rem;
+  }
+}
