@@ -172,33 +172,88 @@ export default function DiagnosticGrading() {
     TRI: { grade: '중3-1 + 공통수학1', emoji: '📙', color: '#ff9800' },
   };
 
+  const steps = [
+    { id: 'info', label: '학생 정보', icon: '👤' },
+    { id: 'test-select', label: '시험 선택', icon: '📋' },
+    { id: 'grading', label: '채점', icon: '✏️' },
+    { id: 'result', label: '완료', icon: '✓' }
+  ];
+
+  const getCurrentStepIndex = () => {
+    return steps.findIndex(step => step.id === currentStep);
+  };
+
+  const getStepStatus = (stepIndex) => {
+    const currentIndex = getCurrentStepIndex();
+    if (stepIndex < currentIndex) return 'completed';
+    if (stepIndex === currentIndex) return 'active';
+    return 'pending';
+  };
+
   return (
     <div className="diagnostic-grading-page">
       <div className="grading-container">
         {/* 헤더 */}
         <header className="grading-header">
-          <Button variant="secondary" onClick={() => navigate('/admin/campaigns')}>
-            ← 관리자 페이지로
-          </Button>
-          <h1 className="grading-title">진단검사 수동 채점</h1>
-          <p className="grading-subtitle">
-            학생이 지필로 응시한 진단검사를 수동으로 채점할 수 있습니다.
-          </p>
+          <div className="header-top">
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/admin/campaigns')}
+              className="back-button"
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="back-icon">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              관리자 페이지로
+            </Button>
+          </div>
+          <div className="header-content">
+            <div className="header-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 5H7C6.46957 5 5.96086 5.21071 5.58579 5.58579C5.21071 5.96086 5 6.46957 5 7V19C5 19.5304 5.21071 20.0391 5.58579 20.4142C5.96086 20.7893 6.46957 21 7 21H17C17.5304 21 18.0391 20.7893 18.4142 20.4142C18.7893 20.0391 19 19.5304 19 19V7C19 6.46957 18.7893 5.96086 18.4142 5.58579C18.0391 5.21071 17.5304 5 17 5H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9 5C9 4.46957 9.21071 3.96086 9.58579 3.58579C9.96086 3.21071 10.4696 3 11 3H13C13.5304 3 14.0391 3.21071 14.4142 3.58579C14.7893 3.96086 15 4.46957 15 5C15 5.53043 14.7893 6.03914 14.4142 6.41421C14.0391 6.78929 13.5304 7 13 7H11C10.4696 7 9.96086 6.78929 9.58579 6.41421C9.21071 6.03914 9 5.53043 9 5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9 12H15M9 16H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="header-text">
+              <h1 className="grading-title">진단검사 수동 채점</h1>
+              <p className="grading-subtitle">
+                학생이 지필로 응시한 진단검사를 수동으로 채점할 수 있습니다
+              </p>
+            </div>
+          </div>
+          <div className="header-decoration"></div>
         </header>
 
         {/* 진행 단계 */}
-        <div className="progress-bar">
-          <div className={`progress-step ${currentStep === 'info' ? 'active' : ''}`}>
-            1. 학생 정보
-          </div>
-          <div className={`progress-step ${currentStep === 'test-select' ? 'active' : ''}`}>
-            2. 시험 선택
-          </div>
-          <div className={`progress-step ${currentStep === 'grading' ? 'active' : ''}`}>
-            3. 채점
-          </div>
-          <div className={`progress-step ${currentStep === 'result' ? 'active' : ''}`}>
-            4. 완료
+        <div className="progress-section">
+          <div className="progress-bar-container">
+            <div className="progress-bar-bg">
+              <div
+                className="progress-bar-fill"
+                style={{ width: `${(getCurrentStepIndex() / (steps.length - 1)) * 100}%` }}
+              ></div>
+            </div>
+            <div className="progress-steps">
+              {steps.map((step, index) => (
+                <div key={step.id} className="progress-step-wrapper">
+                  <div className={`progress-step ${getStepStatus(index)}`}>
+                    <div className="step-indicator">
+                      <div className="step-number">{index + 1}</div>
+                      <div className="step-check">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="step-label">
+                      <span className="step-icon">{step.icon}</span>
+                      <span className="step-text">{step.label}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

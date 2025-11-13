@@ -1,3 +1,4 @@
+/* ===== 페이지 레이아웃 ===== */
 .diagnostic-grading-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
@@ -5,19 +6,19 @@
 }
 
 .grading-container {
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 0 auto;
   background: white;
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  animation: slideUp 0.4s ease-out;
+  animation: fadeInUp 0.5s ease-out;
 }
 
-@keyframes slideUp {
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -25,89 +26,320 @@
   }
 }
 
+/* ===== 헤더 ===== */
 .grading-header {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
   color: white;
-  padding: var(--spacing-2xl);
+  padding: 2rem 2.5rem 3rem;
   position: relative;
   overflow: hidden;
 }
 
-.grading-header::before {
-  content: '';
+.header-decoration {
   position: absolute;
-  top: -50%;
-  right: -10%;
+  top: -100px;
+  right: -100px;
   width: 300px;
   height: 300px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.header-decoration::after {
+  content: '';
+  position: absolute;
+  top: 50px;
+  left: 50px;
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 50%;
 }
 
+.header-top {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 1.5rem;
+}
+
+.back-button {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  padding: 0.625rem 1.25rem !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  transition: all 0.2s !important;
+  backdrop-filter: blur(10px);
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: translateX(-2px);
+}
+
+.back-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.header-icon svg {
+  width: 32px;
+  height: 32px;
+  color: white;
+}
+
+.header-text {
+  flex: 1;
+}
+
 .grading-title {
-  font-size: var(--font-size-2xl);
+  font-size: 2rem;
   font-weight: 700;
-  margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+  margin: 0 0 0.5rem 0;
   letter-spacing: -0.02em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 1;
 }
 
 .grading-subtitle {
-  font-size: var(--font-size-base);
+  font-size: 1rem;
   margin: 0;
   opacity: 0.95;
-  line-height: 1.6;
+  line-height: 1.5;
+  font-weight: 400;
   position: relative;
   z-index: 1;
 }
 
-/* 진행 바 */
-.progress-bar {
-  display: flex;
-  background: var(--color-gray-50);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  gap: var(--spacing-xs);
+/* ===== 진행 섹션 ===== */
+.progress-section {
+  padding: 3rem 2.5rem 2.5rem;
+  background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
 }
 
-.progress-step {
-  flex: 1;
-  text-align: center;
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-gray-400);
-  border-radius: var(--radius-md);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.progress-bar-container {
   position: relative;
 }
 
-.progress-step::after {
-  content: '';
+/* 진행 바 배경 */
+.progress-bar-bg {
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 3px;
-  background: var(--color-primary);
-  transition: width 0.3s ease;
+  top: 28px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #e0e0e0;
+  border-radius: 2px;
+  overflow: hidden;
 }
 
-.progress-step.active {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%);
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+}
+
+/* 진행 스텝들 */
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+.progress-step-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+
+/* 스텝 인디케이터 (원형) */
+.step-indicator {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  z-index: 2;
+}
+
+.step-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #999;
+  transition: all 0.3s;
+}
+
+.step-check {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.step-check svg {
+  width: 28px;
+  height: 28px;
   color: white;
-  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
-  transform: translateY(-2px);
 }
 
-.progress-step.active::after {
-  width: 80%;
+/* 스텝 라벨 */
+.step-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
 }
 
-/* 채점 단계 */
+.step-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: all 0.3s;
+  opacity: 0.7;
+}
+
+.step-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #666;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+/* ===== 스텝 상태별 스타일 ===== */
+
+/* Pending (대기 중) */
+.progress-step.pending .step-indicator {
+  border-color: #e0e0e0;
+  background: white;
+}
+
+.progress-step.pending .step-number {
+  color: #999;
+}
+
+.progress-step.pending .step-icon {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+.progress-step.pending .step-text {
+  color: #999;
+}
+
+/* Active (진행 중) */
+.progress-step.active .step-indicator {
+  border-color: var(--color-secondary);
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.3);
+  transform: scale(1.1);
+}
+
+.progress-step.active .step-number {
+  color: white;
+  transform: scale(1.1);
+}
+
+.progress-step.active .step-icon {
+  opacity: 1;
+  transform: scale(1.1);
+  filter: grayscale(0);
+}
+
+.progress-step.active .step-text {
+  color: var(--color-secondary);
+  font-weight: 700;
+}
+
+/* Completed (완료) */
+.progress-step.completed .step-indicator {
+  border-color: #4caf50;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.progress-step.completed .step-number {
+  opacity: 0;
+  transform: scale(0);
+}
+
+.progress-step.completed .step-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.progress-step.completed .step-icon {
+  opacity: 1;
+  filter: grayscale(0);
+}
+
+.progress-step.completed .step-text {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+/* ===== 채점 단계 컨텐츠 ===== */
 .grading-step {
-  padding: 2.5rem 2rem;
+  padding: 2.5rem;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .step-title {
@@ -153,14 +385,14 @@
 }
 
 .form-select:focus {
-  border-color: #1a73e8;
-  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
 /* 시험 그리드 */
 .test-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -168,31 +400,48 @@
 .test-card {
   padding: 2rem 1.5rem;
   border: 2px solid #e0e0e0;
-  border-radius: 12px;
+  border-radius: 16px;
   background: white;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.test-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
 .test-card:hover {
-  border-color: #1a73e8;
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(26, 115, 232, 0.15);
+  border-color: var(--color-secondary);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.15);
+}
+
+.test-card:hover::before {
+  opacity: 1;
 }
 
 .test-emoji {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2rem;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .test-name {
@@ -200,12 +449,16 @@
   font-weight: 700;
   color: #333;
   margin: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .test-grade {
   font-size: 0.9rem;
   font-weight: 600;
   margin: 0;
+  position: relative;
+  z-index: 1;
 }
 
 /* 채점 정보 */
@@ -216,20 +469,27 @@
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
   gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
 }
 
 .grading-stats {
   display: flex;
-  gap: 1.5rem;
-  font-size: 0.95rem;
+  gap: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #666;
+  flex-wrap: wrap;
 }
 
 .grading-stats span {
   padding: 0.5rem 1rem;
-  background: #f8f9fa;
-  border-radius: 20px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 /* 빠른 액션 */
@@ -237,20 +497,21 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
 /* 문항 그리드 */
 .question-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .question-button {
   aspect-ratio: 1;
-  border: 2px solid var(--color-gray-200);
-  border-radius: var(--radius-md);
+  border: 2.5px solid var(--color-gray-200);
+  border-radius: 12px;
   background: white;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -274,7 +535,7 @@
 
 .question-button:hover {
   transform: scale(1.08) translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .question-button:hover::before {
@@ -282,25 +543,26 @@
 }
 
 .question-button.unmarked {
-  border-color: var(--color-gray-200);
-  background: var(--color-gray-50);
+  border-color: #d0d0d0;
+  background: #fafafa;
 }
 
 .question-button.correct {
-  border-color: var(--color-success);
-  background: linear-gradient(135deg, var(--color-success-light) 0%, #d4edda 100%);
+  border-color: #4caf50;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
   box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
 }
 
 .question-button.wrong {
-  border-color: var(--color-error);
-  background: linear-gradient(135deg, var(--color-error-light) 0%, #f8d7da 100%);
-  box-shadow: 0 2px 8px rgba(233, 78, 61, 0.2);
+  border-color: #f44336;
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.2);
 }
 
 .question-number {
   font-size: 0.8rem;
   color: #666;
+  font-weight: 600;
 }
 
 .question-mark {
@@ -325,6 +587,10 @@
   color: #666;
   text-align: center;
   margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 3px solid var(--color-secondary);
 }
 
 /* 버튼 그룹 */
@@ -332,10 +598,12 @@
   display: flex;
   gap: 1rem;
   margin-top: 2rem;
+  flex-wrap: wrap;
 }
 
 .button-group button {
   flex: 1;
+  min-width: 200px;
   padding: 1rem;
   font-size: 1rem;
   font-weight: 600;
@@ -344,13 +612,14 @@
 /* 결과 */
 .success-badge {
   display: inline-block;
-  padding: 0.5rem 1.25rem;
+  padding: 0.625rem 1.5rem;
   background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
   color: white;
-  border-radius: 20px;
-  font-size: 0.9rem;
+  border-radius: 24px;
+  font-size: 0.95rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 .result-summary {
@@ -361,27 +630,30 @@
 }
 
 .result-item {
-  padding: 1.25rem;
-  background: #f8f9fa;
-  border-radius: 10px;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 12px;
   text-align: center;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .result-label {
   font-size: 0.85rem;
   color: #666;
   margin-bottom: 0.5rem;
+  font-weight: 600;
 }
 
 .result-value {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #333;
+  color: var(--color-secondary);
 }
 
 .info-box {
-  background: #e3f2fd;
-  border: 2px solid #2196f3;
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+  border: 2px solid var(--color-secondary);
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -389,34 +661,72 @@
 
 .info-box p {
   font-size: 0.95rem;
-  color: #0d47a1;
+  color: #5b21b6;
   margin: 0.5rem 0;
+  font-weight: 500;
 }
 
+/* ===== 반응형 (태블릿) ===== */
 @media (max-width: 768px) {
   .diagnostic-grading-page {
     padding: 1rem 0.5rem;
   }
 
   .grading-container {
-    border-radius: 12px;
+    border-radius: 16px;
   }
 
   .grading-header {
-    padding: 1.5rem;
+    padding: 1.5rem 1.5rem 2rem;
+  }
+
+  .header-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+  }
+
+  .header-icon svg {
+    width: 28px;
+    height: 28px;
   }
 
   .grading-title {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
   }
 
-  .progress-bar {
-    padding: 1rem;
+  .grading-subtitle {
+    font-size: 0.9rem;
   }
 
-  .progress-step {
-    font-size: 0.75rem;
-    padding: 0.5rem 0.25rem;
+  .progress-section {
+    padding: 2rem 1.5rem 2rem;
+  }
+
+  .step-indicator {
+    width: 48px;
+    height: 48px;
+  }
+
+  .progress-bar-bg {
+    top: 24px;
+  }
+
+  .step-number {
+    font-size: 1.1rem;
+  }
+
+  .step-check svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .step-icon {
+    font-size: 1.1rem;
+  }
+
+  .step-text {
+    font-size: 0.8rem;
   }
 
   .grading-step {
@@ -429,8 +739,6 @@
   }
 
   .grading-stats {
-    flex-direction: column;
-    gap: 0.5rem;
     width: 100%;
   }
 
@@ -450,11 +758,116 @@
   .button-group {
     flex-direction: column;
   }
+
+  .button-group button {
+    width: 100%;
+  }
 }
 
+/* ===== 반응형 (모바일) ===== */
 @media (max-width: 480px) {
+  .diagnostic-grading-page {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .grading-container {
+    border-radius: 12px;
+  }
+
+  .grading-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .header-content {
+    gap: 1rem;
+  }
+
+  .header-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+
+  .header-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .grading-title {
+    font-size: 1.25rem;
+  }
+
+  .grading-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .progress-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .step-indicator {
+    width: 40px;
+    height: 40px;
+    border-width: 2px;
+  }
+
+  .progress-bar-bg {
+    top: 20px;
+    height: 3px;
+  }
+
+  .step-number {
+    font-size: 1rem;
+  }
+
+  .step-check svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .step-icon {
+    font-size: 1rem;
+  }
+
+  .step-text {
+    font-size: 0.7rem;
+  }
+
+  .progress-step.active .step-indicator {
+    transform: scale(1.05);
+  }
+
+  .grading-step {
+    padding: 1.5rem 1rem;
+  }
+
   .question-grid {
     grid-template-columns: repeat(5, 1fr);
     gap: 0.5rem;
+  }
+
+  .question-button {
+    border-width: 2px;
+  }
+}
+
+/* 매우 작은 화면에서 라벨 숨기기 */
+@media (max-width: 380px) {
+  .step-icon {
+    display: none;
+  }
+
+  .step-text {
+    font-size: 0.65rem;
+  }
+
+  .back-button {
+    font-size: 0.8rem !important;
+    padding: 0.5rem 1rem !important;
+  }
+
+  .back-icon {
+    width: 16px;
+    height: 16px;
   }
 }
