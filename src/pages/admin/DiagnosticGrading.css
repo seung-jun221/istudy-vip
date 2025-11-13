@@ -28,115 +28,51 @@
 
 /* ===== 헤더 ===== */
 .grading-header {
-  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 2rem 2.5rem 3rem;
+  padding: 2rem 2.5rem;
+  text-align: center;
   position: relative;
-  overflow: hidden;
-}
-
-.header-decoration {
-  position: absolute;
-  top: -100px;
-  right: -100px;
-  width: 300px;
-  height: 300px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.header-decoration::after {
-  content: '';
-  position: absolute;
-  top: 50px;
-  left: 50px;
-  width: 200px;
-  height: 200px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 50%;
 }
 
 .header-top {
   position: relative;
-  z-index: 1;
   margin-bottom: 1.5rem;
+  text-align: left;
 }
 
 .back-button {
   display: inline-flex !important;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.15) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
   color: white !important;
   padding: 0.625rem 1.25rem !important;
   font-size: 0.9rem !important;
   font-weight: 600 !important;
-  border-radius: 10px !important;
+  border-radius: 8px !important;
   transition: all 0.2s !important;
-  backdrop-filter: blur(10px);
 }
 
 .back-button:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
-  transform: translateX(-2px);
-}
-
-.back-icon {
-  width: 18px;
-  height: 18px;
-}
-
-.header-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.header-icon {
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.header-icon svg {
-  width: 32px;
-  height: 32px;
-  color: white;
-}
-
-.header-text {
-  flex: 1;
+  background: rgba(255, 255, 255, 0.3) !important;
 }
 
 .grading-title {
   font-size: 2rem;
   font-weight: 700;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.75rem 0;
   letter-spacing: -0.02em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 1;
 }
 
 .grading-subtitle {
   font-size: 1rem;
-  margin: 0;
+  margin: 0 auto;
   opacity: 0.95;
   line-height: 1.5;
   font-weight: 400;
-  position: relative;
-  z-index: 1;
+  max-width: 600px;
 }
 
 /* ===== 진행 섹션 ===== */
@@ -163,10 +99,9 @@
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%);
+  background: #4caf50;
   border-radius: 2px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+  transition: width 0.5s ease;
 }
 
 /* 진행 스텝들 */
@@ -202,7 +137,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   z-index: 2;
 }
@@ -222,12 +157,9 @@
   justify-content: center;
   opacity: 0;
   transform: scale(0);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.step-check svg {
-  width: 28px;
-  height: 28px;
+  transition: all 0.3s ease;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: white;
 }
 
@@ -278,33 +210,30 @@
 
 /* Active (진행 중) */
 .progress-step.active .step-indicator {
-  border-color: var(--color-secondary);
-  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
-  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.3);
-  transform: scale(1.1);
+  border-color: #667eea;
+  background: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .progress-step.active .step-number {
   color: white;
-  transform: scale(1.1);
 }
 
 .progress-step.active .step-icon {
   opacity: 1;
-  transform: scale(1.1);
   filter: grayscale(0);
 }
 
 .progress-step.active .step-text {
-  color: var(--color-secondary);
+  color: #667eea;
   font-weight: 700;
 }
 
 /* Completed (완료) */
 .progress-step.completed .step-indicator {
   border-color: #4caf50;
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  background: #4caf50;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 }
 
 .progress-step.completed .step-number {
@@ -400,35 +329,19 @@
 .test-card {
   padding: 2rem 1.5rem;
   border: 2px solid #e0e0e0;
-  border-radius: 16px;
+  border-radius: 12px;
   background: white;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.test-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, transparent 100%);
-  opacity: 0;
-  transition: opacity 0.3s;
 }
 
 .test-card:hover {
-  border-color: var(--color-secondary);
-  transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.15);
-}
-
-.test-card:hover::before {
-  opacity: 1;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
 }
 
 .test-emoji {
@@ -440,8 +353,6 @@
   justify-content: center;
   font-size: 2rem;
   margin: 0 auto;
-  position: relative;
-  z-index: 1;
 }
 
 .test-name {
@@ -449,16 +360,12 @@
   font-weight: 700;
   color: #333;
   margin: 0;
-  position: relative;
-  z-index: 1;
 }
 
 .test-grade {
   font-size: 0.9rem;
   font-weight: 600;
   margin: 0;
-  position: relative;
-  z-index: 1;
 }
 
 /* 채점 정보 */
@@ -470,7 +377,7 @@
   flex-wrap: wrap;
   gap: 1rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  background: #f8f9fa;
   border-radius: 12px;
   border: 1px solid #e9ecef;
 }
@@ -510,36 +417,20 @@
 
 .question-button {
   aspect-ratio: 1;
-  border: 2.5px solid var(--color-gray-200);
-  border-radius: 12px;
+  border: 2.5px solid #e0e0e0;
+  border-radius: 10px;
   background: white;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.question-button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 100%);
-  opacity: 0;
-  transition: opacity 0.2s;
 }
 
 .question-button:hover {
-  transform: scale(1.08) translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.question-button:hover::before {
-  opacity: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .question-button.unmarked {
@@ -549,14 +440,12 @@
 
 .question-button.correct {
   border-color: #4caf50;
-  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+  background: #e8f5e9;
 }
 
 .question-button.wrong {
   border-color: #f44336;
-  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.2);
+  background: #ffebee;
 }
 
 .question-number {
@@ -613,13 +502,12 @@
 .success-badge {
   display: inline-block;
   padding: 0.625rem 1.5rem;
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  background: #4caf50;
   color: white;
-  border-radius: 24px;
+  border-radius: 20px;
   font-size: 0.95rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 .result-summary {
@@ -631,11 +519,10 @@
 
 .result-item {
   padding: 1.5rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  background: #f8f9fa;
   border-radius: 12px;
   text-align: center;
   border: 1px solid #e9ecef;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .result-label {
@@ -648,12 +535,12 @@
 .result-value {
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--color-secondary);
+  color: #667eea;
 }
 
 .info-box {
-  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-  border: 2px solid var(--color-secondary);
+  background: #f3e8ff;
+  border: 2px solid #667eea;
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -831,10 +718,6 @@
 
   .step-text {
     font-size: 0.7rem;
-  }
-
-  .progress-step.active .step-indicator {
-    transform: scale(1.05);
   }
 
   .grading-step {

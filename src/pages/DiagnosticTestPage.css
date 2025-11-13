@@ -28,72 +28,17 @@
 
 /* ===== 헤더 ===== */
 .diagnostic-header {
-  background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 3rem 2.5rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.header-decoration {
-  position: absolute;
-  top: -100px;
-  right: -100px;
-  width: 300px;
-  height: 300px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.header-decoration::after {
-  content: '';
-  position: absolute;
-  top: 50px;
-  left: 50px;
-  width: 200px;
-  height: 200px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 50%;
-}
-
-.header-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.header-icon {
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.header-icon svg {
-  width: 32px;
-  height: 32px;
-  color: white;
-}
-
-.header-text {
-  flex: 1;
+  padding: 2.5rem 2rem;
+  text-align: center;
 }
 
 .diagnostic-title {
   font-size: 2rem;
   font-weight: 700;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.75rem 0;
   letter-spacing: -0.02em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .diagnostic-subtitle {
@@ -102,6 +47,8 @@
   opacity: 0.95;
   line-height: 1.5;
   font-weight: 400;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 /* ===== 진행 섹션 ===== */
@@ -128,10 +75,9 @@
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%);
+  background: #4caf50;
   border-radius: 2px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+  transition: width 0.5s ease;
 }
 
 /* 진행 스텝들 */
@@ -167,7 +113,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   z-index: 2;
 }
@@ -187,12 +133,9 @@
   justify-content: center;
   opacity: 0;
   transform: scale(0);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.step-check svg {
-  width: 28px;
-  height: 28px;
+  transition: all 0.3s ease;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: white;
 }
 
@@ -243,33 +186,30 @@
 
 /* Active (진행 중) */
 .progress-step.active .step-indicator {
-  border-color: #1a73e8;
-  background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
-  box-shadow: 0 4px 16px rgba(26, 115, 232, 0.3);
-  transform: scale(1.1);
+  border-color: #667eea;
+  background: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .progress-step.active .step-number {
   color: white;
-  transform: scale(1.1);
 }
 
 .progress-step.active .step-icon {
   opacity: 1;
-  transform: scale(1.1);
   filter: grayscale(0);
 }
 
 .progress-step.active .step-text {
-  color: #1a73e8;
+  color: #667eea;
   font-weight: 700;
 }
 
 /* Completed (완료) */
 .progress-step.completed .step-indicator {
   border-color: #4caf50;
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  background: #4caf50;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 }
 
 .progress-step.completed .step-number {
@@ -442,10 +382,6 @@
 
   .step-text {
     font-size: 0.7rem;
-  }
-
-  .progress-step.active .step-indicator {
-    transform: scale(1.05);
   }
 
   .diagnostic-content {
