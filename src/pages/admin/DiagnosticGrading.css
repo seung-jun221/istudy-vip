@@ -26,7 +26,7 @@
 }
 
 .grading-header {
-  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: white;
   padding: var(--spacing-2xl);
   position: relative;
@@ -90,14 +90,14 @@
   transform: translateX(-50%);
   width: 0;
   height: 3px;
-  background: var(--color-secondary);
+  background: var(--color-primary);
   transition: width 0.3s ease;
 }
 
 .progress-step.active {
-  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
   transform: translateY(-2px);
 }
 
@@ -153,8 +153,8 @@
 }
 
 .form-select:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
 }
 
 /* 시험 그리드 */
@@ -179,9 +179,9 @@
 }
 
 .test-card:hover {
-  border-color: #667eea;
+  border-color: #1a73e8;
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 8px 24px rgba(26, 115, 232, 0.15);
 }
 
 .test-emoji {

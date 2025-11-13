@@ -1,6 +1,6 @@
 .diagnostic-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
   padding: 2rem 1rem;
 }
 
@@ -14,7 +14,7 @@
 }
 
 .diagnostic-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
   color: white;
   padding: 2.5rem 2rem;
   text-align: center;
@@ -37,7 +37,8 @@
 .progress-bar {
   display: flex;
   align-items: center;
-  padding: 2rem;
+  justify-content: center;
+  padding: 2rem 1.5rem;
   background: #f8f9fa;
 }
 
@@ -50,8 +51,8 @@
 }
 
 .step-number {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: #e0e0e0;
   color: #999;
@@ -59,26 +60,27 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   margin-bottom: 0.5rem;
   transition: all 0.3s;
 }
 
 .step-label {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #666;
   font-weight: 500;
   transition: all 0.3s;
+  white-space: nowrap;
 }
 
 .progress-step.active .step-number {
-  background: #667eea;
+  background: #1a73e8;
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
 }
 
 .progress-step.active .step-label {
-  color: #667eea;
+  color: #1a73e8;
   font-weight: 600;
 }
 
@@ -92,10 +94,11 @@
 }
 
 .progress-line {
-  flex: 1;
-  height: 2px;
+  flex: 0.5;
+  max-width: 80px;
+  height: 3px;
   background: #e0e0e0;
-  margin: 0 1rem;
+  margin: 0 0.75rem;
   margin-bottom: 2rem;
 }
 
