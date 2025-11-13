@@ -1,70 +1,88 @@
-/* 캠페인 목록 - 기존 사이트 스타일 적용 */
+/* 캠페인 목록 - 관리자 페이지 전문 디자인 */
 .campaign-list-container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
 }
 
 .campaign-list-container .admin-header {
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
-  padding: 20px 0;
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+  border: none;
+  padding: var(--spacing-xl) 0;
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.campaign-list-container .admin-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
 }
 
 .campaign-list-container .admin-header-content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--spacing-xl);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .campaign-list-container .admin-header-title {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-lg);
 }
 
 .campaign-list-container .admin-logo {
   height: 40px;
   width: auto;
+  filter: brightness(0) invert(1);
 }
 
 .campaign-list-container .admin-header h1 {
-  font-size: 26px;
+  font-size: var(--font-size-3xl);
   font-weight: 700;
-  color: #1a73e8;
+  color: white;
   margin: 0;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .campaign-list-container .admin-header-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-md);
 }
 
 .campaign-list-container .campaign-list-content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: var(--spacing-2xl) var(--spacing-xl);
 }
 
 .campaign-list-container .loading-state,
 .campaign-list-container .empty-state {
   text-align: center;
-  padding: 80px 20px;
-  color: #666;
+  padding: 80px var(--spacing-xl);
+  color: var(--color-gray-500);
 }
 
 .campaign-list-container .spinner {
   width: 40px;
   height: 40px;
-  margin: 0 auto 16px;
-  border: 3px solid #f3f3f3;
-  border-top-color: #1a73e8;
+  margin: 0 auto var(--spacing-lg);
+  border: 3px solid var(--color-gray-200);
+  border-top-color: var(--color-secondary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -78,123 +96,164 @@
 .campaign-list-container .campaign-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 24px;
+  gap: var(--spacing-xl);
 }
 
 .campaign-list-container .campaign-card {
   background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.campaign-list-container .campaign-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 
 .campaign-list-container .campaign-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.15);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.campaign-list-container .campaign-card:hover::before {
+  opacity: 1;
 }
 
 /* 종료된 캠페인 스타일 */
 .campaign-list-container .campaign-card-inactive {
-  background: #f5f5f5;
+  background: var(--color-gray-50);
   opacity: 0.7;
-  transform: scale(0.95);
+  transform: scale(0.98);
+}
+
+.campaign-list-container .campaign-card-inactive::before {
+  background: var(--color-gray-400);
 }
 
 .campaign-list-container .campaign-card-inactive:hover {
-  transform: scale(0.95) translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: scale(0.98) translateY(-2px);
+  box-shadow: var(--shadow-md);
   opacity: 0.85;
 }
 
 .campaign-list-container .campaign-card-inactive .campaign-title {
-  color: #666;
+  color: var(--color-gray-500);
 }
 
 .campaign-list-container .campaign-card-inactive .stat-value,
 .campaign-list-container .campaign-card-inactive .info-value {
-  color: #888;
+  color: var(--color-gray-500);
 }
 
 .campaign-list-container .campaign-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #f5f5f5;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 2px solid var(--color-gray-100);
 }
 
 .campaign-list-container .campaign-title {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   font-weight: 700;
-  color: #333;
+  color: var(--color-gray-700);
+  letter-spacing: -0.01em;
 }
 
 .campaign-list-container .campaign-status {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: 0.25rem 0.875rem;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .campaign-list-container .campaign-status.active {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: linear-gradient(135deg, var(--color-success-light) 0%, #d4edda 100%);
+  color: var(--color-success);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
 }
 
 .campaign-list-container .campaign-status.inactive {
-  background: #ffebee;
-  color: #E94E3D;
+  background: linear-gradient(135deg, var(--color-error-light) 0%, #f8d7da 100%);
+  color: var(--color-error);
+  box-shadow: 0 2px 8px rgba(233, 78, 61, 0.2);
 }
 
 .campaign-list-container .campaign-info {
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-lg);
 }
 
 .campaign-list-container .info-row {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
-  font-size: 14px;
+  padding: var(--spacing-sm) 0;
+  font-size: var(--font-size-sm);
 }
 
 .campaign-list-container .info-label {
-  color: #666;
+  color: var(--color-gray-500);
 }
 
 .campaign-list-container .info-value {
-  color: #333;
-  font-weight: 500;
+  color: var(--color-gray-700);
+  font-weight: 600;
 }
 
 .campaign-list-container .campaign-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-  padding: 16px;
-  background: #f5f5f5;
-  border-radius: 8px;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: var(--color-gray-50);
+  border-radius: var(--radius-md);
 }
 
 .campaign-list-container .stat-item {
   text-align: center;
+  padding: var(--spacing-sm) 0;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.campaign-list-container .stat-item:hover {
+  background: white;
 }
 
 .campaign-list-container .stat-item.highlight {
-  background: #1a73e8;
-  border-radius: 8px;
-  padding: 8px 0;
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) 0;
   color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.campaign-list-container .stat-item.highlight:hover {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+  transform: scale(1.05);
 }
 
 .campaign-list-container .stat-value {
-  font-size: 24px;
+  font-size: var(--font-size-3xl);
   font-weight: 700;
-  color: #333;
-  margin-bottom: 4px;
+  color: var(--color-gray-700);
+  margin-bottom: 0.25rem;
+  line-height: 1;
 }
 
 .campaign-list-container .stat-item.highlight .stat-value {
@@ -202,8 +261,8 @@
 }
 
 .campaign-list-container .stat-label {
-  font-size: 11px;
-  color: #666;
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
   font-weight: 500;
 }
 
@@ -213,43 +272,87 @@
 
 .campaign-list-container .campaign-card-footer {
   text-align: right;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-gray-100);
 }
 
 .campaign-list-container .btn-link {
   background: none;
   border: none;
-  color: #1a73e8;
-  font-size: 14px;
+  color: var(--color-secondary);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   padding: 0;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.campaign-list-container .btn-link::after {
+  content: ' →';
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.campaign-list-container .btn-link:hover {
+  color: var(--color-secondary-dark);
+}
+
+.campaign-list-container .btn-link:hover::after {
+  transform: translateX(4px);
 }
 
 .campaign-list-container .btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 0.625rem var(--spacing-xl);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.3s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .campaign-list-container .btn-secondary {
-  background: #edf2f7;
-  color: #333;
+  background: white;
+  color: var(--color-secondary);
+  border: 2px solid var(--color-secondary);
+  box-shadow: var(--shadow-sm);
 }
 
 .campaign-list-container .btn-secondary:hover {
-  background: #e2e8f0;
+  background: var(--color-secondary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .campaign-list-container .btn-outline {
   background: white;
-  color: #666;
-  border: 1px solid #ddd;
+  color: var(--color-gray-600);
+  border: 2px solid var(--color-gray-300);
+  box-shadow: var(--shadow-sm);
 }
 
 .campaign-list-container .btn-outline:hover {
-  background: #f5f5f5;
+  background: var(--color-gray-100);
+  border-color: var(--color-gray-400);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .campaign-list-container .admin-header {
+    padding: var(--spacing-lg) 0;
+  }
+
+  .campaign-list-container .admin-header h1 {
+    font-size: var(--font-size-2xl);
+  }
+
+  .campaign-list-container .campaign-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-list-container .campaign-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
