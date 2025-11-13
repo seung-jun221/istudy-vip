@@ -16,6 +16,7 @@ import DiagnosticTestPage from './pages/DiagnosticTestPage';
 import AdminLogin from './pages/admin/AdminLogin';
 import CampaignList from './pages/admin/CampaignList';
 import CampaignDetail from './pages/admin/CampaignDetail';
+import DiagnosticGrading from './pages/admin/DiagnosticGrading';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import Loading from './components/common/Loading';
 import Toast from './components/common/Toast';
@@ -74,6 +75,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <CampaignDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/diagnostic-grading"
+          element={
+            <ProtectedRoute>
+              <DiagnosticGrading />
             </ProtectedRoute>
           }
         />
