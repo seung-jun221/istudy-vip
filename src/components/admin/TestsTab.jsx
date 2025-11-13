@@ -1,9 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
+import { getAllResultsByPhone } from '../../utils/diagnosticService';
 import './AdminTabs.css';
 
 export default function TestsTab({ tests, testSlots }) {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [resultsMap, setResultsMap] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  // 각 예약자의 제출 결과 로드
+  useEffect(() => {
+    loadAllResults();
+  }, [tests]);
+
+  const loadAllResults = async () => {
+    if (tests.length === 0) return;
+
+    setLoading(true);
+    const newResultsMap = {};
+
+    // 각 예약자의 전화번호로 결과 조회
+    for (const test of tests) {
+      try {
+        const results = await getAllResultsByPhone(test.parent_phone);
+        if (results && results.length > 0) {
+          // 가장 최근 결과 사용
+          newResultsMap[test.id] = results[0];
+        }
+      } catch (error) {
+        console.error(`결과 로드 실패 (${test.parent_phone}):`, error);
+      }
+    }
+
+    setResultsMap(newResultsMap);
+    setLoading(false);
+  };
 
   // 필터링
   const filteredTests = tests.filter((test) => {
@@ -112,9 +145,18 @@ export default function TestsTab({ tests, testSlots }) {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <button className="btn-excel" onClick={handleExportExcel}>
-          📊 엑셀 다운로드
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/admin/diagnostic-grading')}
+            style={{ background: '#667eea', borderColor: '#667eea' }}
+          >
+            ✏️ 수동 채점하기
+          </button>
+          <button className="btn-excel" onClick={handleExportExcel}>
+            📊 엑셀 다운로드
+          </button>
+        </div>
       </div>
 
       {/* 테이블 */}
@@ -130,30 +172,75 @@ export default function TestsTab({ tests, testSlots }) {
               <th>진단검사 날짜</th>
               <th>진단검사 시간</th>
               <th>지점</th>
+              <th>제출 여부</th>
+              <th>점수</th>
+              <th>성적 조회</th>
             </tr>
           </thead>
           <tbody>
             {filteredTests.length === 0 ? (
               <tr>
-                <td colSpan="8" className="empty-cell">
+                <td colSpan="11" className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
             ) : (
-              filteredTests.map((test) => (
-                <tr key={test.id}>
-                  <td className="highlight-cell">{test.student_name}</td>
-                  <td>{test.grade || '-'}</td>
-                  <td>{test.school || '-'}</td>
-                  <td>{test.math_level || '-'}</td>
-                  <td>{test.parent_phone}</td>
-                  <td>{formatTestDate(test.test_date)}</td>
-                  <td>
-                    {test.test_slots?.time ? test.test_slots.time.slice(0, 5) : '-'}
-                  </td>
-                  <td>{test.location || '-'}</td>
-                </tr>
-              ))
+              filteredTests.map((test) => {
+                const result = resultsMap[test.id];
+                const hasResult = !!result;
+
+                return (
+                  <tr key={test.id}>
+                    <td className="highlight-cell">{test.student_name}</td>
+                    <td>{test.grade || '-'}</td>
+                    <td>{test.school || '-'}</td>
+                    <td>{test.math_level || '-'}</td>
+                    <td>{test.parent_phone}</td>
+                    <td>{formatTestDate(test.test_date)}</td>
+                    <td>
+                      {test.test_slots?.time ? test.test_slots.time.slice(0, 5) : '-'}
+                    </td>
+                    <td>{test.location || '-'}</td>
+                    <td>
+                      {hasResult ? (
+                        <span style={{ color: '#4caf50', fontWeight: '600' }}>✓ 제출됨</span>
+                      ) : (
+                        <span style={{ color: '#999' }}>미제출</span>
+                      )}
+                    </td>
+                    <td>
+                      {hasResult ? (
+                        <strong style={{ color: '#667eea' }}>
+                          {result.total_score.toFixed(1)}점
+                        </strong>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td>
+                      {hasResult ? (
+                        <button
+                          className="btn-small"
+                          onClick={() => window.open(`/diagnostic-report/${result.id}`, '_blank')}
+                          style={{
+                            padding: '0.4rem 0.8rem',
+                            fontSize: '0.85rem',
+                            background: '#667eea',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          📊 리포트 보기
+                        </button>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
