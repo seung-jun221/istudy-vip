@@ -1,115 +1,76 @@
 /* ===== 페이지 레이아웃 ===== */
 .diagnostic-grading-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
-  padding: var(--spacing-xl) var(--spacing-md);
+  background: #f5f7fa;
+  padding: 24px;
 }
 
 .grading-container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  animation: fadeInUp 0.5s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* ===== 헤더 ===== */
 .grading-header {
-  background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
-  color: white;
-  padding: 2rem 2.5rem;
-  text-align: center;
-  position: relative;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .header-top {
-  position: relative;
-  margin-bottom: 1.5rem;
-  text-align: left;
+  margin-bottom: 16px;
 }
 
 .back-button {
   display: inline-flex !important;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.2) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  color: white !important;
-  padding: 0.625rem 1.25rem !important;
-  font-size: 0.9rem !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
-  border-radius: 8px !important;
-  transition: all 0.2s !important;
+  border-radius: 6px !important;
+  background: white !important;
+  border: 1px solid #ddd !important;
+  color: #666 !important;
+  cursor: pointer;
+  transition: all 0.3s !important;
 }
 
 .back-button:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
+  background: #f5f5f5 !important;
+  border-color: #1a73e8 !important;
+  color: #1a73e8 !important;
 }
 
 .grading-title {
-  font-size: 2rem;
+  font-size: 24px;
   font-weight: 700;
-  margin: 0 0 0.75rem 0;
-  letter-spacing: -0.02em;
+  margin: 0 0 8px 0;
+  color: #333;
 }
 
 .grading-subtitle {
-  font-size: 1rem;
-  margin: 0 auto;
-  opacity: 0.95;
+  font-size: 14px;
+  margin: 0;
+  color: #666;
   line-height: 1.5;
-  font-weight: 400;
-  max-width: 600px;
 }
 
 /* ===== 진행 섹션 ===== */
 .progress-section {
-  padding: 3rem 2.5rem 2.5rem;
-  background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.progress-bar-container {
-  position: relative;
-}
-
-/* 진행 바 배경 */
-.progress-bar-bg {
-  position: absolute;
-  top: 28px;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: #e0e0e0;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-bar-fill {
-  height: 100%;
-  background: #4caf50;
-  border-radius: 2px;
-  transition: width 0.5s ease;
-}
-
-/* 진행 스텝들 */
 .progress-steps {
   display: flex;
   justify-content: space-between;
   position: relative;
-  z-index: 1;
 }
 
 .progress-step-wrapper {
@@ -122,43 +83,36 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  position: relative;
+  gap: 8px;
 }
 
-/* 스텝 인디케이터 (원형) */
+/* 스텝 인디케이터 */
 .step-indicator {
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: white;
-  border: 3px solid #e0e0e0;
+  background: #f5f5f5;
+  border: 2px solid #ddd;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  z-index: 2;
 }
 
 .step-number {
-  font-size: 1.25rem;
+  font-size: 16px;
   font-weight: 700;
   color: #999;
-  transition: all 0.3s;
 }
 
 .step-check {
   position: absolute;
   inset: 0;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transform: scale(0);
-  transition: all 0.3s ease;
-  font-size: 1.5rem;
+  font-size: 18px;
   font-weight: 700;
   color: white;
 }
@@ -168,22 +122,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 4px;
   text-align: center;
 }
 
 .step-icon {
-  font-size: 1.25rem;
+  font-size: 16px;
   line-height: 1;
-  transition: all 0.3s;
-  opacity: 0.7;
 }
 
 .step-text {
-  font-size: 0.875rem;
+  font-size: 13px;
   font-weight: 600;
   color: #666;
-  transition: all 0.3s;
   white-space: nowrap;
 }
 
@@ -191,20 +142,11 @@
 
 /* Pending (대기 중) */
 .progress-step.pending .step-indicator {
-  border-color: #e0e0e0;
-  background: white;
+  border-color: #ddd;
+  background: #f5f5f5;
 }
 
 .progress-step.pending .step-number {
-  color: #999;
-}
-
-.progress-step.pending .step-icon {
-  opacity: 0.5;
-  filter: grayscale(1);
-}
-
-.progress-step.pending .step-text {
   color: #999;
 }
 
@@ -212,16 +154,10 @@
 .progress-step.active .step-indicator {
   border-color: #1a73e8;
   background: #1a73e8;
-  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
 }
 
 .progress-step.active .step-number {
   color: white;
-}
-
-.progress-step.active .step-icon {
-  opacity: 1;
-  filter: grayscale(0);
 }
 
 .progress-step.active .step-text {
@@ -231,51 +167,35 @@
 
 /* Completed (완료) */
 .progress-step.completed .step-indicator {
-  border-color: #4caf50;
-  background: #4caf50;
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  border-color: #10a37f;
+  background: #10a37f;
 }
 
 .progress-step.completed .step-number {
-  opacity: 0;
-  transform: scale(0);
+  display: none;
 }
 
 .progress-step.completed .step-check {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.progress-step.completed .step-icon {
-  opacity: 1;
-  filter: grayscale(0);
+  display: flex;
 }
 
 .progress-step.completed .step-text {
-  color: #4caf50;
-  font-weight: 600;
+  color: #10a37f;
 }
 
 /* ===== 채점 단계 컨텐츠 ===== */
 .grading-step {
-  padding: 2.5rem;
-  animation: fadeIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .step-title {
-  font-size: 1.5rem;
+  font-size: 20px;
   font-weight: 700;
   color: #333;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 20px 0;
 }
 
 .info-form {
@@ -283,17 +203,17 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 16px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .form-label {
-  font-size: 0.95rem;
+  font-size: 14px;
   font-weight: 600;
   color: #333;
 }
@@ -303,40 +223,39 @@
 }
 
 .form-select {
-  padding: 0.875rem 1rem;
-  border: 1.5px solid #e0e0e0;
+  padding: 12px;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 14px;
   outline: none;
-  transition: all 0.2s;
+  transition: all 0.3s;
   background: white;
   cursor: pointer;
 }
 
 .form-select:focus {
   border-color: #1a73e8;
-  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
 }
 
 /* 시험 그리드 */
 .test-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .test-card {
-  padding: 2rem 1.5rem;
+  padding: 24px;
   border: 2px solid #e0e0e0;
   border-radius: 12px;
   background: white;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 12px;
 }
 
 .test-card:hover {
@@ -345,25 +264,25 @@
 }
 
 .test-emoji {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 28px;
   margin: 0 auto;
 }
 
 .test-name {
-  font-size: 1.1rem;
+  font-size: 16px;
   font-weight: 700;
   color: #333;
   margin: 0;
 }
 
 .test-grade {
-  font-size: 0.9rem;
+  font-size: 14px;
   font-weight: 600;
   margin: 0;
 }
@@ -373,60 +292,59 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 20px;
   flex-wrap: wrap;
-  gap: 1rem;
-  padding: 1.5rem;
+  gap: 16px;
+  padding: 16px;
   background: #f8f9fa;
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid #e9ecef;
 }
 
 .grading-stats {
   display: flex;
-  gap: 1rem;
-  font-size: 0.9rem;
+  gap: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: #666;
   flex-wrap: wrap;
 }
 
 .grading-stats span {
-  padding: 0.5rem 1rem;
+  padding: 8px 16px;
   background: white;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 /* 빠른 액션 */
 .quick-actions {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 12px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
 /* 문항 그리드 */
 .question-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .question-button {
   aspect-ratio: 1;
-  border: 2.5px solid #e0e0e0;
-  border-radius: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
   background: white;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 4px;
 }
 
 .question-button:hover {
@@ -439,7 +357,7 @@
 }
 
 .question-button.correct {
-  border-color: #4caf50;
+  border-color: #10a37f;
   background: #e8f5e9;
 }
 
@@ -449,13 +367,13 @@
 }
 
 .question-number {
-  font-size: 0.8rem;
+  font-size: 12px;
   color: #666;
   font-weight: 600;
 }
 
 .question-mark {
-  font-size: 1.5rem;
+  font-size: 20px;
   font-weight: 700;
 }
 
@@ -464,7 +382,7 @@
 }
 
 .question-button.correct .question-mark {
-  color: #4caf50;
+  color: #10a37f;
 }
 
 .question-button.wrong .question-mark {
@@ -472,11 +390,11 @@
 }
 
 .hint-text {
-  font-size: 0.9rem;
+  font-size: 14px;
   color: #666;
   text-align: center;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
+  margin-bottom: 20px;
+  padding: 12px;
   background: #f8f9fa;
   border-radius: 8px;
   border-left: 3px solid #1a73e8;
@@ -485,40 +403,37 @@
 /* 버튼 그룹 */
 .button-group {
   display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
+  gap: 12px;
+  margin-top: 24px;
   flex-wrap: wrap;
 }
 
 .button-group button {
   flex: 1;
-  min-width: 200px;
-  padding: 1rem;
-  font-size: 1rem;
-  font-weight: 600;
+  min-width: 150px;
 }
 
 /* 결과 */
 .success-badge {
   display: inline-block;
-  padding: 0.625rem 1.5rem;
-  background: #4caf50;
+  padding: 8px 20px;
+  background: #10a37f;
   color: white;
   border-radius: 20px;
-  font-size: 0.95rem;
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: 1.5rem;
+  margin-bottom: 20px;
 }
 
 .result-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .result-item {
-  padding: 1.5rem;
+  padding: 20px;
   background: #f8f9fa;
   border-radius: 12px;
   text-align: center;
@@ -526,14 +441,14 @@
 }
 
 .result-label {
-  font-size: 0.85rem;
+  font-size: 13px;
   color: #666;
-  margin-bottom: 0.5rem;
+  margin-bottom: 8px;
   font-weight: 600;
 }
 
 .result-value {
-  font-size: 1.75rem;
+  font-size: 24px;
   font-weight: 700;
   color: #1a73e8;
 }
@@ -542,100 +457,49 @@
   background: #e3f2fd;
   border: 2px solid #1a73e8;
   border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 20px;
+  margin-bottom: 24px;
 }
 
 .info-box p {
-  font-size: 0.95rem;
+  font-size: 14px;
   color: #1557b0;
-  margin: 0.5rem 0;
+  margin: 8px 0;
   font-weight: 500;
 }
 
 /* ===== 반응형 (태블릿) ===== */
 @media (max-width: 768px) {
   .diagnostic-grading-page {
-    padding: 1rem 0.5rem;
+    padding: 16px;
   }
 
-  .grading-container {
-    border-radius: 16px;
-  }
-
-  .grading-header {
-    padding: 1.5rem 1.5rem 2rem;
-  }
-
-  .header-icon {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-  }
-
-  .header-icon svg {
-    width: 28px;
-    height: 28px;
+  .grading-header,
+  .progress-section,
+  .grading-step {
+    padding: 20px;
   }
 
   .grading-title {
-    font-size: 1.5rem;
-  }
-
-  .grading-subtitle {
-    font-size: 0.9rem;
-  }
-
-  .progress-section {
-    padding: 2rem 1.5rem 2rem;
+    font-size: 20px;
   }
 
   .step-indicator {
-    width: 48px;
-    height: 48px;
-  }
-
-  .progress-bar-bg {
-    top: 24px;
+    width: 36px;
+    height: 36px;
   }
 
   .step-number {
-    font-size: 1.1rem;
-  }
-
-  .step-check svg {
-    width: 24px;
-    height: 24px;
-  }
-
-  .step-icon {
-    font-size: 1.1rem;
+    font-size: 14px;
   }
 
   .step-text {
-    font-size: 0.8rem;
-  }
-
-  .grading-step {
-    padding: 2rem 1.5rem;
-  }
-
-  .grading-header-info {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .grading-stats {
-    width: 100%;
-  }
-
-  .quick-actions {
-    flex-direction: column;
+    font-size: 12px;
   }
 
   .question-grid {
     grid-template-columns: repeat(5, 1fr);
-    gap: 0.75rem;
+    gap: 8px;
   }
 
   .result-summary {
@@ -654,103 +518,34 @@
 /* ===== 반응형 (모바일) ===== */
 @media (max-width: 480px) {
   .diagnostic-grading-page {
-    padding: 0.5rem 0.25rem;
+    padding: 12px;
   }
 
-  .grading-container {
-    border-radius: 12px;
-  }
-
-  .grading-header {
-    padding: 1.5rem 1rem;
-  }
-
-  .header-content {
-    gap: 1rem;
-  }
-
-  .header-icon {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-  }
-
-  .header-icon svg {
-    width: 24px;
-    height: 24px;
+  .grading-header,
+  .progress-section,
+  .grading-step {
+    padding: 16px;
   }
 
   .grading-title {
-    font-size: 1.25rem;
-  }
-
-  .grading-subtitle {
-    font-size: 0.85rem;
-  }
-
-  .progress-section {
-    padding: 1.5rem 1rem;
+    font-size: 18px;
   }
 
   .step-indicator {
-    width: 40px;
-    height: 40px;
-    border-width: 2px;
-  }
-
-  .progress-bar-bg {
-    top: 20px;
-    height: 3px;
+    width: 32px;
+    height: 32px;
   }
 
   .step-number {
-    font-size: 1rem;
-  }
-
-  .step-check svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  .step-icon {
-    font-size: 1rem;
+    font-size: 12px;
   }
 
   .step-text {
-    font-size: 0.7rem;
-  }
-
-  .grading-step {
-    padding: 1.5rem 1rem;
+    font-size: 11px;
   }
 
   .question-grid {
     grid-template-columns: repeat(5, 1fr);
-    gap: 0.5rem;
-  }
-
-  .question-button {
-    border-width: 2px;
-  }
-}
-
-/* 매우 작은 화면에서 라벨 숨기기 */
-@media (max-width: 380px) {
-  .step-icon {
-    display: none;
-  }
-
-  .step-text {
-    font-size: 0.65rem;
-  }
-
-  .back-button {
-    font-size: 0.8rem !important;
-    padding: 0.5rem 1rem !important;
-  }
-
-  .back-icon {
-    width: 16px;
-    height: 16px;
+    gap: 6px;
   }
 }

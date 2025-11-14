@@ -148,20 +148,6 @@ export default function DiagnosticGrading() {
     }
   };
 
-  const handleReset = () => {
-    setStudentInfo({
-      studentName: '',
-      parentPhone: '',
-      school: '',
-      grade: '',
-      mathLevel: '',
-    });
-    setQuestionResults(Array(25).fill(null));
-    setSelectedTest(null);
-    setCurrentStep('info');
-    setResult(null);
-  };
-
   const getMarkedCount = () => {
     return questionResults.filter((r) => r !== null).length;
   };
@@ -216,29 +202,21 @@ export default function DiagnosticGrading() {
 
         {/* 진행 단계 */}
         <div className="progress-section">
-          <div className="progress-bar-container">
-            <div className="progress-bar-bg">
-              <div
-                className="progress-bar-fill"
-                style={{ width: `${(getCurrentStepIndex() / (steps.length - 1)) * 100}%` }}
-              ></div>
-            </div>
-            <div className="progress-steps">
-              {steps.map((step, index) => (
-                <div key={step.id} className="progress-step-wrapper">
-                  <div className={`progress-step ${getStepStatus(index)}`}>
-                    <div className="step-indicator">
-                      <div className="step-number">{index + 1}</div>
-                      <div className="step-check">✓</div>
-                    </div>
-                    <div className="step-label">
-                      <span className="step-icon">{step.icon}</span>
-                      <span className="step-text">{step.label}</span>
-                    </div>
+          <div className="progress-steps">
+            {steps.map((step, index) => (
+              <div key={step.id} className="progress-step-wrapper">
+                <div className={`progress-step ${getStepStatus(index)}`}>
+                  <div className="step-indicator">
+                    <div className="step-number">{index + 1}</div>
+                    <div className="step-check">✓</div>
+                  </div>
+                  <div className="step-label">
+                    <span className="step-icon">{step.icon}</span>
+                    <span className="step-text">{step.label}</span>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -419,7 +397,7 @@ export default function DiagnosticGrading() {
             </div>
 
             <div className="button-group">
-              <Button onClick={handleReset}>새로운 채점 시작하기</Button>
+              <Button onClick={() => navigate('/admin/campaigns')}>← 대시보드로 돌아가기</Button>
             </div>
           </div>
         )}
