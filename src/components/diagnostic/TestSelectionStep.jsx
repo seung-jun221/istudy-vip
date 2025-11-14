@@ -63,11 +63,10 @@ export default function TestSelectionStep() {
               <div className="test-emoji" style={{ backgroundColor: `${info.color}20` }}>
                 {info.emoji}
               </div>
-              <h3 className="test-name">{test.test_name}</h3>
+              <h3 className="test-name">{test.test_type} 진단검사</h3>
               <div className="test-grade" style={{ color: info.color }}>
                 {info.grade}
               </div>
-              <p className="test-desc">{info.description}</p>
               <div className="test-info">
                 <span>📝 {test.total_questions}문항</span>
                 <span>📊 {test.total_score}점</span>
