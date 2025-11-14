@@ -25,9 +25,9 @@ export default function TestsTab({ tests, testSlots }) {
     for (const test of tests) {
       try {
         const results = await getAllResultsByPhone(test.parent_phone);
-        if (results && results.length > 0) {
-          // 가장 최근 결과 사용
-          newResultsMap[test.id] = results[0];
+        if (results && results.length > 0 && results[0].result) {
+          // 가장 최근 결과 사용 - result 객체만 추출
+          newResultsMap[test.id] = results[0].result;
         }
       } catch (error) {
         console.error(`결과 로드 실패 (${test.parent_phone}):`, error);
@@ -215,7 +215,7 @@ export default function TestsTab({ tests, testSlots }) {
                             fontWeight: '600',
                           }}
                         >
-                          📊 성적확인 ({result.total_score.toFixed(1)}점)
+                          📊 성적확인 ({result.total_score != null ? result.total_score.toFixed(1) : '0.0'}점)
                         </button>
                       ) : (
                         <button
