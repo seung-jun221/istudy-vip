@@ -12,6 +12,8 @@ export default function TestsTab({ tests, testSlots }) {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [manualStudents, setManualStudents] = useState([]);
+  const [editMode, setEditMode] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
 
   // 각 예약자의 제출 결과 로드
   useEffect(() => {
@@ -46,6 +48,47 @@ export default function TestsTab({ tests, testSlots }) {
     setManualStudents((prev) => [...prev, studentData]);
   };
 
+  // 학생 수정 핸들러
+  const handleUpdateStudent = (updatedData) => {
+    setManualStudents((prev) =>
+      prev.map((student) =>
+        student.id === updatedData.id ? updatedData : student
+      )
+    );
+  };
+
+  // 수정 모달 열기
+  const handleEditClick = (student) => {
+    setEditingStudent({
+      id: student.id,
+      studentName: student.student_name,
+      parentPhone: student.parent_phone,
+      school: student.school || '',
+      grade: student.grade || '',
+      mathLevel: student.math_level || '',
+      testDate: student.testDate || '',
+      testTime: student.testTime || '',
+      location: student.location || '',
+      isManuallyAdded: student.source === 'manual',
+    });
+    setEditMode(true);
+    setIsModalOpen(true);
+  };
+
+  // 모달 닫기
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditMode(false);
+    setEditingStudent(null);
+  };
+
+  // 추가 모달 열기
+  const handleAddClick = () => {
+    setEditMode(false);
+    setEditingStudent(null);
+    setIsModalOpen(true);
+  };
+
   // 수동 추가된 학생과 예약 학생 합치기
   const allStudents = [
     ...tests.map(test => ({ ...test, source: 'reservation' })),
@@ -58,7 +101,9 @@ export default function TestsTab({ tests, testSlots }) {
       math_level: student.mathLevel,
       test_date: null,
       test_slots: null,
-      location: null,
+      testDate: student.testDate,
+      testTime: student.testTime,
+      location: student.location,
       source: 'manual',
     }))
   ];
@@ -112,9 +157,15 @@ export default function TestsTab({ tests, testSlots }) {
       학교: test.school || '',
       선행정도: test.math_level || '',
       '학부모 연락처': test.parent_phone || '',
-      '진단검사 날짜': formatDateForExcel(test.test_date),
-      '진단검사 시간': test.test_slots?.time ? test.test_slots.time.slice(0, 5) : '',
-      지점: test.location || '',
+      '진단검사 날짜': test.source === 'manual' && test.testDate
+        ? formatDateForExcel(test.testDate)
+        : formatDateForExcel(test.test_date),
+      '진단검사 시간': test.source === 'manual' && test.testTime
+        ? test.testTime
+        : test.test_slots?.time ? test.test_slots.time.slice(0, 5) : '',
+      지점: test.source === 'manual' && test.location
+        ? test.location
+        : test.location || '',
     }));
 
     // 워크시트 생성
@@ -173,7 +224,7 @@ export default function TestsTab({ tests, testSlots }) {
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             className="btn-primary"
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleAddClick}
             style={{ background: '#1a73e8', borderColor: '#1a73e8' }}
           >
             ➕ 학생추가
@@ -198,12 +249,13 @@ export default function TestsTab({ tests, testSlots }) {
               <th>진단검사 시간</th>
               <th>지점</th>
               <th>성적 관리</th>
+              <th>수정</th>
             </tr>
           </thead>
           <tbody>
             {filteredTests.length === 0 ? (
               <tr>
-                <td colSpan="9" className="empty-cell">
+                <td colSpan="10" className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -219,11 +271,25 @@ export default function TestsTab({ tests, testSlots }) {
                     <td>{test.school || '-'}</td>
                     <td>{test.math_level || '-'}</td>
                     <td>{test.parent_phone}</td>
-                    <td>{formatTestDate(test.test_date)}</td>
                     <td>
-                      {test.test_slots?.time ? test.test_slots.time.slice(0, 5) : '-'}
+                      {test.source === 'manual' && test.testDate
+                        ? formatTestDate(test.testDate)
+                        : test.test_date
+                        ? formatTestDate(test.test_date)
+                        : '-'}
                     </td>
-                    <td>{test.location || '-'}</td>
+                    <td>
+                      {test.source === 'manual' && test.testTime
+                        ? test.testTime
+                        : test.test_slots?.time
+                        ? test.test_slots.time.slice(0, 5)
+                        : '-'}
+                    </td>
+                    <td>
+                      {test.source === 'manual' && test.location
+                        ? test.location
+                        : test.location || '-'}
+                    </td>
                     <td>
                       {hasResult ? (
                         <button
@@ -269,6 +335,26 @@ export default function TestsTab({ tests, testSlots }) {
                         </button>
                       )}
                     </td>
+                    <td>
+                      {test.source === 'manual' && (
+                        <button
+                          className="btn-small"
+                          onClick={() => handleEditClick(test)}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            fontSize: '0.85rem',
+                            background: '#f59e0b',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                          }}
+                        >
+                          ✏️ 수정
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 );
               })
@@ -283,11 +369,13 @@ export default function TestsTab({ tests, testSlots }) {
         {searchTerm && ` (검색 결과)`}
       </div>
 
-      {/* 학생 추가 모달 */}
+      {/* 학생 추가/수정 모달 */}
       <StudentAddModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onAddStudent={handleAddStudent}
+        onClose={handleCloseModal}
+        onAddStudent={editMode ? handleUpdateStudent : handleAddStudent}
+        editMode={editMode}
+        initialData={editingStudent}
       />
     </div>
   );

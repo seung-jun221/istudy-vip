@@ -1,14 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './StudentAddModal.css';
 
-export default function StudentAddModal({ isOpen, onClose, onAddStudent }) {
+export default function StudentAddModal({ isOpen, onClose, onAddStudent, editMode = false, initialData = null }) {
   const [formData, setFormData] = useState({
     studentName: '',
     parentPhone: '',
     school: '',
     grade: '',
     mathLevel: '',
+    testDate: '',
+    testTime: '',
+    location: '',
   });
+
+  // 수정 모드일 때 초기 데이터 로드
+  useEffect(() => {
+    if (editMode && initialData) {
+      setFormData({
+        studentName: initialData.studentName || '',
+        parentPhone: initialData.parentPhone || '',
+        school: initialData.school || '',
+        grade: initialData.grade || '',
+        mathLevel: initialData.mathLevel || '',
+        testDate: initialData.testDate || '',
+        testTime: initialData.testTime || '',
+        location: initialData.location || '',
+      });
+    } else if (!editMode) {
+      // 추가 모드일 때는 폼 초기화
+      setFormData({
+        studentName: '',
+        parentPhone: '',
+        school: '',
+        grade: '',
+        mathLevel: '',
+        testDate: '',
+        testTime: '',
+        location: '',
+      });
+    }
+  }, [editMode, initialData, isOpen]);
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -34,22 +65,37 @@ export default function StudentAddModal({ isOpen, onClose, onAddStudent }) {
       return;
     }
 
-    // 학생 추가
-    onAddStudent({
+    // 학생 추가 또는 수정
+    const studentData = {
       ...formData,
       parentPhone: phoneNumber,
-      id: `temp_${Date.now()}`, // 임시 ID
-      isManuallyAdded: true,
-    });
+    };
+
+    if (!editMode) {
+      // 추가 모드: 새 ID 생성
+      studentData.id = `temp_${Date.now()}`;
+      studentData.isManuallyAdded = true;
+    } else if (initialData) {
+      // 수정 모드: 기존 ID 유지
+      studentData.id = initialData.id;
+      studentData.isManuallyAdded = initialData.isManuallyAdded;
+    }
+
+    onAddStudent(studentData);
 
     // 폼 초기화 및 닫기
-    setFormData({
-      studentName: '',
-      parentPhone: '',
-      school: '',
-      grade: '',
-      mathLevel: '',
-    });
+    if (!editMode) {
+      setFormData({
+        studentName: '',
+        parentPhone: '',
+        school: '',
+        grade: '',
+        mathLevel: '',
+        testDate: '',
+        testTime: '',
+        location: '',
+      });
+    }
     onClose();
   };
 
@@ -59,7 +105,7 @@ export default function StudentAddModal({ isOpen, onClose, onAddStudent }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>학생 추가</h2>
+          <h2>{editMode ? '학생 정보 수정' : '학생 추가'}</h2>
           <button className="modal-close-btn" onClick={onClose}>
             ×
           </button>
@@ -141,6 +187,39 @@ export default function StudentAddModal({ isOpen, onClose, onAddStudent }) {
             />
           </div>
 
+          <div className="form-divider" style={{ margin: '1.5rem 0', borderTop: '1px solid #e5e7eb' }}></div>
+
+          <div className="form-group">
+            <label className="form-label">진단검사 날짜</label>
+            <input
+              type="date"
+              className="form-input"
+              value={formData.testDate}
+              onChange={(e) => handleChange('testDate', e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">진단검사 시간</label>
+            <input
+              type="time"
+              className="form-input"
+              value={formData.testTime}
+              onChange={(e) => handleChange('testTime', e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">장소</label>
+            <input
+              type="text"
+              className="form-input"
+              value={formData.location}
+              onChange={(e) => handleChange('location', e.target.value)}
+              placeholder="예: 강남점"
+            />
+          </div>
+
           <div className="modal-footer">
             <button
               type="button"
@@ -150,7 +229,7 @@ export default function StudentAddModal({ isOpen, onClose, onAddStudent }) {
               취소
             </button>
             <button type="submit" className="btn-primary">
-              추가
+              {editMode ? '수정' : '추가'}
             </button>
           </div>
         </form>
