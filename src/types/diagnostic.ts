@@ -61,10 +61,15 @@ export interface DiagnosticSubmission {
   test_type: TestType;
 
   // 답안 정보
-  answers: string[]; // ["1", "2", "3", ...]
+  answers?: string[] | null; // ["1", "2", "3", ...] - nullable (등록 시에는 null)
 
   // 제출 방식
-  submission_type: SubmissionType;
+  submission_type: SubmissionType | 'registration';
+
+  // 예약 정보 (학생 추가 시 입력)
+  test_date?: string;
+  test_time?: string;
+  location?: string;
 
   // 시간
   submitted_at: string;
@@ -261,6 +266,41 @@ export interface GetResultsResponse {
     report?: DiagnosticReport;
   }>;
   error?: string;
+}
+
+/**
+ * 학생 등록 요청 (성적 입력 전)
+ */
+export interface CreateRegistrationRequest {
+  // 학생 정보
+  student_name: string;
+  parent_phone: string;
+  school?: string;
+  grade: string;
+  math_level?: string;
+
+  // 시험 정보
+  test_type: TestType;
+
+  // 예약 정보 (선택)
+  test_date?: string;
+  test_time?: string;
+  location?: string;
+}
+
+/**
+ * 학생 정보 수정 요청
+ */
+export interface UpdateRegistrationRequest {
+  id: string;
+  student_name?: string;
+  parent_phone?: string;
+  school?: string;
+  grade?: string;
+  math_level?: string;
+  test_date?: string;
+  test_time?: string;
+  location?: string;
 }
 
 // ========================================

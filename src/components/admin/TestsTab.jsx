@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
-import { getAllResultsByPhone } from '../../utils/diagnosticService';
+import {
+  getAllResultsByPhone,
+  getAllRegistrations,
+  createDiagnosticRegistration,
+  updateDiagnosticRegistration
+} from '../../utils/diagnosticService';
 import StudentAddModal from './StudentAddModal';
 import './AdminTabs.css';
 
@@ -11,28 +16,23 @@ export default function TestsTab({ tests, testSlots }) {
   const [resultsMap, setResultsMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [manualStudents, setManualStudents] = useState([]);
+  const [registrations, setRegistrations] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
 
-  // localStorage에서 수동 추가된 학생 목록 로드
+  // Supabase에서 등록 목록 로드
   useEffect(() => {
-    const savedStudents = localStorage.getItem('manualStudents');
-    if (savedStudents) {
-      try {
-        setManualStudents(JSON.parse(savedStudents));
-      } catch (error) {
-        console.error('localStorage에서 학생 목록 로드 실패:', error);
-      }
-    }
+    loadRegistrations();
   }, []);
 
-  // manualStudents가 변경될 때마다 localStorage에 저장
-  useEffect(() => {
-    if (manualStudents.length > 0 || localStorage.getItem('manualStudents')) {
-      localStorage.setItem('manualStudents', JSON.stringify(manualStudents));
+  const loadRegistrations = async () => {
+    try {
+      const data = await getAllRegistrations();
+      setRegistrations(data);
+    } catch (error) {
+      console.error('등록 목록 로드 실패:', error);
     }
-  }, [manualStudents]);
+  };
 
   // 각 예약자의 제출 결과 로드
   useEffect(() => {
@@ -63,17 +63,57 @@ export default function TestsTab({ tests, testSlots }) {
   };
 
   // 학생 추가 핸들러
-  const handleAddStudent = (studentData) => {
-    setManualStudents((prev) => [...prev, studentData]);
+  const handleAddStudent = async (studentData) => {
+    try {
+      const newRegistration = await createDiagnosticRegistration({
+        student_name: studentData.studentName,
+        parent_phone: studentData.parentPhone,
+        school: studentData.school,
+        grade: studentData.grade,
+        math_level: studentData.mathLevel,
+        test_type: studentData.testType || 'MONO', // 기본값 설정 또는 모달에서 받기
+        test_date: studentData.testDate,
+        test_time: studentData.testTime,
+        location: studentData.location,
+      });
+
+      if (newRegistration) {
+        // 성공 시 목록 새로고침
+        await loadRegistrations();
+      } else {
+        alert('학생 등록에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('학생 추가 실패:', error);
+      alert('학생 등록 중 오류가 발생했습니다.');
+    }
   };
 
   // 학생 수정 핸들러
-  const handleUpdateStudent = (updatedData) => {
-    setManualStudents((prev) =>
-      prev.map((student) =>
-        student.id === updatedData.id ? updatedData : student
-      )
-    );
+  const handleUpdateStudent = async (updatedData) => {
+    try {
+      const updated = await updateDiagnosticRegistration({
+        id: updatedData.id,
+        student_name: updatedData.studentName,
+        parent_phone: updatedData.parentPhone,
+        school: updatedData.school,
+        grade: updatedData.grade,
+        math_level: updatedData.mathLevel,
+        test_date: updatedData.testDate,
+        test_time: updatedData.testTime,
+        location: updatedData.location,
+      });
+
+      if (updated) {
+        // 성공 시 목록 새로고침
+        await loadRegistrations();
+      } else {
+        alert('학생 정보 수정에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('학생 수정 실패:', error);
+      alert('학생 정보 수정 중 오류가 발생했습니다.');
+    }
   };
 
   // 수정 모달 열기
@@ -85,10 +125,10 @@ export default function TestsTab({ tests, testSlots }) {
       school: student.school || '',
       grade: student.grade || '',
       mathLevel: student.math_level || '',
-      testDate: student.testDate || '',
-      testTime: student.testTime || '',
+      testDate: student.test_date || '',
+      testTime: student.test_time || '',
       location: student.location || '',
-      isManuallyAdded: student.source === 'manual',
+      isManuallyAdded: student.source === 'registration',
     });
     setEditMode(true);
     setIsModalOpen(true);
@@ -108,23 +148,24 @@ export default function TestsTab({ tests, testSlots }) {
     setIsModalOpen(true);
   };
 
-  // 수동 추가된 학생과 예약 학생 합치기
+  // 예약 학생과 등록 학생 합치기
   const allStudents = [
     ...tests.map(test => ({ ...test, source: 'reservation' })),
-    ...manualStudents.map(student => ({
-      id: student.id,
-      student_name: student.studentName,
-      parent_phone: student.parentPhone,
-      school: student.school,
-      grade: student.grade,
-      math_level: student.mathLevel,
-      test_date: null,
-      test_slots: null,
-      testDate: student.testDate,
-      testTime: student.testTime,
-      location: student.location,
-      source: 'manual',
-    }))
+    ...registrations
+      .filter(reg => reg.submission_type === 'registration')
+      .map(reg => ({
+        id: reg.id,
+        student_name: reg.student_name,
+        parent_phone: reg.parent_phone,
+        school: reg.school,
+        grade: reg.grade,
+        math_level: reg.math_level,
+        test_date: reg.test_date,
+        test_time: reg.test_time,
+        location: reg.location,
+        test_slots: null,
+        source: 'registration',
+      }))
   ];
 
   // 필터링
@@ -176,15 +217,13 @@ export default function TestsTab({ tests, testSlots }) {
       학교: test.school || '',
       선행정도: test.math_level || '',
       '학부모 연락처': test.parent_phone || '',
-      '진단검사 날짜': test.source === 'manual' && test.testDate
-        ? formatDateForExcel(test.testDate)
+      '진단검사 날짜': test.source === 'registration' && test.test_date
+        ? formatDateForExcel(test.test_date)
         : formatDateForExcel(test.test_date),
-      '진단검사 시간': test.source === 'manual' && test.testTime
-        ? test.testTime
+      '진단검사 시간': test.source === 'registration' && test.test_time
+        ? test.test_time
         : test.test_slots?.time ? test.test_slots.time.slice(0, 5) : '',
-      지점: test.source === 'manual' && test.location
-        ? test.location
-        : test.location || '',
+      지점: test.location || '',
     }));
 
     // 워크시트 생성
@@ -291,23 +330,19 @@ export default function TestsTab({ tests, testSlots }) {
                     <td>{test.math_level || '-'}</td>
                     <td>{test.parent_phone}</td>
                     <td>
-                      {test.source === 'manual' && test.testDate
-                        ? formatTestDate(test.testDate)
-                        : test.test_date
+                      {test.test_date
                         ? formatTestDate(test.test_date)
                         : '-'}
                     </td>
                     <td>
-                      {test.source === 'manual' && test.testTime
-                        ? test.testTime
+                      {test.test_time
+                        ? test.test_time
                         : test.test_slots?.time
                         ? test.test_slots.time.slice(0, 5)
                         : '-'}
                     </td>
                     <td>
-                      {test.source === 'manual' && test.location
-                        ? test.location
-                        : test.location || '-'}
+                      {test.location || '-'}
                     </td>
                     <td>
                       {hasResult ? (

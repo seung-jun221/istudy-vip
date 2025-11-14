@@ -16,6 +16,8 @@ import type {
   QuestionResult,
   AreaResult as DiagnosticAreaResult,
   DifficultyResult as DiagnosticDifficultyResult,
+  CreateRegistrationRequest,
+  UpdateRegistrationRequest,
 } from '../types/diagnostic';
 import { AutoGrader } from '../lib/grading-engine';
 import type {
@@ -638,4 +640,156 @@ export async function getStudentInfoFromReservation(reservationId: string): Prom
   }
 
   return data;
+}
+
+// ========================================
+// 학생 등록 관리 (성적 입력 전)
+// ========================================
+
+/**
+ * 학생 등록 생성 (성적 입력 전)
+ */
+export async function createDiagnosticRegistration(
+  request: CreateRegistrationRequest
+): Promise<DiagnosticSubmission | null> {
+  try {
+    // 1. 시험 정보 조회
+    const test = await getDiagnosticTestByType(request.test_type);
+    if (!test) {
+      throw new Error('존재하지 않는 시험입니다.');
+    }
+
+    // 2. 등록 데이터 생성
+    const registrationId = 'R' + Date.now();
+    const registrationData: Partial<DiagnosticSubmission> = {
+      submission_id: registrationId,
+      student_name: request.student_name,
+      parent_phone: request.parent_phone,
+      school: request.school,
+      grade: request.grade,
+      math_level: request.math_level,
+      test_id: test.id,
+      test_type: request.test_type,
+      test_date: request.test_date,
+      test_time: request.test_time,
+      location: request.location,
+      answers: null, // 등록 시에는 답안 없음
+      submission_type: 'registration',
+    };
+
+    // 3. Supabase에 등록 데이터 삽입
+    const { data: registration, error: registrationError } = await supabase
+      .from('diagnostic_submissions')
+      .insert([registrationData])
+      .select()
+      .single();
+
+    if (registrationError) {
+      console.error('등록 실패:', registrationError);
+      throw new Error('학생 등록에 실패했습니다.');
+    }
+
+    return registration;
+  } catch (error) {
+    console.error('createDiagnosticRegistration 실패:', error);
+    return null;
+  }
+}
+
+/**
+ * 학생 등록 정보 수정
+ */
+export async function updateDiagnosticRegistration(
+  request: UpdateRegistrationRequest
+): Promise<DiagnosticSubmission | null> {
+  try {
+    const updateData: any = {};
+
+    if (request.student_name !== undefined) updateData.student_name = request.student_name;
+    if (request.parent_phone !== undefined) updateData.parent_phone = request.parent_phone;
+    if (request.school !== undefined) updateData.school = request.school;
+    if (request.grade !== undefined) updateData.grade = request.grade;
+    if (request.math_level !== undefined) updateData.math_level = request.math_level;
+    if (request.test_date !== undefined) updateData.test_date = request.test_date;
+    if (request.test_time !== undefined) updateData.test_time = request.test_time;
+    if (request.location !== undefined) updateData.location = request.location;
+
+    updateData.updated_at = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('diagnostic_submissions')
+      .update(updateData)
+      .eq('id', request.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('등록 수정 실패:', error);
+      throw new Error('학생 정보 수정에 실패했습니다.');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('updateDiagnosticRegistration 실패:', error);
+    return null;
+  }
+}
+
+/**
+ * 모든 등록 목록 조회 (관리자용)
+ */
+export async function getAllRegistrations(): Promise<DiagnosticSubmission[]> {
+  const { data, error } = await supabase
+    .from('diagnostic_submissions')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('등록 목록 조회 실패:', error);
+    throw new Error('등록 목록을 불러올 수 없습니다.');
+  }
+
+  return data || [];
+}
+
+/**
+ * 특정 시험 타입의 등록 목록 조회
+ */
+export async function getRegistrationsByTestType(
+  testType: TestType
+): Promise<DiagnosticSubmission[]> {
+  const { data, error } = await supabase
+    .from('diagnostic_submissions')
+    .select('*')
+    .eq('test_type', testType)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('등록 목록 조회 실패:', error);
+    throw new Error('등록 목록을 불러올 수 없습니다.');
+  }
+
+  return data || [];
+}
+
+/**
+ * 등록 삭제
+ */
+export async function deleteRegistration(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('diagnostic_submissions')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('등록 삭제 실패:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('deleteRegistration 실패:', error);
+    return false;
+  }
 }

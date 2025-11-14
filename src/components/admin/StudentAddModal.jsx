@@ -8,6 +8,7 @@ export default function StudentAddModal({ isOpen, onClose, onAddStudent, editMod
     school: '',
     grade: '',
     mathLevel: '',
+    testType: 'MONO',
     testDate: '',
     testTime: '',
     location: '',
@@ -22,6 +23,7 @@ export default function StudentAddModal({ isOpen, onClose, onAddStudent, editMod
         school: initialData.school || '',
         grade: initialData.grade || '',
         mathLevel: initialData.mathLevel || '',
+        testType: initialData.testType || 'MONO',
         testDate: initialData.testDate || '',
         testTime: initialData.testTime || '',
         location: initialData.location || '',
@@ -34,6 +36,7 @@ export default function StudentAddModal({ isOpen, onClose, onAddStudent, editMod
         school: '',
         grade: '',
         mathLevel: '',
+        testType: 'MONO',
         testDate: '',
         testTime: '',
         location: '',
@@ -91,6 +94,7 @@ export default function StudentAddModal({ isOpen, onClose, onAddStudent, editMod
         school: '',
         grade: '',
         mathLevel: '',
+        testType: 'MONO',
         testDate: '',
         testTime: '',
         location: '',
@@ -185,6 +189,22 @@ export default function StudentAddModal({ isOpen, onClose, onAddStudent, editMod
               onChange={(e) => handleChange('mathLevel', e.target.value)}
               placeholder="예: 중3 (고1 선행 중)"
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">
+              진단검사 유형 <span className="required">*</span>
+            </label>
+            <select
+              className="form-select"
+              value={formData.testType}
+              onChange={(e) => handleChange('testType', e.target.value)}
+              required
+            >
+              <option value="MONO">중1-1 진단검사</option>
+              <option value="DI">중2-1 진단검사</option>
+              <option value="TRI">중3-1 + 공통수학1 진단검사</option>
+            </select>
           </div>
 
           <div className="form-divider" style={{ margin: '1.5rem 0', borderTop: '1px solid #e5e7eb' }}></div>
