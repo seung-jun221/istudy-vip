@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { getAllResultsByPhone } from '../../utils/diagnosticService';
+import StudentAddModal from './StudentAddModal';
 import './AdminTabs.css';
 
 export default function TestsTab({ tests, testSlots }) {
@@ -9,6 +10,8 @@ export default function TestsTab({ tests, testSlots }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [resultsMap, setResultsMap] = useState({});
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [manualStudents, setManualStudents] = useState([]);
 
   // 각 예약자의 제출 결과 로드
   useEffect(() => {
@@ -38,8 +41,30 @@ export default function TestsTab({ tests, testSlots }) {
     setLoading(false);
   };
 
+  // 학생 추가 핸들러
+  const handleAddStudent = (studentData) => {
+    setManualStudents((prev) => [...prev, studentData]);
+  };
+
+  // 수동 추가된 학생과 예약 학생 합치기
+  const allStudents = [
+    ...tests.map(test => ({ ...test, source: 'reservation' })),
+    ...manualStudents.map(student => ({
+      id: student.id,
+      student_name: student.studentName,
+      parent_phone: student.parentPhone,
+      school: student.school,
+      grade: student.grade,
+      math_level: student.mathLevel,
+      test_date: null,
+      test_slots: null,
+      location: null,
+      source: 'manual',
+    }))
+  ];
+
   // 필터링
-  const filteredTests = tests.filter((test) => {
+  const filteredTests = allStudents.filter((test) => {
     const matchesSearch =
       test.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       test.parent_phone?.includes(searchTerm);
@@ -148,10 +173,10 @@ export default function TestsTab({ tests, testSlots }) {
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             className="btn-primary"
-            onClick={() => navigate('/admin/diagnostic-grading')}
+            onClick={() => setIsModalOpen(true)}
             style={{ background: '#1a73e8', borderColor: '#1a73e8' }}
           >
-            ✏️ 수동 채점하기
+            ➕ 학생추가
           </button>
           <button className="btn-excel" onClick={handleExportExcel}>
             📊 엑셀 다운로드
@@ -257,6 +282,13 @@ export default function TestsTab({ tests, testSlots }) {
         총 {filteredTests.length}명
         {searchTerm && ` (검색 결과)`}
       </div>
+
+      {/* 학생 추가 모달 */}
+      <StudentAddModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAddStudent={handleAddStudent}
+      />
     </div>
   );
 }
