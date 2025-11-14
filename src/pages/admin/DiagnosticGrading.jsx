@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import {
   getActiveDiagnosticTests,
@@ -12,25 +12,29 @@ import './DiagnosticGrading.css';
 export default function DiagnosticGrading() {
   const { showToast } = useAdmin();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // 시험 목록
   const [tests, setTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
 
+  // 전달받은 학생 정보 확인
+  const passedStudentInfo = location.state;
+
   // 학생 정보
   const [studentInfo, setStudentInfo] = useState({
-    studentName: '',
-    parentPhone: '',
-    school: '',
-    grade: '',
-    mathLevel: '',
+    studentName: passedStudentInfo?.studentName || '',
+    parentPhone: passedStudentInfo?.parentPhone || '',
+    school: passedStudentInfo?.school || '',
+    grade: passedStudentInfo?.grade || '',
+    mathLevel: passedStudentInfo?.mathLevel || '',
   });
 
   // 문항별 O/X (null: 미선택, true: O, false: X)
   const [questionResults, setQuestionResults] = useState(Array(25).fill(null));
 
-  // UI 상태
-  const [currentStep, setCurrentStep] = useState('info'); // 'info' | 'test-select' | 'grading' | 'result'
+  // UI 상태 - 학생 정보가 전달되었으면 시험 선택 단계부터 시작
+  const [currentStep, setCurrentStep] = useState(passedStudentInfo ? 'test-select' : 'info'); // 'info' | 'test-select' | 'grading' | 'result'
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 

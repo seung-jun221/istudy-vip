@@ -220,7 +220,15 @@ export default function TestsTab({ tests, testSlots }) {
                       ) : (
                         <button
                           className="btn-small"
-                          onClick={() => navigate('/admin/diagnostic-grading')}
+                          onClick={() => navigate('/admin/diagnostic-grading', {
+                            state: {
+                              studentName: test.student_name,
+                              parentPhone: test.parent_phone,
+                              school: test.school || '',
+                              grade: test.grade || '',
+                              mathLevel: test.math_level || '',
+                            }
+                          })}
                           style={{
                             padding: '0.5rem 1rem',
                             fontSize: '0.85rem',
