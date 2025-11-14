@@ -15,6 +15,25 @@ export default function TestsTab({ tests, testSlots }) {
   const [editMode, setEditMode] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
 
+  // localStorage에서 수동 추가된 학생 목록 로드
+  useEffect(() => {
+    const savedStudents = localStorage.getItem('manualStudents');
+    if (savedStudents) {
+      try {
+        setManualStudents(JSON.parse(savedStudents));
+      } catch (error) {
+        console.error('localStorage에서 학생 목록 로드 실패:', error);
+      }
+    }
+  }, []);
+
+  // manualStudents가 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    if (manualStudents.length > 0 || localStorage.getItem('manualStudents')) {
+      localStorage.setItem('manualStudents', JSON.stringify(manualStudents));
+    }
+  }, [manualStudents]);
+
   // 각 예약자의 제출 결과 로드
   useEffect(() => {
     loadAllResults();
