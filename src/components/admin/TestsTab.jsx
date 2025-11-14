@@ -227,10 +227,10 @@ export default function TestsTab({ tests, testSlots }) {
             onClick={handleAddClick}
             style={{ background: '#1a73e8', borderColor: '#1a73e8' }}
           >
-            ➕ 학생추가
+            학생추가
           </button>
           <button className="btn-excel" onClick={handleExportExcel}>
-            📊 엑셀 다운로드
+            엑셀 다운로드
           </button>
         </div>
       </div>
@@ -306,7 +306,7 @@ export default function TestsTab({ tests, testSlots }) {
                             fontWeight: '600',
                           }}
                         >
-                          📊 성적확인 ({result.total_score != null ? result.total_score.toFixed(1) : '0.0'}점)
+                          성적확인 ({result.total_score != null ? result.total_score.toFixed(1) : '0.0'}점)
                         </button>
                       ) : (
                         <button
@@ -331,29 +331,27 @@ export default function TestsTab({ tests, testSlots }) {
                             fontWeight: '600',
                           }}
                         >
-                          ✏️ 성적입력
+                          성적입력
                         </button>
                       )}
                     </td>
                     <td>
-                      {test.source === 'manual' && (
-                        <button
-                          className="btn-small"
-                          onClick={() => handleEditClick(test)}
-                          style={{
-                            padding: '0.5rem 1rem',
-                            fontSize: '0.85rem',
-                            background: '#f59e0b',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontWeight: '600',
-                          }}
-                        >
-                          ✏️ 수정
-                        </button>
-                      )}
+                      <button
+                        className="btn-small"
+                        onClick={() => handleEditClick(test)}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          fontSize: '0.85rem',
+                          background: '#f59e0b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontWeight: '600',
+                        }}
+                      >
+                        수정
+                      </button>
                     </td>
                   </tr>
                 );
