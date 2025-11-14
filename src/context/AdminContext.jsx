@@ -12,24 +12,18 @@ export function useAdmin() {
 }
 
 export function AdminProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // 로컬스토리지에서 인증 상태 동기적으로 복원 (초기값으로)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('admin_authenticated') === 'true';
+  });
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
-  const [authMode, setAuthMode] = useState('super'); // 'super' | 'campaign'
-  const [allowedCampaignId, setAllowedCampaignId] = useState(null);
-
-  // 로컬스토리지에서 인증 상태 복원
-  useEffect(() => {
-    const authStatus = localStorage.getItem('admin_authenticated');
-    const mode = localStorage.getItem('admin_auth_mode');
-    const campaignId = localStorage.getItem('admin_campaign_id');
-
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-      setAuthMode(mode || 'super');
-      setAllowedCampaignId(campaignId || null);
-    }
-  }, []);
+  const [authMode, setAuthMode] = useState(() => {
+    return localStorage.getItem('admin_auth_mode') || 'super';
+  });
+  const [allowedCampaignId, setAllowedCampaignId] = useState(() => {
+    return localStorage.getItem('admin_campaign_id') || null;
+  });
 
   // 로그인
   const login = async (password) => {
