@@ -498,6 +498,52 @@ export async function getResultBySubmissionId(
 }
 
 /**
+ * 결과 ID로 결과 조회
+ */
+export async function getResultById(
+  resultId: string
+): Promise<DiagnosticResult | null> {
+  const { data, error } = await supabase
+    .from('diagnostic_results')
+    .select('*')
+    .eq('id', resultId)
+    .single();
+
+  if (error) {
+    console.error('결과 조회 실패:', error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * 결과 ID로 전체 정보 조회 (제출 + 결과)
+ */
+export async function getFullResultById(
+  resultId: string
+): Promise<(DiagnosticResult & { submission?: DiagnosticSubmission }) | null> {
+  const result = await getResultById(resultId);
+  if (!result) return null;
+
+  const { data: submission, error: submissionError } = await supabase
+    .from('diagnostic_submissions')
+    .select('*')
+    .eq('id', result.submission_id)
+    .single();
+
+  if (submissionError) {
+    console.error('제출 정보 조회 실패:', submissionError);
+    return { ...result, submission: undefined };
+  }
+
+  return {
+    ...result,
+    submission,
+  };
+}
+
+/**
  * 결과 ID로 보고서 조회
  */
 export async function getReportByResultId(

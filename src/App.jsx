@@ -13,6 +13,7 @@ import ConsultingPage from './pages/ConsultingPage';
 import ConsultingPasswordReset from './pages/ConsultingPasswordReset';
 import TestGuidePage from './pages/TestGuidePage';
 import DiagnosticTestPage from './pages/DiagnosticTestPage';
+import DiagnosticReportPage from './pages/DiagnosticReportPage';
 import AdminLogin from './pages/admin/AdminLogin';
 import CampaignList from './pages/admin/CampaignList';
 import CampaignDetail from './pages/admin/CampaignDetail';
@@ -59,6 +60,7 @@ function AppContent() {
         <Route path="/consulting/password-reset" element={<ConsultingPasswordReset />} />
         <Route path="/test-guide" element={<TestGuidePage />} />
         <Route path="/diagnostic-test" element={<DiagnosticTestPage />} />
+        <Route path="/diagnostic-report/:id" element={<DiagnosticReportPage />} />
 
         {/* 관리자 페이지 */}
         <Route path="/admin/login" element={<AdminLogin />} />
