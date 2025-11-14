@@ -149,7 +149,7 @@ export default function TestsTab({ tests, testSlots }) {
           <button
             className="btn-primary"
             onClick={() => navigate('/admin/diagnostic-grading')}
-            style={{ background: '#667eea', borderColor: '#667eea' }}
+            style={{ background: '#1a73e8', borderColor: '#1a73e8' }}
           >
             ✏️ 수동 채점하기
           </button>
@@ -172,15 +172,13 @@ export default function TestsTab({ tests, testSlots }) {
               <th>진단검사 날짜</th>
               <th>진단검사 시간</th>
               <th>지점</th>
-              <th>제출 여부</th>
-              <th>점수</th>
-              <th>성적 조회</th>
+              <th>성적 관리</th>
             </tr>
           </thead>
           <tbody>
             {filteredTests.length === 0 ? (
               <tr>
-                <td colSpan="11" className="empty-cell">
+                <td colSpan="9" className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -203,39 +201,39 @@ export default function TestsTab({ tests, testSlots }) {
                     <td>{test.location || '-'}</td>
                     <td>
                       {hasResult ? (
-                        <span style={{ color: '#4caf50', fontWeight: '600' }}>✓ 제출됨</span>
-                      ) : (
-                        <span style={{ color: '#999' }}>미제출</span>
-                      )}
-                    </td>
-                    <td>
-                      {hasResult ? (
-                        <strong style={{ color: '#667eea' }}>
-                          {result.total_score.toFixed(1)}점
-                        </strong>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td>
-                      {hasResult ? (
                         <button
                           className="btn-small"
                           onClick={() => window.open(`/diagnostic-report/${result.id}`, '_blank')}
                           style={{
-                            padding: '0.4rem 0.8rem',
+                            padding: '0.5rem 1rem',
                             fontSize: '0.85rem',
-                            background: '#667eea',
+                            background: '#1a73e8',
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
                             cursor: 'pointer',
+                            fontWeight: '600',
                           }}
                         >
-                          📊 리포트 보기
+                          📊 성적확인 ({result.total_score.toFixed(1)}점)
                         </button>
                       ) : (
-                        '-'
+                        <button
+                          className="btn-small"
+                          onClick={() => navigate('/admin/diagnostic-grading')}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            fontSize: '0.85rem',
+                            background: 'white',
+                            color: '#666',
+                            border: '1.5px solid #ddd',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                          }}
+                        >
+                          ✏️ 성적입력
+                        </button>
                       )}
                     </td>
                   </tr>

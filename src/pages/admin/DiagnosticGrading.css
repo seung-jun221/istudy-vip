@@ -28,7 +28,7 @@
 
 /* ===== 헤더 ===== */
 .grading-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
   color: white;
   padding: 2rem 2.5rem;
   text-align: center;
@@ -210,9 +210,9 @@
 
 /* Active (진행 중) */
 .progress-step.active .step-indicator {
-  border-color: #667eea;
-  background: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  border-color: #1a73e8;
+  background: #1a73e8;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
 }
 
 .progress-step.active .step-number {
@@ -225,7 +225,7 @@
 }
 
 .progress-step.active .step-text {
-  color: #667eea;
+  color: #1a73e8;
   font-weight: 700;
 }
 
@@ -314,8 +314,8 @@
 }
 
 .form-select:focus {
-  border-color: var(--color-secondary);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
 }
 
 /* 시험 그리드 */
@@ -340,8 +340,8 @@
 }
 
 .test-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  border-color: #1a73e8;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.15);
 }
 
 .test-emoji {
@@ -479,7 +479,7 @@
   padding: 1rem;
   background: #f8f9fa;
   border-radius: 8px;
-  border-left: 3px solid var(--color-secondary);
+  border-left: 3px solid #1a73e8;
 }
 
 /* 버튼 그룹 */
@@ -535,12 +535,12 @@
 .result-value {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #667eea;
+  color: #1a73e8;
 }
 
 .info-box {
-  background: #f3e8ff;
-  border: 2px solid #667eea;
+  background: #e3f2fd;
+  border: 2px solid #1a73e8;
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -548,7 +548,7 @@
 
 .info-box p {
   font-size: 0.95rem;
-  color: #5b21b6;
+  color: #1557b0;
   margin: 0.5rem 0;
   font-weight: 500;
 }

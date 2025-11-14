@@ -9,9 +9,9 @@
   --color-primary-dark: #1557b0;
   --color-primary-light: #e3f2fd;
 
-  /* Secondary Colors (진단검사용) */
-  --color-secondary: #667eea;
-  --color-secondary-dark: #764ba2;
+  /* Secondary Colors */
+  --color-secondary: #1a73e8;
+  --color-secondary-dark: #1557b0;
 
   /* Status Colors */
   --color-success: #4caf50;
