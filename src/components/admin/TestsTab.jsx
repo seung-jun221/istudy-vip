@@ -34,27 +34,44 @@ export default function TestsTab({ tests, testSlots }) {
     }
   };
 
-  // 각 예약자의 제출 결과 로드
+  // 각 예약자 및 등록 학생의 제출 결과 로드
   useEffect(() => {
     loadAllResults();
-  }, [tests]);
+  }, [tests, registrations]);
 
   const loadAllResults = async () => {
-    if (tests.length === 0) return;
+    if (tests.length === 0 && registrations.length === 0) return;
 
     setLoading(true);
     const newResultsMap = {};
 
-    // 각 예약자의 전화번호로 결과 조회
+    // 예약 학생들의 전화번호로 결과 조회
     for (const test of tests) {
       try {
         const results = await getAllResultsByPhone(test.parent_phone);
-        if (results && results.length > 0 && results[0].result) {
-          // 가장 최근 결과 사용 - result 객체만 추출
-          newResultsMap[test.id] = results[0].result;
+        // result가 있는 첫 번째 submission 찾기
+        const submissionWithResult = results.find(r => r.result);
+        if (submissionWithResult && submissionWithResult.result) {
+          newResultsMap[test.id] = submissionWithResult.result;
         }
       } catch (error) {
         console.error(`결과 로드 실패 (${test.parent_phone}):`, error);
+      }
+    }
+
+    // 등록 학생들의 전화번호로 결과 조회
+    for (const reg of registrations) {
+      if (reg.submission_type === 'registration') {
+        try {
+          const results = await getAllResultsByPhone(reg.parent_phone);
+          // result가 있는 첫 번째 submission 찾기
+          const submissionWithResult = results.find(r => r.result);
+          if (submissionWithResult && submissionWithResult.result) {
+            newResultsMap[reg.id] = submissionWithResult.result;
+          }
+        } catch (error) {
+          console.error(`결과 로드 실패 (${reg.parent_phone}):`, error);
+        }
       }
     }
 
