@@ -45,7 +45,7 @@ export class AutoGrader {
     const areaResults: AreaResult[] = this.calculateAreaResults(submission.testType, questionResults);
 
     // 4. 난이도별 집계
-    const difficultyResults: DifficultyResult[] = this.calculateDifficultyResults(questionResults);
+    const difficultyResults: DifficultyResult[] = this.calculateDifficultyResults(questionResults, submission.testType);
 
     // 5. 등급 계산
     const percentile = GradeCalculator.calculatePercentile(submission.testType, totalEarnedScore);
@@ -129,15 +129,32 @@ export class AutoGrader {
   /**
    * 난이도별 결과 계산
    */
-  private static calculateDifficultyResults(questionResults: QuestionResult[]): DifficultyResult[] {
-    // 난이도 매핑
-    const difficultyMapping = {
-      LOW: 'LOW',
-      MID: 'MID',
-      HIGH: 'HIGH',
-      VERY_HIGH: 'HIGH',
-      EXTREME: 'HIGH',
+  private static calculateDifficultyResults(questionResults: QuestionResult[], testType: TestType): DifficultyResult[] {
+    // 시험별 난이도 매핑
+    // MONO/TRI: MID(⭐⭐)→하난도, HIGH(⭐⭐⭐)→중난도, VERY_HIGH(⭐⭐⭐⭐)→고난도
+    // DI: LOW(⭐)+MID(⭐⭐)→하난도, HIGH(⭐⭐⭐)→중난도, VERY_HIGH(⭐⭐⭐⭐)+EXTREME(⭐⭐⭐⭐⭐)→고난도
+    const getDifficultyMapping = (testType: TestType) => {
+      if (testType === 'DI') {
+        return {
+          LOW: 'LOW',        // ⭐ → 하난도
+          MID: 'LOW',        // ⭐⭐ → 하난도
+          HIGH: 'MID',       // ⭐⭐⭐ → 중난도
+          VERY_HIGH: 'HIGH', // ⭐⭐⭐⭐ → 고난도
+          EXTREME: 'HIGH',   // ⭐⭐⭐⭐⭐ → 고난도
+        };
+      } else {
+        // MONO, TRI
+        return {
+          LOW: 'LOW',        // ⭐ → 하난도 (MONO/TRI에는 없음)
+          MID: 'LOW',        // ⭐⭐ → 하난도
+          HIGH: 'MID',       // ⭐⭐⭐ → 중난도
+          VERY_HIGH: 'HIGH', // ⭐⭐⭐⭐ → 고난도
+          EXTREME: 'HIGH',   // ⭐⭐⭐⭐⭐ → 고난도
+        };
+      }
     };
+
+    const difficultyMapping = getDifficultyMapping(testType);
 
     // 난이도별 그룹화
     const groups = questionResults.reduce((acc, result) => {
