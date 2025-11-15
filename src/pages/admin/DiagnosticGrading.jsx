@@ -157,9 +157,9 @@ export default function DiagnosticGrading() {
   };
 
   const testInfo = {
-    MONO: { grade: '중1-1', emoji: '📗', color: '#4caf50' },
-    DI: { grade: '중2-1', emoji: '📘', color: '#2196f3' },
-    TRI: { grade: '중3-1 + 공통수학1', emoji: '📙', color: '#ff9800' },
+    MONO: { name: 'MONO 진단검사', grade: '중1-1', emoji: '📗', color: '#4caf50' },
+    DI: { name: 'DI 진단검사', grade: '중2-1', emoji: '📘', color: '#2196f3' },
+    TRI: { name: 'TRI 진단검사', grade: '중3-1 + 공통수학1', emoji: '📙', color: '#ff9800' },
   };
 
   const steps = [
@@ -299,7 +299,7 @@ export default function DiagnosticGrading() {
                     <div className="test-emoji" style={{ backgroundColor: `${info.color}20` }}>
                       {info.emoji}
                     </div>
-                    <h3 className="test-name">{test.test_name}</h3>
+                    <h3 className="test-name">{info.name}</h3>
                     <div className="test-grade" style={{ color: info.color }}>
                       {info.grade}
                     </div>
@@ -317,7 +317,7 @@ export default function DiagnosticGrading() {
         {currentStep === 'grading' && (
           <div className="grading-step">
             <div className="grading-header-info">
-              <h2 className="step-title">채점: {selectedTest?.test_name}</h2>
+              <h2 className="step-title">채점: {selectedTest ? testInfo[selectedTest.test_type].name : ''}</h2>
               <div className="grading-stats">
                 <span>채점 완료: {getMarkedCount()}/25</span>
                 <span>정답: {getCorrectCount()}</span>

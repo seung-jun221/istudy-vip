@@ -23,18 +23,21 @@ export default function TestSelectionStep() {
 
   const testInfo = {
     MONO: {
+      name: 'MONO 진단검사',
       grade: '중1-1',
       description: '수와 연산, 식의 계산, 방정식, 함수',
       emoji: '📗',
       color: '#4caf50'
     },
     DI: {
+      name: 'DI 진단검사',
       grade: '중2-1',
       description: '실수와 연산, 식의 계산, 일차부등식, 연립방정식',
       emoji: '📘',
       color: '#2196f3'
     },
     TRI: {
+      name: 'TRI 진단검사',
       grade: '중3-1 + 공통수학1',
       description: '다항식, 이차방정식, 이차함수',
       emoji: '📙',
@@ -63,7 +66,7 @@ export default function TestSelectionStep() {
               <div className="test-emoji" style={{ backgroundColor: `${info.color}20` }}>
                 {info.emoji}
               </div>
-              <h3 className="test-name">{test.test_type} 진단검사</h3>
+              <h3 className="test-name">{info.name}</h3>
               <div className="test-grade" style={{ color: info.color }}>
                 {info.grade}
               </div>

@@ -10,6 +10,12 @@ export default function AnswerInputStep() {
   const questionsPerPage = 5;
   const totalPages = 5; // 25 문항 ÷ 5 = 5 페이지
 
+  const testInfo = {
+    MONO: { name: 'MONO 진단검사' },
+    DI: { name: 'DI 진단검사' },
+    TRI: { name: 'TRI 진단검사' },
+  };
+
   const handleAnswerChange = (index, value) => {
     const newAnswers = [...answers];
     newAnswers[index] = value;
@@ -60,7 +66,7 @@ export default function AnswerInputStep() {
       <div className="answer-header">
         <h2 className="step-title">답안 입력</h2>
         <p className="step-description">
-          {selectedTest?.test_name} - 총 25문항
+          {selectedTest ? testInfo[selectedTest.test_type].name : ''} - 총 25문항
         </p>
         <div className="progress-info">
           <div className="filled-count">
