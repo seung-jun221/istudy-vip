@@ -39,15 +39,20 @@ export async function getActiveDiagnosticTests(): Promise<DiagnosticTest[]> {
   const { data, error } = await supabase
     .from('diagnostic_tests')
     .select('*')
-    .eq('is_active', true)
-    .order('test_type');
+    .eq('is_active', true);
 
   if (error) {
     console.error('진단검사 조회 실패:', error);
     throw new Error('진단검사 목록을 불러올 수 없습니다.');
   }
 
-  return data || [];
+  // MONO, DI, TRI 순서로 정렬
+  const testOrder = { MONO: 1, DI: 2, TRI: 3 };
+  const sorted = (data || []).sort((a, b) => {
+    return (testOrder[a.test_type as TestType] || 99) - (testOrder[b.test_type as TestType] || 99);
+  });
+
+  return sorted;
 }
 
 /**
