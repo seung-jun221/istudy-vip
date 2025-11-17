@@ -19,12 +19,14 @@ import type {
   CreateRegistrationRequest,
   UpdateRegistrationRequest,
 } from '../types/diagnostic';
-import { AutoGrader } from '../lib/grading-engine';
+import { AutoGrader, generateReportData } from '../lib/grading-engine';
 import type {
   StudentSubmission,
   StudentAnswer,
   AreaResult as GradingAreaResult,
   DifficultyResult as GradingDifficultyResult,
+  GradingResult,
+  QuestionResult as GradingQuestionResult,
 } from '../lib/grading-engine';
 import { getCorrectAnswers } from './correctAnswers';
 
@@ -378,30 +380,55 @@ async function gradeSubmissionManual(
 }
 
 /**
- * 보고서 생성 (HTML/PDF)
- * TODO: 다음 단계에서 구현 (HTML 템플릿 바인딩 + PDF 변환)
+ * 보고서 생성 (동적 코멘트 + 로드맵)
  */
 async function generateReport(resultId: string): Promise<DiagnosticReport> {
-  // Placeholder: 보고서 레코드만 생성
-  const reportData = {
-    result_id: resultId,
-    html_content: null,
-    pdf_url: null,
-    dynamic_comments: null,
-  };
+  try {
+    // 1. 결과 데이터 조회 (제출 정보 포함)
+    const fullResult = await getFullResultById(resultId);
+    if (!fullResult || !fullResult.submission) {
+      throw new Error('결과 또는 제출 정보를 찾을 수 없습니다.');
+    }
 
-  const { data: report, error: reportError } = await supabase
-    .from('diagnostic_reports')
-    .insert([reportData])
-    .select()
-    .single();
+    const { submission } = fullResult;
 
-  if (reportError) {
-    console.error('보고서 생성 실패:', reportError);
-    throw new Error('보고서 생성에 실패했습니다.');
+    // 2. DiagnosticResult를 GradingResult로 변환
+    const gradingResult = convertToGradingResult(fullResult, submission);
+
+    // 3. 보고서 데이터 생성 (동적 코멘트 + 로드맵)
+    const reportData = generateReportData(gradingResult);
+
+    // 4. dynamic_comments 형식으로 변환
+    const dynamicComments = {
+      area_comments: convertAreaCommentsFormat(reportData.comments.areaComments),
+      learning_strategy: {}, // TODO: 추후 추가 가능
+      roadmap: reportData.comments.roadmap,
+    };
+
+    // 5. Supabase에 보고서 저장
+    const insertData = {
+      result_id: resultId,
+      html_content: null, // TODO: 2단계에서 HTML 템플릿 구현
+      pdf_url: null, // TODO: 3단계에서 PDF 변환 구현
+      dynamic_comments: dynamicComments,
+    };
+
+    const { data: report, error: reportError } = await supabase
+      .from('diagnostic_reports')
+      .insert([insertData])
+      .select()
+      .single();
+
+    if (reportError) {
+      console.error('보고서 생성 실패:', reportError);
+      throw new Error('보고서 생성에 실패했습니다.');
+    }
+
+    return report;
+  } catch (error) {
+    console.error('generateReport 실패:', error);
+    throw error;
   }
-
-  return report;
 }
 
 // ========================================
@@ -797,4 +824,116 @@ export async function deleteRegistration(id: string): Promise<boolean> {
     console.error('deleteRegistration 실패:', error);
     return false;
   }
+}
+
+// ========================================
+// 보고서 생성 헬퍼 함수
+// ========================================
+
+/**
+ * DiagnosticResult를 GradingResult로 변환
+ */
+function convertToGradingResult(
+  result: DiagnosticResult,
+  submission: DiagnosticSubmission
+): GradingResult {
+  // 영역별 결과 변환
+  const areaResults: GradingAreaResult[] = result.area_results.map(ar => ({
+    area: ar.areaName,
+    totalScore: ar.totalScore,
+    earnedScore: ar.earnedScore,
+    correctCount: ar.correctCount,
+    totalCount: ar.totalCount,
+    accuracy: ar.correctRate,
+    tScore: ar.tscore,
+    percentile: ar.percentile,
+  }));
+
+  // 난이도별 결과 변환
+  const difficultyResults: GradingDifficultyResult[] = result.difficulty_results.map(dr => ({
+    difficulty: dr.difficulty === 'LOW' || dr.difficulty === 'MID' ? 'LOW' :
+                dr.difficulty === 'HIGH' ? 'MID' : 'HIGH',
+    totalScore: dr.totalScore,
+    earnedScore: dr.earnedScore,
+    correctCount: dr.correctCount,
+    totalCount: dr.totalCount,
+    accuracy: dr.correctRate,
+  }));
+
+  // 문항별 결과 변환
+  const questionResults: GradingQuestionResult[] = result.question_results.map(qr => ({
+    questionNumber: qr.questionNumber,
+    area: qr.area,
+    difficulty: qr.difficulty,
+    score: qr.score,
+    earnedScore: qr.isCorrect ? qr.score : 0,
+    isCorrect: qr.isCorrect,
+  }));
+
+  // 통계 정보 (기본값 사용)
+  const statistics = {
+    mean: result.max_score * 0.5, // 50% 평균 가정
+    stdDev: result.max_score * 0.15, // 15% 표준편차 가정
+    grade1Cut: result.max_score * 0.87,
+    grade2Cut: result.max_score * 0.75,
+    grade3Cut: result.max_score * 0.63,
+    grade4Cut: result.max_score * 0.51,
+    grade5Cut: result.max_score * 0.39,
+  };
+
+  return {
+    studentInfo: {
+      studentId: submission.submission_id,
+      studentName: submission.student_name,
+      grade: submission.grade,
+      testType: submission.test_type,
+    },
+    overallScore: {
+      totalScore: result.max_score,
+      earnedScore: result.total_score,
+      percentile: result.percentile,
+      grade9: result.grade9,
+      grade5: result.grade5,
+      expectedHighSchoolGrade: `${result.grade9}등급`,
+    },
+    areaResults,
+    difficultyResults,
+    questionResults,
+    statistics,
+  };
+}
+
+/**
+ * 영역별 코멘트를 DB 형식으로 변환
+ */
+function convertAreaCommentsFormat(areaComments: { [area: string]: string }): {
+  [areaName: string]: {
+    level: 'Excellent' | 'Good' | 'Average' | 'Weak' | 'Critical';
+    comment: string;
+    wrongPatterns?: string;
+  };
+} {
+  const result: any = {};
+
+  for (const [area, comment] of Object.entries(areaComments)) {
+    // 코멘트 내용에서 레벨 추정 (간단한 키워드 매칭)
+    let level: 'Excellent' | 'Good' | 'Average' | 'Weak' | 'Critical' = 'Average';
+
+    if (comment.includes('우수') || comment.includes('탁월') || comment.includes('완벽')) {
+      level = 'Excellent';
+    } else if (comment.includes('양호') || comment.includes('잘') || comment.includes('좋')) {
+      level = 'Good';
+    } else if (comment.includes('미흡') || comment.includes('부족')) {
+      level = 'Weak';
+    } else if (comment.includes('취약') || comment.includes('매우')) {
+      level = 'Critical';
+    }
+
+    result[area] = {
+      level,
+      comment,
+    };
+  }
+
+  return result;
 }
