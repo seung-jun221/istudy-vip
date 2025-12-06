@@ -9,6 +9,7 @@ import {
   QuestionResult,
   AreaResult,
   DifficultyResult,
+  TestType,
 } from '../types/index';
 import { ScoreTableParser } from '../parsers/scoreTableParser';
 import { GradeCalculator } from './gradeCalculator';

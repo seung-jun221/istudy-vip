@@ -24,6 +24,14 @@ export {
   generateAllAreaComments,
   generateRoadmap,
   generateSimpleRoadmap,
+  // 학습 전략
+  generateLearningStrategies,
+  createStudentProfile,
+  getAllCommentsForCategory,
+  getCategoryNames,
+  // HTML 보고서 생성기
+  generateHtmlReport,
+  generateReportBundle,
 } from './report';
 
 export type {
@@ -49,4 +57,13 @@ export type {
   LevelInfo,
   AreaComment,
   Roadmap,
+  // 학습 전략 타입
+  StudentProfile,
+  StrategyComment,
+  LearningStrategyResult,
+  GradeLevel,
+  ProgressLevel,
+  ScoreGrade,
+  // HTML 보고서 옵션
+  HtmlReportOptions,
 } from './report';

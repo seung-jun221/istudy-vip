@@ -38,3 +38,24 @@ export {
   identifyStrengthsAndWeaknesses,
   generateLearningPriority,
 } from './commentGenerator';
+
+// 학습 전략 데이터베이스
+export {
+  generateLearningStrategies,
+  createStudentProfile,
+  getAllCommentsForCategory,
+  getCategoryNames,
+  type StudentProfile,
+  type StrategyComment,
+  type LearningStrategyResult,
+  type GradeLevel,
+  type ProgressLevel,
+  type ScoreGrade,
+} from './learningStrategyDatabase';
+
+// HTML 보고서 생성기
+export {
+  generateHtmlReport,
+  generateReportBundle,
+  type HtmlReportOptions,
+} from './htmlReportGenerator';
