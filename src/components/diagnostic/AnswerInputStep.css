@@ -1,0 +1,214 @@
+.answer-input-step {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.answer-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.filled-count {
+  font-size: 1rem;
+  color: #666;
+}
+
+.filled-count strong {
+  color: #667eea;
+  font-size: 1.25rem;
+}
+
+.progress-percentage {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+/* 페이지 네비게이션 */
+.page-navigation {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.page-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.page-button:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+}
+
+.page-button.active {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.page-button.filled:not(.active) {
+  border-color: #4caf50;
+  background: #f1f8f4;
+}
+
+.page-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.page-range {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  opacity: 0.8;
+}
+
+/* 답안 입력 그리드 */
+.answer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.answer-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.answer-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.answer-input {
+  padding: 0.875rem 1rem;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.answer-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.answer-input:not(:placeholder-shown) {
+  border-color: #4caf50;
+  background: #f1f8f4;
+}
+
+/* 페이지 컨트롤 */
+.page-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.page-indicator {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #667eea;
+}
+
+/* 버튼 그룹 */
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.button-group button {
+  flex: 1;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.submit-button {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+}
+
+.submit-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+}
+
+.warning-text {
+  text-align: center;
+  color: #ff9800;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .answer-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .progress-info {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .page-navigation {
+    gap: 0.5rem;
+  }
+
+  .page-button {
+    min-width: 60px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .page-number {
+    font-size: 1rem;
+  }
+
+  .page-range {
+    font-size: 0.7rem;
+  }
+
+  .page-controls {
+    flex-wrap: wrap;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .answer-grid {
+    grid-template-columns: 1fr;
+  }
+}

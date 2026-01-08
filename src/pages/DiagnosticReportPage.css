@@ -1,0 +1,471 @@
+/* 진단검사 결과 보고서 페이지 */
+.report-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 2rem 1rem;
+}
+
+.report-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+}
+
+/* 로딩 */
+.report-loading,
+.report-error {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #1a73e8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.report-error h2 {
+  color: #f44336;
+  margin-bottom: 1rem;
+}
+
+/* 헤더 */
+.report-header {
+  text-align: center;
+  padding-bottom: 2rem;
+  margin-bottom: 2rem;
+  border-bottom: 3px solid #2c3e50;
+}
+
+.report-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.report-subtitle {
+  font-size: 14px;
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+/* 섹션 */
+.report-section {
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  padding-left: 12px;
+  border-left: 4px solid #1a73e8;
+}
+
+/* 학생 정보 */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 6px;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
+}
+
+.info-value {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+/* 종합 성적 카드 */
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.score-card {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+  text-align: center;
+  border: 2px solid #e0e0e0;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.score-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.score-card.primary {
+  background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+  color: white;
+  border: none;
+}
+
+.score-card .score-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 0.75rem;
+}
+
+.score-card.primary .score-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.score-value-large {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.score-unit {
+  font-size: 18px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.score-max,
+.score-desc {
+  font-size: 12px;
+  color: #999;
+  font-weight: 500;
+}
+
+.score-card.primary .score-max,
+.score-card.primary .score-desc {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 영역별 성적 테이블 */
+.area-table {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-header,
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 2fr 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  align-items: center;
+}
+
+.table-header {
+  background: #2c3e50;
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.table-row {
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-row:hover {
+  background: #f8f9fa;
+}
+
+.col {
+  text-align: center;
+}
+
+.col-area {
+  text-align: left;
+}
+
+.rate-bar {
+  position: relative;
+  height: 24px;
+  background: #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.rate-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50, #8bc34a);
+  transition: width 0.3s ease;
+}
+
+.rate-text {
+  position: relative;
+  z-index: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  line-height: 24px;
+}
+
+/* 난이도별 정답률 */
+.difficulty-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.difficulty-card {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border: 2px solid #e0e0e0;
+}
+
+.difficulty-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.difficulty-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.difficulty-rate {
+  font-size: 24px;
+  font-weight: 800;
+  color: #2c3e50;
+}
+
+.difficulty-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-item span {
+  font-size: 12px;
+  color: #666;
+}
+
+.stat-item strong {
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #1a73e8;
+  transition: width 0.3s ease;
+}
+
+/* 문항별 결과 */
+.question-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.question-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.5rem;
+  border-radius: 8px;
+  border: 2px solid;
+  transition: transform 0.2s;
+}
+
+.question-item:hover {
+  transform: scale(1.05);
+}
+
+.question-item.correct {
+  background: #e8f5e9;
+  border-color: #4caf50;
+}
+
+.question-item.incorrect {
+  background: #ffebee;
+  border-color: #f44336;
+}
+
+.question-number {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.question-result {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.question-item.correct .question-result {
+  color: #4caf50;
+}
+
+.question-item.incorrect .question-result {
+  color: #f44336;
+}
+
+.question-summary {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.summary-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.correct-text {
+  color: #4caf50;
+}
+
+.incorrect-text {
+  color: #f44336;
+}
+
+/* 푸터 */
+.report-footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e0e0e0;
+  text-align: center;
+}
+
+.footer-text {
+  font-size: 13px;
+  color: #7f8c8d;
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+/* 인쇄 스타일 */
+@media print {
+  .report-page {
+    background: white;
+    padding: 0;
+  }
+
+  .report-container {
+    box-shadow: none;
+    max-width: 100%;
+  }
+
+  .score-card,
+  .difficulty-card,
+  .question-item {
+    break-inside: avoid;
+  }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .report-container {
+    padding: 1.5rem;
+  }
+
+  .report-title {
+    font-size: 22px;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .score-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .table-header,
+  .table-row {
+    grid-template-columns: 1.5fr 1fr 1fr 1.5fr 1fr 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem 0.5rem;
+    font-size: 12px;
+  }
+
+  .difficulty-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .question-grid {
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 0.5rem;
+  }
+}

@@ -18,11 +18,25 @@ export default function TimeSelector({ onNext, onBack, agreed, onAgreeChange }) 
   const [testMethod, setTestMethod] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ⭐ 시간 페이지 진입 시 항상 다시 로드
+  // ⭐ 시간 페이지 진입 시 로드 (selectedLocation이 업데이트되면 다시 로드)
   useEffect(() => {
     const init = async () => {
+      // timeSlots가 이미 있으면 DateSelector에서 이미 로드한 것이므로 스킵
+      if (timeSlots.length > 0) {
+        console.log('⏭️ timeSlots 이미 로드됨:', timeSlots.length);
+
+        // 진단검사 방식만 확인
+        if (selectedLocation) {
+          const method = await loadTestMethod(selectedLocation);
+          setTestMethod(method);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // selectedLocation이 있으면 시간 슬롯 로드
       if (selectedDate && selectedLocation) {
-        console.log('시간 슬롯 로딩:', selectedDate, selectedLocation);
+        console.log('⏰ 시간 슬롯 로딩:', selectedDate, selectedLocation);
         await loadTimeSlots(selectedDate, selectedLocation);
 
         // 진단검사 방식 확인
@@ -32,7 +46,7 @@ export default function TimeSelector({ onNext, onBack, agreed, onAgreeChange }) 
       }
     };
     init();
-  }, []); // ⭐ 빈 배열: 컴포넌트 마운트 시 한 번만 실행
+  }, [selectedDate, selectedLocation, timeSlots.length]); // ⭐ 의존성 배열 수정
 
   const handleTimeSelect = (time) => {
     setSelectedTime(time);

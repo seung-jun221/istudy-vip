@@ -2,7 +2,7 @@
 import { useConsulting } from '../../context/ConsultingContext';
 import './DateSelector.css';
 
-export default function DateSelector({ onNext, onBack }) {
+export default function DateSelector({ onNext, onBack, location }) {
   const {
     availableDates,
     selectedDate,
@@ -11,10 +11,14 @@ export default function DateSelector({ onNext, onBack }) {
     selectedLocation,
   } = useConsulting();
 
+  // ⭐ prop으로 받은 location 또는 context의 selectedLocation 사용
+  const effectiveLocation = location || selectedLocation;
+
   // ⭐ 날짜 선택 시 바로 다음 단계로
   const handleDateSelect = async (date) => {
     setSelectedDate(date);
-    await loadTimeSlots(date, selectedLocation);
+    console.log('📅 날짜 선택:', date, '지역:', effectiveLocation);
+    await loadTimeSlots(date, effectiveLocation);
     // ⭐ 시간 슬롯 로딩 완료 후 자동으로 다음 화면으로
     onNext();
   };

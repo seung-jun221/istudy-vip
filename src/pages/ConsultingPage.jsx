@@ -508,6 +508,7 @@ export default function ConsultingPage() {
               onBack={() =>
                 setStep(userInfo?.isSeminarAttendee ? 'phone' : 'info')
               }
+              location={userInfo?.location}
             />
           </div>
         )}
