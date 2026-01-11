@@ -254,6 +254,9 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
       return;
     }
 
+    // ⭐ 기존 슬롯의 test_method 또는 현재 formData의 test_method 사용
+    const currentTestMethod = formData.test_method || seminarSlots?.[0]?.test_method || 'home';
+
     const success = await createSeminarSlots(campaign.id, [
       {
         date,
@@ -262,6 +265,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
         max_capacity,
         display_capacity,
         session_number: (seminarSlots?.length || 0) + 1,
+        test_method: currentTestMethod, // ⭐ 진단검사 방식 상속
       },
     ]);
 
