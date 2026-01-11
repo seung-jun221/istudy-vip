@@ -225,7 +225,11 @@ export default function DiagnosticReportPage() {
             ))}
           </div>
 
-          {/* T-Score 프로필 차트 */}
+        </div>
+
+        {/* T-Score 프로필 차트 */}
+        <div className="report-section">
+          <h2 className="section-title">자기주도 학습역량 주요 요인 프로파일</h2>
           <TScoreBarChart areaResults={data.area_results} />
         </div>
 
