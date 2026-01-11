@@ -34,32 +34,14 @@ export default function TScoreBarChart({ areaResults, title = "자기주도 학�
 
   return (
     <div className="tscore-profile-chart">
-      <div className="chart-title">{title}</div>
-
-      {/* 범례 */}
-      <div className="level-legend">
-        <span className="legend-label">T Score</span>
-        <div className="legend-items">
-          <div className="legend-item danger">
-            <span className="legend-color"></span>
-            <span>위험 (30 이하)</span>
-          </div>
-          <div className="legend-item warning">
-            <span className="legend-color"></span>
-            <span>주의 (30-40)</span>
-          </div>
-          <div className="legend-item normal">
-            <span className="legend-color"></span>
-            <span>보통 (40-60)</span>
-          </div>
-          <div className="legend-item good">
-            <span className="legend-color"></span>
-            <span>우수 (60-70)</span>
-          </div>
-          <div className="legend-item excellent">
-            <span className="legend-color"></span>
-            <span>최상 (70 이상)</span>
-          </div>
+      {/* 헤더: 타이틀 + 범례 */}
+      <div className="chart-header">
+        <div className="chart-title">{title}</div>
+        <div className="compact-legend">
+          <span className="legend-prefix">T Score</span>
+          <span className="legend-text">
+            위험 (30 이하)주의 (30-40)보통 (40-60)우수 (60-70)최상 (70 이상)
+          </span>
         </div>
       </div>
 
