@@ -180,7 +180,7 @@
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1fr 2fr 1fr 1fr;
+  grid-template-columns: 1.5fr 1.5fr 1fr 1fr 1fr;
   gap: 1rem;
   padding: 1rem;
   align-items: center;
@@ -212,6 +212,22 @@
 
 .col-area {
   text-align: left;
+}
+
+.col-tscore {
+  font-weight: 700;
+}
+
+.col-eval {
+  text-align: center;
+}
+
+.eval-badge {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .rate-bar {

@@ -85,6 +85,15 @@ export default function DiagnosticReportPage() {
     return `${grade9 - 1}~${grade9}`;
   };
 
+  // T-Score 기반 평가 레벨 및 색상
+  const getTScoreEvaluation = (tScore) => {
+    if (tScore >= 70) return { label: '최상', color: '#e8f5e9', textColor: '#2e7d32' };
+    if (tScore >= 60) return { label: '우수', color: '#e3f2fd', textColor: '#1565c0' };
+    if (tScore >= 40) return { label: '보통', color: '#fff3e0', textColor: '#ef6c00' };
+    if (tScore >= 30) return { label: '주의', color: '#fff8e1', textColor: '#f9a825' };
+    return { label: '위험', color: '#ffebee', textColor: '#c62828' };
+  };
+
   if (loading) {
     return (
       <div className="report-page">
@@ -196,33 +205,40 @@ export default function DiagnosticReportPage() {
           <div className="area-table">
             <div className="table-header">
               <div className="col col-area">영역</div>
-              <div className="col col-score">득점</div>
-              <div className="col col-correct">정답수</div>
-              <div className="col col-rate">정답률</div>
+              <div className="col col-score">원점수</div>
               <div className="col col-tscore">T-Score</div>
               <div className="col col-percentile">백분위</div>
+              <div className="col col-eval">평가</div>
             </div>
-            {data.area_results.map((area, index) => (
-              <div key={index} className="table-row">
-                <div className="col col-area">
-                  <strong>{area.areaName}</strong>
-                </div>
-                <div className="col col-score">
-                  {area.earnedScore.toFixed(1)} / {area.totalScore.toFixed(1)}
-                </div>
-                <div className="col col-correct">
-                  {area.correctCount} / {area.totalCount}
-                </div>
-                <div className="col col-rate">
-                  <div className="rate-bar">
-                    <div className="rate-fill" style={{ width: `${area.correctRate}%` }}></div>
-                    <span className="rate-text">{area.correctRate.toFixed(1)}%</span>
+            {data.area_results.map((area, index) => {
+              const evaluation = getTScoreEvaluation(area.tscore);
+              const topPercentile = (100 - area.percentile).toFixed(0);
+              return (
+                <div key={index} className="table-row">
+                  <div className="col col-area">
+                    <strong>{area.areaName}</strong>
+                  </div>
+                  <div className="col col-score">
+                    {area.earnedScore.toFixed(1)}/{area.totalScore.toFixed(1)}
+                  </div>
+                  <div className="col col-tscore" style={{ color: evaluation.textColor }}>
+                    {area.tscore.toFixed(1)}
+                  </div>
+                  <div className="col col-percentile">{topPercentile}%</div>
+                  <div className="col col-eval">
+                    <span
+                      className="eval-badge"
+                      style={{
+                        backgroundColor: evaluation.color,
+                        color: evaluation.textColor
+                      }}
+                    >
+                      {evaluation.label}
+                    </span>
                   </div>
                 </div>
-                <div className="col col-tscore">{area.tscore.toFixed(1)}</div>
-                <div className="col col-percentile">{area.percentile.toFixed(1)}%</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
         </div>
