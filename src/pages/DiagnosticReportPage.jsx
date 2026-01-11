@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getFullResultById, getOrGenerateReport } from '../utils/diagnosticService';
+import NormalDistributionChart from '../components/charts/NormalDistributionChart';
+import TScoreBarChart from '../components/charts/TScoreBarChart';
 import './DiagnosticReportPage.css';
 
 export default function DiagnosticReportPage() {
@@ -159,6 +161,13 @@ export default function DiagnosticReportPage() {
               <div className="score-desc">2028 개편 수능 기준</div>
             </div>
           </div>
+
+          {/* 정규분포 그래프 */}
+          <NormalDistributionChart
+            percentile={data.percentile}
+            score={data.total_score}
+            maxScore={data.max_score}
+          />
         </div>
 
         {/* 영역별 성적 */}
@@ -195,6 +204,9 @@ export default function DiagnosticReportPage() {
               </div>
             ))}
           </div>
+
+          {/* T-Score 프로필 차트 */}
+          <TScoreBarChart areaResults={data.area_results} />
         </div>
 
         {/* 난이도별 정답률 */}
