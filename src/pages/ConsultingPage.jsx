@@ -366,13 +366,48 @@ export default function ConsultingPage() {
             <div className="title-area">
               <img
                 src="/assets/images/istudy-logo.png"
-                alt="i.study"
+                alt="아이스터디"
                 className="logo"
               />
-              <h1>수학의 아침 X i.study</h1>
+              <h1>아이스터디 수리탐구</h1>
             </div>
 
-            <h2>개별 컨설팅 예약</h2>
+            <h2>입학테스트 / 개별컨설팅 예약</h2>
+
+            {/* 🎉 사직 직영점 오픈 홍보 박스 (임시) */}
+            <div style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              padding: '20px',
+              borderRadius: '12px',
+              marginBottom: '16px',
+              textAlign: 'center',
+              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
+            }}>
+              <div style={{ fontSize: '24px', marginBottom: '8px' }}>🎉</div>
+              <div style={{ fontSize: '18px', fontWeight: '700', marginBottom: '4px' }}>
+                부산 사직 직영점 GRAND OPEN
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
+                2026. 03. 02
+              </div>
+              <div style={{ fontSize: '14px', opacity: '0.95' }}>
+                📍 사직역 3번출구 도보 1분
+              </div>
+              <div style={{ fontSize: '14px', opacity: '0.95' }}>
+                📞 051-715-1580
+              </div>
+            </div>
+
+            {/* 안내 문구 */}
+            <p style={{
+              fontSize: '13px',
+              color: '#6b7280',
+              textAlign: 'center',
+              marginBottom: '16px'
+            }}>
+              ※ 입학테스트 신청은 컨설팅 예약 후 진행 가능합니다.
+            </p>
 
             <div className="info-box" style={{ marginBottom: '20px' }}>
               <p style={{ fontSize: '14px', lineHeight: '1.6' }}>
