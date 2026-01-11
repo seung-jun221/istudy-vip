@@ -693,7 +693,7 @@ export async function createDiagnosticRegistration(
 
     // 2. 등록 데이터 생성
     const registrationId = 'R' + Date.now();
-    const registrationData: Partial<DiagnosticSubmission> = {
+    const registrationData: any = {
       submission_id: registrationId,
       student_name: request.student_name,
       parent_phone: request.parent_phone,
@@ -707,6 +707,7 @@ export async function createDiagnosticRegistration(
       location: request.location,
       answers: null, // 등록 시에는 답안 없음
       submission_type: 'registration',
+      campaign_id: request.campaign_id, // 캠페인 ID 추가
     };
 
     // 3. Supabase에 등록 데이터 삽입
@@ -769,12 +770,20 @@ export async function updateDiagnosticRegistration(
 
 /**
  * 모든 등록 목록 조회 (관리자용)
+ * @param campaignId - 캠페인 ID (선택, 제공 시 해당 캠페인 등록만 조회)
  */
-export async function getAllRegistrations(): Promise<DiagnosticSubmission[]> {
-  const { data, error } = await supabase
+export async function getAllRegistrations(campaignId?: string): Promise<DiagnosticSubmission[]> {
+  let query = supabase
     .from('diagnostic_submissions')
     .select('*')
-    .order('created_at', { ascending: false });
+    .eq('submission_type', 'registration'); // 등록 타입만 조회
+
+  // 캠페인 ID가 있으면 필터링
+  if (campaignId) {
+    query = query.eq('campaign_id', campaignId);
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) {
     console.error('등록 목록 조회 실패:', error);

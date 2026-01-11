@@ -286,6 +286,9 @@ export interface CreateRegistrationRequest {
   test_date?: string;
   test_time?: string;
   location?: string;
+
+  // 캠페인 정보
+  campaign_id?: string;
 }
 
 /**
