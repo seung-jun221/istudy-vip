@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { getFullResultById, getOrGenerateReport } from '../utils/diagnosticService';
 import NormalDistributionChart from '../components/charts/NormalDistributionChart';
 import TScoreBarChart from '../components/charts/TScoreBarChart';
+import SchoolCompetitivenessChart from '../components/charts/SchoolCompetitivenessChart';
 import './DiagnosticReportPage.css';
 
 export default function DiagnosticReportPage() {
@@ -247,6 +248,12 @@ export default function DiagnosticReportPage() {
         <div className="report-section">
           <h2 className="section-title">자기주도 학습역량 주요 요인 프로파일</h2>
           <TScoreBarChart areaResults={data.area_results} />
+        </div>
+
+        {/* 고교 유형별 내신 경쟁력 분석 */}
+        <div className="report-section">
+          <h2 className="section-title">고교 유형별 내신 경쟁력 분석</h2>
+          <SchoolCompetitivenessChart score={data.total_score} maxScore={data.max_score} />
         </div>
 
         {/* 난이도별 정답률 */}
