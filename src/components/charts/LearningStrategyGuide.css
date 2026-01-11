@@ -5,8 +5,8 @@
 
 .strategy-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
 }
 
 .strategy-card {
@@ -17,6 +17,7 @@
   display: flex;
   flex-direction: column;
   transition: box-shadow 0.2s, transform 0.2s;
+  min-height: 300px;
 }
 
 .strategy-card:hover {
@@ -48,6 +49,7 @@
 .strategy-body {
   flex: 1;
   margin-bottom: 1rem;
+  overflow: hidden;
 }
 
 .strategy-recommendation {
@@ -73,9 +75,31 @@
 
 .strategy-content {
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: #444;
   margin: 0;
+  white-space: pre-line;
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.strategy-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.strategy-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.strategy-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 2px;
+}
+
+.strategy-content::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
 }
 
 .strategy-footer {
@@ -83,6 +107,7 @@
   gap: 0.5rem;
   padding-top: 0.75rem;
   border-top: 1px solid #f0f0f0;
+  flex-wrap: wrap;
 }
 
 .condition-badge {
@@ -101,16 +126,31 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .strategy-grid {
     grid-template-columns: 1fr;
   }
 
   .strategy-card {
     padding: 1rem;
+    min-height: auto;
   }
 
   .strategy-content {
     font-size: 12px;
+    max-height: none;
+  }
+}
+
+/* 인쇄 시 스크롤 없이 전체 표시 */
+@media print {
+  .strategy-content {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .strategy-card {
+    min-height: auto;
+    break-inside: avoid;
   }
 }
