@@ -366,13 +366,74 @@ export default function ConsultingPage() {
             <div className="title-area">
               <img
                 src="/assets/images/istudy-logo.png"
-                alt="i.study"
+                alt="아이스터디"
                 className="logo"
               />
-              <h1>수학의 아침 X i.study</h1>
+              <h1>아이스터디 수리탐구</h1>
             </div>
 
-            <h2>개별 컨설팅 예약</h2>
+            <h2>입학테스트 / 개별컨설팅 예약</h2>
+
+            {/* 사직 직영점 오픈 안내 */}
+            <div style={{
+              background: '#ffffff',
+              border: '2px solid #1e3a5f',
+              padding: '24px 20px',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              textAlign: 'center',
+            }}>
+              <div style={{
+                fontSize: '11px',
+                fontWeight: '500',
+                color: '#1e3a5f',
+                letterSpacing: '2px',
+                marginBottom: '8px',
+                textTransform: 'uppercase',
+              }}>
+                NEW BRANCH
+              </div>
+              <div style={{
+                fontSize: '18px',
+                fontWeight: '700',
+                color: '#1e3a5f',
+                marginBottom: '4px',
+              }}>
+                부산 사직 직영점
+              </div>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: '600',
+                color: '#374151',
+                marginBottom: '16px',
+              }}>
+                2026. 03. 02 OPEN
+              </div>
+              <div style={{
+                borderTop: '1px solid #e5e7eb',
+                paddingTop: '12px',
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '24px',
+              }}>
+                <div style={{ fontSize: '13px', color: '#4b5563' }}>
+                  사직역 3번출구 도보 1분
+                </div>
+                <div style={{ fontSize: '13px', color: '#4b5563' }}>
+                  051-715-1580
+                </div>
+              </div>
+            </div>
+
+            {/* 안내 문구 */}
+            <p style={{
+              fontSize: '13px',
+              color: '#6b7280',
+              textAlign: 'center',
+              marginBottom: '16px'
+            }}>
+              ※ 입학테스트 신청은 컨설팅 예약 후 진행 가능합니다.
+            </p>
 
             <div className="info-box" style={{ marginBottom: '20px' }}>
               <p style={{ fontSize: '14px', lineHeight: '1.6' }}>
@@ -508,6 +569,7 @@ export default function ConsultingPage() {
               onBack={() =>
                 setStep(userInfo?.isSeminarAttendee ? 'phone' : 'info')
               }
+              location={userInfo?.location}
             />
           </div>
         )}

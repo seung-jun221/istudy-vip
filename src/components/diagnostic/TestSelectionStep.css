@@ -1,0 +1,127 @@
+.test-selection-step {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.test-card {
+  position: relative;
+  padding: 2rem 1.5rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.test-card:hover {
+  border-color: #667eea;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+}
+
+.test-card.selected {
+  border-color: #667eea;
+  border-width: 3px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+}
+
+.test-emoji {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin: 0 auto;
+}
+
+.test-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+.test-grade {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.test-desc {
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.test-info {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: #666;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.selected-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #667eea;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #999;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.button-group button {
+  flex: 1;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .test-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .test-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .test-emoji {
+    width: 50px;
+    height: 50px;
+    font-size: 1.75rem;
+  }
+}
