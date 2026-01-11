@@ -12,8 +12,8 @@ export default function NormalDistributionChart({
   predictedGrade = '2~3'
 }) {
   const width = 500;
-  const height = 180;
-  const padding = { top: 40, right: 30, bottom: 30, left: 30 };
+  const height = 200;
+  const padding = { top: 50, right: 30, bottom: 30, left: 30 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
@@ -61,22 +61,21 @@ export default function NormalDistributionChart({
   const avgY = getYForScore(average);
   const scoreY = getYForScore(score);
 
+  // 평균과 내 점수가 가까울 때 라벨 위치 조정
+  const labelsClose = Math.abs(score - average) < 15;
+  const avgLabelY = padding.top - 10;
+  const scoreLabelY = labelsClose ? padding.top + 5 : padding.top - 10;
+
   return (
     <div className="normal-dist-chart">
       <div className="chart-title">전체 수험생 점수 분포 (정규분포)</div>
 
       <svg viewBox={`0 0 ${width} ${height}`} className="chart-svg">
-        <defs>
-          <linearGradient id="curveFill" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#42a5f5" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#42a5f5" stopOpacity="0.1" />
-          </linearGradient>
-        </defs>
-
-        {/* 곡선 아래 채우기 */}
+        {/* 곡선 아래 채우기 - 연한 하늘색 단색 */}
         <path
           d={generateFillPath()}
-          fill="url(#curveFill)"
+          fill="#b3e5fc"
+          fillOpacity="0.5"
         />
 
         {/* 정규분포 곡선 */}
@@ -131,7 +130,7 @@ export default function NormalDistributionChart({
         />
         <text
           x={avgX}
-          y={padding.top - 8}
+          y={avgLabelY}
           textAnchor="middle"
           className="marker-label avg-label"
         >
@@ -150,7 +149,7 @@ export default function NormalDistributionChart({
         />
         <text
           x={scoreX}
-          y={padding.top - 8}
+          y={scoreLabelY}
           textAnchor="middle"
           className="marker-label score-label"
         >
@@ -169,7 +168,7 @@ export default function NormalDistributionChart({
           <div className="stats-value">{stdDev.toFixed(1)}</div>
         </div>
         <div className="stats-item">
-          <div className="stats-label">고1 예상 등급</div>
+          <div className="stats-label">고1 예상 등급 (9등급제)</div>
           <div className="stats-value highlight">{predictedGrade}등급</div>
         </div>
       </div>
