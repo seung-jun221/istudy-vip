@@ -67,14 +67,14 @@ export default function DiagnosticReportPage() {
     return names[testType] || testType;
   };
 
-  // 검사 유형별 평균/표준편차 데이터
+  // 검사 유형별 평균/표준편차 데이터 (진단검사 평균 표준편차.txt 기준)
   const getTestStats = (testType) => {
     const stats = {
-      'DI': { average: 47, stdDev: 20 },
-      'MONO': { average: 50, stdDev: 18 },
-      'TRI': { average: 52, stdDev: 19 }
+      'MONO': { average: 45, stdDev: 22 },  // 평균 43-48점, 표준편차 20-24점
+      'DI': { average: 47, stdDev: 20 },    // 평균 45-50점, 표준편차 18-22점
+      'TRI': { average: 42, stdDev: 24 }    // 평균 40-45점, 표준편차 22-26점
     };
-    return stats[testType] || { average: 50, stdDev: 20 };
+    return stats[testType] || { average: 45, stdDev: 20 };
   };
 
   // 예상 등급 계산 (9등급 기준으로 범위 표시)
