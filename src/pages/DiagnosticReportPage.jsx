@@ -4,6 +4,7 @@ import { getFullResultById, getOrGenerateReport } from '../utils/diagnosticServi
 import NormalDistributionChart from '../components/charts/NormalDistributionChart';
 import TScoreBarChart from '../components/charts/TScoreBarChart';
 import SchoolCompetitivenessChart from '../components/charts/SchoolCompetitivenessChart';
+import LearningStrategyGuide from '../components/charts/LearningStrategyGuide';
 import './DiagnosticReportPage.css';
 
 export default function DiagnosticReportPage() {
@@ -254,6 +255,16 @@ export default function DiagnosticReportPage() {
         <div className="report-section">
           <h2 className="section-title">고교 유형별 내신 경쟁력 분석</h2>
           <SchoolCompetitivenessChart score={data.total_score} maxScore={data.max_score} />
+        </div>
+
+        {/* 맞춤 학습 전략 가이드 */}
+        <div className="report-section">
+          <h2 className="section-title">맞춤 학습 전략 가이드</h2>
+          <LearningStrategyGuide
+            grade9={data.grade9}
+            studentGrade={submission?.grade}
+            testType={submission?.test_type}
+          />
         </div>
 
         {/* 난이도별 정답률 */}
