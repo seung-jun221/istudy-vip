@@ -398,9 +398,12 @@ async function generateReport(resultId: string): Promise<DiagnosticReport> {
     // 3. 보고서 데이터 생성 (동적 코멘트 + 로드맵)
     const reportData = generateReportData(gradingResult);
 
-    // 4. dynamic_comments 형식으로 변환
+    // 4. dynamic_comments 형식으로 변환 (T-Score 기반 레벨 결정)
     const dynamicComments = {
-      area_comments: convertAreaCommentsFormat(reportData.comments.areaComments),
+      area_comments: convertAreaCommentsFormat(
+        reportData.comments.areaComments,
+        gradingResult.areaResults
+      ),
       learning_strategy: {}, // TODO: 추후 추가 가능
       roadmap: reportData.comments.roadmap,
     };
@@ -937,9 +940,23 @@ function convertToGradingResult(
 }
 
 /**
- * 영역별 코멘트를 DB 형식으로 변환
+ * T-Score 기반 레벨 결정
  */
-function convertAreaCommentsFormat(areaComments: { [area: string]: string }): {
+function getTScoreLevelForArea(tScore: number): 'Excellent' | 'Good' | 'Average' | 'Weak' | 'Critical' {
+  if (tScore >= 65) return 'Excellent';
+  if (tScore >= 55) return 'Good';
+  if (tScore >= 45) return 'Average';
+  if (tScore >= 35) return 'Weak';
+  return 'Critical';
+}
+
+/**
+ * 영역별 코멘트를 DB 형식으로 변환 (T-Score 기반 레벨 결정)
+ */
+function convertAreaCommentsFormat(
+  areaComments: { [area: string]: string },
+  areaResults?: GradingAreaResult[]
+): {
   [areaName: string]: {
     level: 'Excellent' | 'Good' | 'Average' | 'Weak' | 'Critical';
     comment: string;
@@ -948,18 +965,32 @@ function convertAreaCommentsFormat(areaComments: { [area: string]: string }): {
 } {
   const result: any = {};
 
+  // areaResults를 맵으로 변환 (빠른 조회용)
+  const areaScoreMap: { [area: string]: number } = {};
+  if (areaResults) {
+    for (const ar of areaResults) {
+      areaScoreMap[ar.area] = ar.tScore;
+    }
+  }
+
   for (const [area, comment] of Object.entries(areaComments)) {
-    // 코멘트 내용에서 레벨 추정 (간단한 키워드 매칭)
+    // T-Score 기반으로 레벨 결정 (우선) 또는 키워드 매칭 (fallback)
     let level: 'Excellent' | 'Good' | 'Average' | 'Weak' | 'Critical' = 'Average';
 
-    if (comment.includes('우수') || comment.includes('탁월') || comment.includes('완벽')) {
-      level = 'Excellent';
-    } else if (comment.includes('양호') || comment.includes('잘') || comment.includes('좋')) {
-      level = 'Good';
-    } else if (comment.includes('미흡') || comment.includes('부족')) {
-      level = 'Weak';
-    } else if (comment.includes('취약') || comment.includes('매우')) {
-      level = 'Critical';
+    if (areaScoreMap[area] !== undefined) {
+      // T-Score 기반 레벨 결정
+      level = getTScoreLevelForArea(areaScoreMap[area]);
+    } else {
+      // 키워드 매칭 (fallback - 종합 분석 등 영역 외 항목용)
+      if (comment.includes('우수') || comment.includes('탁월') || comment.includes('완벽')) {
+        level = 'Excellent';
+      } else if (comment.includes('양호') || comment.includes('잘 ') || comment.includes('좋')) {
+        level = 'Good';
+      } else if (comment.includes('미흡') || comment.includes('부족')) {
+        level = 'Weak';
+      } else if (comment.includes('취약') || comment.includes('매우 부족')) {
+        level = 'Critical';
+      }
     }
 
     result[area] = {

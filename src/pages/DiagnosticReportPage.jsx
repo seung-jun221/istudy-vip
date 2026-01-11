@@ -265,32 +265,38 @@ export default function DiagnosticReportPage() {
             <div className="comments-container">
               {Object.entries(report.dynamic_comments.area_comments)
                 .filter(([area]) => !['종합 분석', '강점 영역', '약점 영역', '학습 우선순위', '난이도별 분석'].includes(area))
-                .map(([area, commentData], index) => (
-                <div key={index} className="comment-card">
-                  <div className="comment-header">
-                    <span className="comment-area">{area}</span>
-                    {commentData.level && (
-                      <span className={`comment-level level-${commentData.level?.toLowerCase()}`}>
-                        {commentData.level === 'EXCELLENT' ? '우수' :
-                         commentData.level === 'GOOD' ? '양호' :
-                         commentData.level === 'AVERAGE' ? '보통' :
-                         commentData.level === 'WEAK' ? '미흡' : '취약'}
-                      </span>
-                    )}
-                  </div>
-                  <p className="comment-text">{commentData.comment || commentData}</p>
-                  {commentData.learningTips && commentData.learningTips.length > 0 && (
-                    <div className="learning-tips">
-                      <strong>학습 팁:</strong>
-                      <ul>
-                        {commentData.learningTips.map((tip, tipIndex) => (
-                          <li key={tipIndex}>{tip}</li>
-                        ))}
-                      </ul>
+                .map(([area, commentData], index) => {
+                  // 레벨을 대문자로 정규화하여 비교
+                  const levelUpper = commentData.level?.toUpperCase();
+                  const levelLabel = levelUpper === 'EXCELLENT' ? '우수' :
+                                     levelUpper === 'GOOD' ? '양호' :
+                                     levelUpper === 'AVERAGE' ? '보통' :
+                                     levelUpper === 'WEAK' ? '미흡' :
+                                     levelUpper === 'CRITICAL' ? '취약' : '보통';
+                  return (
+                    <div key={index} className="comment-card">
+                      <div className="comment-header">
+                        <span className="comment-area">{area}</span>
+                        {commentData.level && (
+                          <span className={`comment-level level-${commentData.level?.toLowerCase()}`}>
+                            {levelLabel}
+                          </span>
+                        )}
+                      </div>
+                      <p className="comment-text">{commentData.comment || commentData}</p>
+                      {commentData.learningTips && commentData.learningTips.length > 0 && (
+                        <div className="learning-tips">
+                          <strong>학습 팁:</strong>
+                          <ul>
+                            {commentData.learningTips.map((tip, tipIndex) => (
+                              <li key={tipIndex}>{tip}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
+                  );
+                })}
             </div>
           </div>
         )}
