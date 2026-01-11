@@ -62,9 +62,9 @@ export default function DiagnosticReportPage() {
 
   const getTestTypeName = (testType) => {
     const names = {
-      'DI': 'DI (연산 진단검사)',
-      'MONO': 'MONO (단원 진단검사)',
-      'TRI': 'TRI (종합 진단검사)'
+      'DI': 'DI 진단검사',
+      'MONO': 'MONO 진단검사',
+      'TRI': 'TRI 진단검사'
     };
     return names[testType] || testType;
   };
