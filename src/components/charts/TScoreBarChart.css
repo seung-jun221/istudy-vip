@@ -7,78 +7,43 @@
   margin-top: 1.5rem;
 }
 
+/* 헤더 영역 */
+.chart-header {
+  margin-bottom: 0.75rem;
+}
+
 .tscore-profile-chart .chart-title {
   font-size: 15px;
   font-weight: 700;
   color: #2c3e50;
-  margin-bottom: 1rem;
-  padding-left: 0.5rem;
+  padding-left: 0.75rem;
   border-left: 3px solid #1a73e8;
+  margin-bottom: 0.75rem;
 }
 
-/* 범례 */
-.level-legend {
+/* 컴팩트 범례 (샘플 스타일) */
+.compact-legend {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 0.75rem 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  flex-wrap: wrap;
-}
-
-.legend-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-  min-width: 50px;
-}
-
-.legend-items {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+  gap: 1.5rem;
   font-size: 11px;
   color: #666;
 }
 
-.legend-item .legend-color {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
+.legend-prefix {
+  font-weight: 600;
+  color: #333;
 }
 
-.legend-item.danger .legend-color {
-  background: #f44336;
-}
-
-.legend-item.warning .legend-color {
-  background: #ff9800;
-}
-
-.legend-item.normal .legend-color {
-  background: #2196f3;
-}
-
-.legend-item.good .legend-color {
-  background: #8bc34a;
-}
-
-.legend-item.excellent .legend-color {
-  background: #4caf50;
+.legend-text {
+  color: #888;
+  letter-spacing: -0.3px;
 }
 
 /* X축 */
 .x-axis {
   display: flex;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .axis-spacer {
@@ -89,7 +54,7 @@
 .axis-ticks {
   flex: 1;
   position: relative;
-  height: 20px;
+  height: 18px;
 }
 
 .tick-mark {
@@ -103,7 +68,7 @@
 .tscore-profile-chart .bars-container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
 .tscore-profile-chart .bar-row {
@@ -124,7 +89,8 @@
 .bar-track {
   flex: 1;
   display: flex;
-  height: 28px;
+  height: 26px;
+  background: #e8e8e8;
   border-radius: 4px;
   overflow: hidden;
 }
@@ -133,22 +99,21 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding-right: 8px;
+  padding-right: 10px;
   transition: width 0.5s ease-out;
   min-width: 50px;
-  border-radius: 4px 0 0 4px;
+  border-radius: 4px;
 }
 
 .bar-value {
   font-size: 12px;
   font-weight: 700;
   color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .bar-empty {
   background: #e8e8e8;
-  border-radius: 0 4px 4px 0;
 }
 
 /* 반응형 */
@@ -157,18 +122,10 @@
     padding: 1rem;
   }
 
-  .level-legend {
+  .compact-legend {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .legend-items {
-    gap: 0.5rem;
-  }
-
-  .legend-item {
-    font-size: 10px;
+    gap: 0.25rem;
   }
 
   .tscore-profile-chart .bar-label {
@@ -186,11 +143,6 @@
 }
 
 @media (max-width: 480px) {
-  .legend-items {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
   .tscore-profile-chart .bar-label {
     width: 50px;
     font-size: 11px;
@@ -198,5 +150,9 @@
 
   .axis-spacer {
     width: 55px;
+  }
+
+  .legend-text {
+    font-size: 10px;
   }
 }
