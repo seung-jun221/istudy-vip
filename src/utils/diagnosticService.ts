@@ -697,17 +697,17 @@ export async function createDiagnosticRegistration(
       submission_id: registrationId,
       student_name: request.student_name,
       parent_phone: request.parent_phone,
-      school: request.school,
+      school: request.school || null,
       grade: request.grade,
-      math_level: request.math_level,
+      math_level: request.math_level || null,
       test_id: test.id,
       test_type: request.test_type,
-      test_date: request.test_date,
-      test_time: request.test_time,
-      location: request.location,
+      test_date: request.test_date || null, // 빈 문자열이면 null로 변환
+      test_time: request.test_time || null, // 빈 문자열이면 null로 변환
+      location: request.location || null,
       answers: null, // 등록 시에는 답안 없음
       submission_type: 'registration',
-      campaign_id: request.campaign_id, // 캠페인 ID 추가
+      campaign_id: request.campaign_id || null, // 캠페인 ID 추가
     };
 
     // 3. Supabase에 등록 데이터 삽입
