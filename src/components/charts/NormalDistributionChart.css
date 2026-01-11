@@ -1,31 +1,26 @@
 /* 정규분포 그래프 스타일 */
 .normal-dist-chart {
-  background: #f8f9fa;
+  background: white;
+  border: 1px solid #e0e0e0;
   border-radius: 12px;
   padding: 1.5rem;
-  margin-bottom: 1rem;
+  margin-top: 1.5rem;
 }
 
-.chart-title {
-  font-size: 16px;
+.normal-dist-chart .chart-title {
+  font-size: 15px;
   font-weight: 700;
   color: #2c3e50;
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .chart-svg {
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   height: auto;
   display: block;
   margin: 0 auto;
-}
-
-.percentile-label {
-  font-size: 12px;
-  font-weight: 700;
-  fill: #e53935;
 }
 
 .axis-label {
@@ -33,31 +28,51 @@
   fill: #666;
 }
 
-.chart-legend {
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
+.marker-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.marker-label.avg-label {
+  fill: #43a047;
+}
+
+.marker-label.score-label {
+  fill: #e53935;
+}
+
+/* 통계 테이블 */
+.stats-table {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: #e0e0e0;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
   margin-top: 1rem;
-  flex-wrap: wrap;
 }
 
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 14px;
-  color: #333;
+.stats-item {
+  background: #f8f9fa;
+  padding: 0.75rem;
+  text-align: center;
 }
 
-.legend-marker {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+.stats-label {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 0.25rem;
 }
 
-.legend-score {
+.stats-value {
+  font-size: 18px;
   font-weight: 700;
   color: #1a73e8;
+}
+
+.stats-value.highlight {
+  color: #e53935;
 }
 
 /* 반응형 */
@@ -66,9 +81,17 @@
     padding: 1rem;
   }
 
-  .chart-legend {
-    flex-direction: column;
+  .stats-table {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-item {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
+  }
+
+  .stats-label {
+    margin-bottom: 0;
   }
 }

@@ -1,104 +1,142 @@
-/* T-Score 막대 차트 스타일 */
-.tscore-chart {
-  background: #f8f9fa;
+/* T-Score 프로필 차트 스타일 */
+.tscore-profile-chart {
+  background: white;
+  border: 1px solid #e0e0e0;
   border-radius: 12px;
   padding: 1.5rem;
+  margin-top: 1.5rem;
 }
 
-.tscore-chart .chart-title {
-  font-size: 16px;
+.tscore-profile-chart .chart-title {
+  font-size: 15px;
   font-weight: 700;
   color: #2c3e50;
-  text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+  padding-left: 0.5rem;
+  border-left: 3px solid #1a73e8;
 }
 
-.chart-container {
-  position: relative;
-  padding-top: 1.5rem;
-}
-
-/* 기준선 */
-.reference-lines {
-  position: absolute;
-  top: 0;
-  left: 100px;
-  right: 60px;
-  height: 100%;
-  pointer-events: none;
-}
-
-.ref-line {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: #ddd;
-}
-
-.ref-line.average {
-  background: #1a73e8;
-  width: 2px;
-}
-
-.ref-label {
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 10px;
-  color: #666;
-  white-space: nowrap;
-}
-
-.ref-line.average .ref-label {
-  color: #1a73e8;
-  font-weight: 600;
-}
-
-/* 막대 그래프 */
-.bars-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.bar-row {
+/* 범례 */
+.level-legend {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  flex-wrap: wrap;
 }
 
-.bar-label {
-  width: 90px;
+.legend-label {
   font-size: 13px;
   font-weight: 600;
   color: #333;
-  text-align: right;
+  min-width: 50px;
+}
+
+.legend-items {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 11px;
+  color: #666;
+}
+
+.legend-item .legend-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.legend-item.danger .legend-color {
+  background: #f44336;
+}
+
+.legend-item.warning .legend-color {
+  background: #ff9800;
+}
+
+.legend-item.normal .legend-color {
+  background: #2196f3;
+}
+
+.legend-item.good .legend-color {
+  background: #8bc34a;
+}
+
+.legend-item.excellent .legend-color {
+  background: #4caf50;
+}
+
+/* X축 */
+.x-axis {
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+
+.axis-spacer {
+  width: 80px;
   flex-shrink: 0;
 }
 
-.bar-wrapper {
+.axis-ticks {
   flex: 1;
+  position: relative;
+  height: 20px;
+}
+
+.tick-mark {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #999;
+}
+
+/* 막대 그래프 */
+.tscore-profile-chart .bars-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tscore-profile-chart .bar-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  height: 32px;
-  background: #e0e0e0;
+}
+
+.tscore-profile-chart .bar-label {
+  width: 75px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.bar-track {
+  flex: 1;
+  display: flex;
+  height: 28px;
   border-radius: 4px;
-  overflow: visible;
-  position: relative;
+  overflow: hidden;
 }
 
 .bar-fill {
-  height: 100%;
-  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   padding-right: 8px;
   transition: width 0.5s ease-out;
-  min-width: 40px;
+  min-width: 50px;
+  border-radius: 4px 0 0 4px;
 }
 
 .bar-value {
@@ -108,80 +146,57 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.bar-level {
-  font-size: 12px;
-  font-weight: 600;
-  width: 50px;
-  flex-shrink: 0;
-}
-
-/* 범례 */
-.tscore-chart .chart-legend {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e0e0e0;
-}
-
-.tscore-chart .legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 12px;
-  color: #666;
-}
-
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+.bar-empty {
+  background: #e8e8e8;
+  border-radius: 0 4px 4px 0;
 }
 
 /* 반응형 */
 @media (max-width: 768px) {
-  .tscore-chart {
+  .tscore-profile-chart {
     padding: 1rem;
   }
 
-  .bar-label {
-    width: 70px;
-    font-size: 12px;
-  }
-
-  .reference-lines {
-    left: 80px;
-    right: 50px;
-  }
-
-  .bar-level {
-    width: 40px;
-    font-size: 11px;
-  }
-
-  .tscore-chart .chart-legend {
+  .level-legend {
+    flex-direction: column;
+    align-items: flex-start;
     gap: 0.5rem;
   }
 
-  .tscore-chart .legend-item {
-    font-size: 11px;
+  .legend-items {
+    gap: 0.5rem;
+  }
+
+  .legend-item {
+    font-size: 10px;
+  }
+
+  .tscore-profile-chart .bar-label {
+    width: 60px;
+    font-size: 12px;
+  }
+
+  .axis-spacer {
+    width: 65px;
+  }
+
+  .tick-mark {
+    font-size: 10px;
   }
 }
 
 @media (max-width: 480px) {
-  .bar-label {
-    width: 60px;
+  .legend-items {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .tscore-profile-chart .bar-label {
+    width: 50px;
     font-size: 11px;
   }
 
-  .reference-lines {
-    left: 70px;
-    right: 45px;
-  }
-
-  .ref-label {
-    font-size: 9px;
+  .axis-spacer {
+    width: 55px;
   }
 }

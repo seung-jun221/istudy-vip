@@ -1,150 +1,177 @@
 /**
  * 정규분포 그래프 컴포넌트
- * 백분위 위치를 시각적으로 표시합니다.
+ * 전체 수험생 점수 분포와 내 위치를 시각적으로 표시합니다.
  */
 import './NormalDistributionChart.css';
 
-export default function NormalDistributionChart({ percentile, score, maxScore }) {
-  // 정규분포 곡선 포인트 생성 (SVG path)
-  const generateNormalCurve = () => {
-    const points = [];
-    const width = 400;
-    const height = 150;
-    const padding = 20;
+export default function NormalDistributionChart({
+  score,
+  maxScore = 100,
+  average = 47,
+  stdDev = 20,
+  predictedGrade = '2~3'
+}) {
+  const width = 500;
+  const height = 180;
+  const padding = { top: 40, right: 30, bottom: 30, left: 30 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
 
-    for (let i = 0; i <= 100; i++) {
-      const x = padding + (i / 100) * (width - 2 * padding);
-      // 정규분포 공식 (평균 50, 표준편차 약 16.67로 0-100 범위)
-      const z = (i - 50) / 16.67;
-      const y = height - padding - (Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI)) * (height - 2 * padding) * 4;
-      points.push(`${i === 0 ? 'M' : 'L'} ${x} ${y}`);
+  // 점수를 X 좌표로 변환
+  const scoreToX = (s) => {
+    return padding.left + (s / maxScore) * chartWidth;
+  };
+
+  // 정규분포 Y값 계산
+  const normalY = (x, mean, std) => {
+    const z = (x - mean) / std;
+    return Math.exp(-0.5 * z * z) / (std * Math.sqrt(2 * Math.PI));
+  };
+
+  // 정규분포 곡선 path 생성
+  const generateCurvePath = () => {
+    const points = [];
+    const maxY = normalY(average, average, stdDev);
+
+    for (let s = 0; s <= maxScore; s += 1) {
+      const x = scoreToX(s);
+      const yVal = normalY(s, average, stdDev);
+      const y = padding.top + chartHeight - (yVal / maxY) * chartHeight * 0.9;
+      points.push(`${s === 0 ? 'M' : 'L'} ${x} ${y}`);
     }
 
     return points.join(' ');
   };
 
-  // 백분위에 해당하는 X 좌표 계산
-  const getPercentileX = () => {
-    const width = 400;
-    const padding = 20;
-    return padding + (percentile / 100) * (width - 2 * padding);
+  // 곡선 아래 영역 path
+  const generateFillPath = () => {
+    const curvePath = generateCurvePath();
+    return `${curvePath} L ${scoreToX(maxScore)} ${padding.top + chartHeight} L ${scoreToX(0)} ${padding.top + chartHeight} Z`;
   };
 
-  // 백분위에 해당하는 Y 좌표 계산
-  const getPercentileY = () => {
-    const height = 150;
-    const padding = 20;
-    const z = (percentile - 50) / 16.67;
-    return height - padding - (Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI)) * (height - 2 * padding) * 4;
+  // 특정 점수의 Y 좌표
+  const getYForScore = (s) => {
+    const maxY = normalY(average, average, stdDev);
+    const yVal = normalY(s, average, stdDev);
+    return padding.top + chartHeight - (yVal / maxY) * chartHeight * 0.9;
   };
 
-  // 등급 구간 색상
-  const getGradeZones = () => {
-    return [
-      { start: 0, end: 4, color: '#1565c0', label: '1등급' },
-      { start: 4, end: 11, color: '#1976d2', label: '2등급' },
-      { start: 11, end: 23, color: '#1e88e5', label: '3등급' },
-      { start: 23, end: 40, color: '#42a5f5', label: '4등급' },
-      { start: 40, end: 60, color: '#90caf9', label: '5등급' },
-      { start: 60, end: 77, color: '#ffb74d', label: '6등급' },
-      { start: 77, end: 89, color: '#ffa726', label: '7등급' },
-      { start: 89, end: 96, color: '#ff9800', label: '8등급' },
-      { start: 96, end: 100, color: '#f57c00', label: '9등급' },
-    ];
-  };
-
-  const percentileX = getPercentileX();
-  const percentileY = getPercentileY();
+  const avgX = scoreToX(average);
+  const scoreX = scoreToX(score);
+  const avgY = getYForScore(average);
+  const scoreY = getYForScore(score);
 
   return (
     <div className="normal-dist-chart">
-      <div className="chart-title">성적 분포 및 백분위 위치</div>
-      <svg viewBox="0 0 400 180" className="chart-svg">
-        {/* 배경 그라데이션 영역 */}
+      <div className="chart-title">전체 수험생 점수 분포 (정규분포)</div>
+
+      <svg viewBox={`0 0 ${width} ${height}`} className="chart-svg">
         <defs>
-          <linearGradient id="curveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#1565c0" />
-            <stop offset="11%" stopColor="#1976d2" />
-            <stop offset="23%" stopColor="#42a5f5" />
-            <stop offset="50%" stopColor="#90caf9" />
-            <stop offset="77%" stopColor="#ffb74d" />
-            <stop offset="89%" stopColor="#ff9800" />
-            <stop offset="100%" stopColor="#f57c00" />
+          <linearGradient id="curveFill" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#42a5f5" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#42a5f5" stopOpacity="0.1" />
           </linearGradient>
-          <clipPath id="curveClip">
-            <path d={`${generateNormalCurve()} L 380 150 L 20 150 Z`} />
-          </clipPath>
         </defs>
 
         {/* 곡선 아래 채우기 */}
-        <rect
-          x="20"
-          y="0"
-          width="360"
-          height="150"
-          fill="url(#curveGradient)"
-          clipPath="url(#curveClip)"
-          opacity="0.3"
+        <path
+          d={generateFillPath()}
+          fill="url(#curveFill)"
         />
 
         {/* 정규분포 곡선 */}
         <path
-          d={generateNormalCurve()}
+          d={generateCurvePath()}
           fill="none"
-          stroke="#2c3e50"
-          strokeWidth="2"
+          stroke="#1976d2"
+          strokeWidth="2.5"
         />
 
         {/* X축 */}
-        <line x1="20" y1="150" x2="380" y2="150" stroke="#ccc" strokeWidth="1" />
-
-        {/* 백분위 마커 - 세로선 */}
         <line
-          x1={percentileX}
-          y1={percentileY}
-          x2={percentileX}
-          y2="150"
-          stroke="#e53935"
-          strokeWidth="2"
-          strokeDasharray="4,2"
+          x1={padding.left}
+          y1={padding.top + chartHeight}
+          x2={width - padding.right}
+          y2={padding.top + chartHeight}
+          stroke="#ccc"
+          strokeWidth="1"
         />
 
-        {/* 백분위 마커 - 점 */}
-        <circle
-          cx={percentileX}
-          cy={percentileY}
-          r="6"
-          fill="#e53935"
-          stroke="white"
-          strokeWidth="2"
-        />
+        {/* X축 눈금 및 라벨 */}
+        {[0, 20, 40, 60, 80, 100].map((val) => (
+          <g key={val}>
+            <line
+              x1={scoreToX(val)}
+              y1={padding.top + chartHeight}
+              x2={scoreToX(val)}
+              y2={padding.top + chartHeight + 5}
+              stroke="#999"
+              strokeWidth="1"
+            />
+            <text
+              x={scoreToX(val)}
+              y={padding.top + chartHeight + 18}
+              textAnchor="middle"
+              className="axis-label"
+            >
+              {val}
+            </text>
+          </g>
+        ))}
 
-        {/* 백분위 라벨 */}
+        {/* 평균 마커 */}
+        <line
+          x1={avgX}
+          y1={avgY}
+          x2={avgX}
+          y2={padding.top + chartHeight}
+          stroke="#66bb6a"
+          strokeWidth="2"
+          strokeDasharray="6,3"
+        />
         <text
-          x={percentileX}
-          y={percentileY - 15}
+          x={avgX}
+          y={padding.top - 8}
           textAnchor="middle"
-          className="percentile-label"
+          className="marker-label avg-label"
         >
-          {percentile.toFixed(1)}%
+          평균: {average}점
         </text>
 
-        {/* X축 라벨 */}
-        <text x="20" y="168" textAnchor="start" className="axis-label">하위</text>
-        <text x="200" y="168" textAnchor="middle" className="axis-label">평균</text>
-        <text x="380" y="168" textAnchor="end" className="axis-label">상위</text>
+        {/* 내 점수 마커 */}
+        <line
+          x1={scoreX}
+          y1={scoreY}
+          x2={scoreX}
+          y2={padding.top + chartHeight}
+          stroke="#e53935"
+          strokeWidth="2"
+          strokeDasharray="6,3"
+        />
+        <text
+          x={scoreX}
+          y={padding.top - 8}
+          textAnchor="middle"
+          className="marker-label score-label"
+        >
+          내 점수: {score}점
+        </text>
       </svg>
 
-      <div className="chart-legend">
-        <div className="legend-item">
-          <span className="legend-marker" style={{ background: '#e53935' }}></span>
-          <span>내 위치: 상위 {(100 - percentile).toFixed(1)}%</span>
+      {/* 통계 테이블 */}
+      <div className="stats-table">
+        <div className="stats-item">
+          <div className="stats-label">전국 평균</div>
+          <div className="stats-value">{average.toFixed(1)}점</div>
         </div>
-        {score !== undefined && maxScore !== undefined && (
-          <div className="legend-item">
-            <span className="legend-score">{score.toFixed(1)} / {maxScore}점</span>
-          </div>
-        )}
+        <div className="stats-item">
+          <div className="stats-label">표준편차</div>
+          <div className="stats-value">{stdDev.toFixed(1)}</div>
+        </div>
+        <div className="stats-item">
+          <div className="stats-label">고1 예상 등급</div>
+          <div className="stats-value highlight">{predictedGrade}등급</div>
+        </div>
       </div>
     </div>
   );
