@@ -4,7 +4,7 @@
  */
 import './TScoreBarChart.css';
 
-export default function TScoreBarChart({ areaResults, title = "자기주도 학습역량 주요 요인 프로파일" }) {
+export default function TScoreBarChart({ areaResults }) {
   if (!areaResults || areaResults.length === 0) {
     return null;
   }
@@ -34,15 +34,12 @@ export default function TScoreBarChart({ areaResults, title = "자기주도 학�
 
   return (
     <div className="tscore-profile-chart">
-      {/* 헤더: 타이틀 + 범례 */}
-      <div className="chart-header">
-        <div className="chart-title">{title}</div>
-        <div className="compact-legend">
-          <span className="legend-prefix">T Score</span>
-          <span className="legend-text">
-            위험 (30 이하)주의 (30-40)보통 (40-60)우수 (60-70)최상 (70 이상)
-          </span>
-        </div>
+      {/* 범례 (오른쪽 정렬) */}
+      <div className="compact-legend">
+        <span className="legend-prefix">T Score</span>
+        <span className="legend-text">
+          위험 (30 이하)주의 (30-40)보통 (40-60)우수 (60-70)최상 (70 이상)
+        </span>
       </div>
 
       {/* X축 눈금 */}
