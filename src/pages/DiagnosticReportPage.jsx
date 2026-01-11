@@ -67,6 +67,24 @@ export default function DiagnosticReportPage() {
     return names[testType] || testType;
   };
 
+  // 검사 유형별 평균/표준편차 데이터
+  const getTestStats = (testType) => {
+    const stats = {
+      'DI': { average: 47, stdDev: 20 },
+      'MONO': { average: 50, stdDev: 18 },
+      'TRI': { average: 52, stdDev: 19 }
+    };
+    return stats[testType] || { average: 50, stdDev: 20 };
+  };
+
+  // 예상 등급 계산 (9등급 기준으로 범위 표시)
+  const getPredictedGrade = (grade9) => {
+    if (grade9 <= 2) return `${grade9}~${Math.min(grade9 + 1, 3)}`;
+    if (grade9 <= 4) return `${grade9 - 1}~${grade9}`;
+    if (grade9 <= 6) return `${grade9}~${grade9 + 1}`;
+    return `${grade9 - 1}~${grade9}`;
+  };
+
   if (loading) {
     return (
       <div className="report-page">
@@ -164,9 +182,11 @@ export default function DiagnosticReportPage() {
 
           {/* 정규분포 그래프 */}
           <NormalDistributionChart
-            percentile={data.percentile}
             score={data.total_score}
             maxScore={data.max_score}
+            average={getTestStats(submission?.test_type).average}
+            stdDev={getTestStats(submission?.test_type).stdDev}
+            predictedGrade={getPredictedGrade(data.grade9)}
           />
         </div>
 
