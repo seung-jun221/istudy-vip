@@ -1,0 +1,74 @@
+/* 정규분포 그래프 스타일 */
+.normal-dist-chart {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.chart-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.chart-svg {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.percentile-label {
+  font-size: 12px;
+  font-weight: 700;
+  fill: #e53935;
+}
+
+.axis-label {
+  font-size: 11px;
+  fill: #666;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 14px;
+  color: #333;
+}
+
+.legend-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-score {
+  font-weight: 700;
+  color: #1a73e8;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .normal-dist-chart {
+    padding: 1rem;
+  }
+
+  .chart-legend {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
