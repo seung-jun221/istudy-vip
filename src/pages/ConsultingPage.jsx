@@ -374,28 +374,54 @@ export default function ConsultingPage() {
 
             <h2>입학테스트 / 개별컨설팅 예약</h2>
 
-            {/* 🎉 사직 직영점 오픈 홍보 박스 (임시) */}
+            {/* 사직 직영점 오픈 안내 */}
             <div style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              padding: '20px',
-              borderRadius: '12px',
+              background: '#ffffff',
+              border: '2px solid #1e3a5f',
+              padding: '24px 20px',
+              borderRadius: '8px',
               marginBottom: '16px',
               textAlign: 'center',
-              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
             }}>
-              <div style={{ fontSize: '24px', marginBottom: '8px' }}>🎉</div>
-              <div style={{ fontSize: '18px', fontWeight: '700', marginBottom: '4px' }}>
-                부산 사직 직영점 GRAND OPEN
+              <div style={{
+                fontSize: '11px',
+                fontWeight: '500',
+                color: '#1e3a5f',
+                letterSpacing: '2px',
+                marginBottom: '8px',
+                textTransform: 'uppercase',
+              }}>
+                NEW BRANCH
               </div>
-              <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
-                2026. 03. 02
+              <div style={{
+                fontSize: '18px',
+                fontWeight: '700',
+                color: '#1e3a5f',
+                marginBottom: '4px',
+              }}>
+                부산 사직 직영점
               </div>
-              <div style={{ fontSize: '14px', opacity: '0.95' }}>
-                📍 사직역 3번출구 도보 1분
+              <div style={{
+                fontSize: '14px',
+                fontWeight: '600',
+                color: '#374151',
+                marginBottom: '16px',
+              }}>
+                2026. 03. 02 OPEN
               </div>
-              <div style={{ fontSize: '14px', opacity: '0.95' }}>
-                📞 051-715-1580
+              <div style={{
+                borderTop: '1px solid #e5e7eb',
+                paddingTop: '12px',
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '24px',
+              }}>
+                <div style={{ fontSize: '13px', color: '#4b5563' }}>
+                  사직역 3번출구 도보 1분
+                </div>
+                <div style={{ fontSize: '13px', color: '#4b5563' }}>
+                  051-715-1580
+                </div>
               </div>
             </div>
 
