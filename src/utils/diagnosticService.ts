@@ -598,6 +598,30 @@ export async function getReportByResultId(
 }
 
 /**
+ * 결과 ID로 보고서 조회 또는 생성
+ * 보고서가 없으면 자동으로 생성합니다.
+ */
+export async function getOrGenerateReport(
+  resultId: string
+): Promise<DiagnosticReport | null> {
+  // 1. 먼저 기존 보고서 조회
+  const existingReport = await getReportByResultId(resultId);
+  if (existingReport) {
+    return existingReport;
+  }
+
+  // 2. 보고서가 없으면 새로 생성
+  try {
+    console.log('보고서 없음 - 새로 생성합니다:', resultId);
+    const report = await generateReport(resultId);
+    return report;
+  } catch (error) {
+    console.error('보고서 생성 실패:', error);
+    return null;
+  }
+}
+
+/**
  * 전화번호로 모든 결과 조회 (제출 + 결과 + 보고서)
  */
 export async function getAllResultsByPhone(parentPhone: string): Promise<
