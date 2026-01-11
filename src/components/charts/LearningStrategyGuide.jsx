@@ -291,15 +291,17 @@ export default function LearningStrategyGuide({ grade9, studentGrade, testType }
     ) || categoryData.strategies[0];
   };
 
-  // 표시할 전략 카테고리 선택 (최대 3개)
-  const displayCategories = ['advanceVsDeepen', 'csatVsSchool', 'academyVsTutor'];
+  // 모든 6개 카테고리 표시
+  const allCategories = [
+    'advanceVsDeepen',
+    'csatVsSchool',
+    'artsVsScience',
+    'academyVsTutor',
+    'regularVsIntensive',
+    'regularVsSpecial'
+  ];
 
-  // 고등학생이 아니면 문과/이과 대신 몰입 전략 표시
-  if (gradeCategory !== '고등') {
-    displayCategories[1] = 'regularVsIntensive';
-  }
-
-  const strategies = displayCategories.map(key => ({
+  const strategies = allCategories.map(key => ({
     category: STRATEGY_DATA[key],
     strategy: findStrategy(STRATEGY_DATA[key])
   }));
