@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getFullResultById } from '../utils/diagnosticService';
+import { getFullResultById, getOrGenerateReport } from '../utils/diagnosticService';
 import './DiagnosticReportPage.css';
 
 export default function DiagnosticReportPage() {
   const { id } = useParams();
   const [data, setData] = useState(null);
+  const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -24,6 +25,12 @@ export default function DiagnosticReportPage() {
       }
 
       setData(result);
+
+      // 보고서 데이터 (동적 코멘트) 로드 - 없으면 자동 생성
+      const reportData = await getOrGenerateReport(id);
+      if (reportData) {
+        setReport(reportData);
+      }
     } catch (err) {
       console.error('결과 조회 실패:', err);
       setError('결과를 불러오는 중 오류가 발생했습니다.');
@@ -250,6 +257,109 @@ export default function DiagnosticReportPage() {
             </div>
           </div>
         </div>
+
+        {/* 학습 분석 및 코멘트 */}
+        {report?.dynamic_comments?.area_comments && Object.keys(report.dynamic_comments.area_comments).length > 0 && (
+          <div className="report-section">
+            <h2 className="section-title">영역별 학습 분석</h2>
+            <div className="comments-container">
+              {Object.entries(report.dynamic_comments.area_comments)
+                .filter(([area]) => !['종합 분석', '강점 영역', '약점 영역', '학습 우선순위', '난이도별 분석'].includes(area))
+                .map(([area, commentData], index) => (
+                <div key={index} className="comment-card">
+                  <div className="comment-header">
+                    <span className="comment-area">{area}</span>
+                    {commentData.level && (
+                      <span className={`comment-level level-${commentData.level?.toLowerCase()}`}>
+                        {commentData.level === 'EXCELLENT' ? '우수' :
+                         commentData.level === 'GOOD' ? '양호' :
+                         commentData.level === 'AVERAGE' ? '보통' :
+                         commentData.level === 'WEAK' ? '미흡' : '취약'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="comment-text">{commentData.comment || commentData}</p>
+                  {commentData.learningTips && commentData.learningTips.length > 0 && (
+                    <div className="learning-tips">
+                      <strong>학습 팁:</strong>
+                      <ul>
+                        {commentData.learningTips.map((tip, tipIndex) => (
+                          <li key={tipIndex}>{tip}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 종합 분석 */}
+        {report?.dynamic_comments?.area_comments && (
+          <div className="report-section">
+            <h2 className="section-title">종합 분석</h2>
+            <div className="summary-comments">
+              {report.dynamic_comments.area_comments['종합 분석'] && (
+                <div className="summary-item-block">
+                  <p>{typeof report.dynamic_comments.area_comments['종합 분석'] === 'object'
+                      ? report.dynamic_comments.area_comments['종합 분석'].comment
+                      : report.dynamic_comments.area_comments['종합 분석']}</p>
+                </div>
+              )}
+              {report.dynamic_comments.area_comments['강점 영역'] && (
+                <div className="summary-item-block strength">
+                  <strong>강점 영역</strong>
+                  <p>{typeof report.dynamic_comments.area_comments['강점 영역'] === 'object'
+                      ? report.dynamic_comments.area_comments['강점 영역'].comment
+                      : report.dynamic_comments.area_comments['강점 영역']}</p>
+                </div>
+              )}
+              {report.dynamic_comments.area_comments['약점 영역'] && (
+                <div className="summary-item-block weakness">
+                  <strong>약점 영역</strong>
+                  <p>{typeof report.dynamic_comments.area_comments['약점 영역'] === 'object'
+                      ? report.dynamic_comments.area_comments['약점 영역'].comment
+                      : report.dynamic_comments.area_comments['약점 영역']}</p>
+                </div>
+              )}
+              {report.dynamic_comments.area_comments['학습 우선순위'] && (
+                <div className="summary-item-block priority">
+                  <strong>학습 우선순위</strong>
+                  <p>{typeof report.dynamic_comments.area_comments['학습 우선순위'] === 'object'
+                      ? report.dynamic_comments.area_comments['학습 우선순위'].comment
+                      : report.dynamic_comments.area_comments['학습 우선순위']}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 학습 로드맵 */}
+        {report?.dynamic_comments?.roadmap && (
+          <div className="report-section">
+            <h2 className="section-title">맞춤 학습 로드맵</h2>
+            <div className="roadmap-container">
+              {report.dynamic_comments.roadmap.phases?.map((phase, index) => (
+                <div key={index} className="roadmap-phase">
+                  <div className="phase-header">
+                    <span className="phase-number">{index + 1}단계</span>
+                    <span className="phase-title">{phase.title}</span>
+                    {phase.duration && <span className="phase-duration">{phase.duration}</span>}
+                  </div>
+                  {phase.description && <p className="phase-description">{phase.description}</p>}
+                  {phase.tasks && phase.tasks.length > 0 && (
+                    <ul className="phase-tasks">
+                      {phase.tasks.map((task, taskIndex) => (
+                        <li key={taskIndex}>{task}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 푸터 */}
         <div className="report-footer">

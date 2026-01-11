@@ -469,3 +469,247 @@
     gap: 0.5rem;
   }
 }
+
+/* 영역별 학습 분석 코멘트 */
+.comments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.comment-card {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 1.5rem;
+  border-left: 4px solid #1a73e8;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.comment-area {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.comment-level {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.comment-level.level-excellent {
+  background: #4caf50;
+}
+
+.comment-level.level-good {
+  background: #8bc34a;
+}
+
+.comment-level.level-average {
+  background: #ff9800;
+}
+
+.comment-level.level-weak {
+  background: #ff5722;
+}
+
+.comment-level.level-critical {
+  background: #f44336;
+}
+
+.comment-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.learning-tips {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.learning-tips strong {
+  font-size: 13px;
+  color: #1a73e8;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.learning-tips ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.learning-tips li {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 0.25rem;
+}
+
+/* 종합 분석 */
+.summary-comments {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.summary-item-block {
+  padding: 1.25rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #1a73e8;
+}
+
+.summary-item-block strong {
+  display: block;
+  font-size: 14px;
+  color: #1a73e8;
+  margin-bottom: 0.5rem;
+}
+
+.summary-item-block p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #333;
+  margin: 0;
+}
+
+.summary-item-block.strength {
+  border-left-color: #4caf50;
+  background: #e8f5e9;
+}
+
+.summary-item-block.strength strong {
+  color: #2e7d32;
+}
+
+.summary-item-block.weakness {
+  border-left-color: #ff5722;
+  background: #fbe9e7;
+}
+
+.summary-item-block.weakness strong {
+  color: #d84315;
+}
+
+.summary-item-block.priority {
+  border-left-color: #ff9800;
+  background: #fff3e0;
+}
+
+.summary-item-block.priority strong {
+  color: #e65100;
+}
+
+/* 학습 로드맵 */
+.roadmap-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.roadmap-phase {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 1.5rem;
+  border: 2px solid #e0e0e0;
+  position: relative;
+}
+
+.roadmap-phase::before {
+  content: '';
+  position: absolute;
+  left: 2rem;
+  top: 100%;
+  width: 2px;
+  height: 1rem;
+  background: #1a73e8;
+}
+
+.roadmap-phase:last-child::before {
+  display: none;
+}
+
+.phase-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.phase-number {
+  background: #1a73e8;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.phase-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c3e50;
+  flex: 1;
+}
+
+.phase-duration {
+  font-size: 13px;
+  color: #666;
+  background: #e0e0e0;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+}
+
+.phase-description {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #555;
+  margin-bottom: 1rem;
+}
+
+.phase-tasks {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.phase-tasks li {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.8;
+  margin-bottom: 0.25rem;
+}
+
+/* 반응형 - 코멘트 섹션 */
+@media (max-width: 768px) {
+  .comment-card {
+    padding: 1rem;
+  }
+
+  .comment-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .roadmap-phase {
+    padding: 1rem;
+  }
+
+  .phase-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
