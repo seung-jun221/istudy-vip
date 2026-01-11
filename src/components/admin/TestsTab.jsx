@@ -10,7 +10,7 @@ import {
 import StudentAddModal from './StudentAddModal';
 import './AdminTabs.css';
 
-export default function TestsTab({ tests, testSlots }) {
+export default function TestsTab({ tests, testSlots, campaignId }) {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [resultsMap, setResultsMap] = useState({});
@@ -20,14 +20,14 @@ export default function TestsTab({ tests, testSlots }) {
   const [editMode, setEditMode] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
 
-  // Supabase에서 등록 목록 로드
+  // Supabase에서 등록 목록 로드 (캠페인별 필터링)
   useEffect(() => {
     loadRegistrations();
-  }, []);
+  }, [campaignId]);
 
   const loadRegistrations = async () => {
     try {
-      const data = await getAllRegistrations();
+      const data = await getAllRegistrations(campaignId);
       setRegistrations(data);
     } catch (error) {
       console.error('등록 목록 로드 실패:', error);
@@ -92,6 +92,7 @@ export default function TestsTab({ tests, testSlots }) {
         test_date: studentData.testDate,
         test_time: studentData.testTime,
         location: studentData.location,
+        campaign_id: campaignId, // 캠페인 ID 추가
       });
 
       if (newRegistration) {

@@ -148,7 +148,7 @@ export default function CampaignDetail() {
             onUpdate={fetchCampaignDetail}
           />
         )}
-        {activeTab === 'tests' && <TestsTab tests={tests} testSlots={testSlots} />}
+        {activeTab === 'tests' && <TestsTab tests={tests} testSlots={testSlots} campaignId={id} />}
         {activeTab === 'settings' && (
           <SettingsTab
             campaign={campaign}
