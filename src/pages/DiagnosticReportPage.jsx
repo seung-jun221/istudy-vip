@@ -69,6 +69,108 @@ export default function DiagnosticReportPage() {
     return names[testType] || testType;
   };
 
+  // 문항별 상세 정보 (배점표 기준)
+  const QUESTION_CONTENTS = {
+    MONO: {
+      1: '150 이하 자연수 중 약수의 개수가 3개인 수의 개수',
+      2: 'x^a × y^b × (x+y)의 인수 개수',
+      3: '(a+12)/(a-2)가 정수가 되는 a의 값의 합',
+      4: '연분수 계산',
+      5: '72×a=b²를 만족하는 a',
+      6: '약수 개수가 3개일 때 순서쌍 개수',
+      7: '식 간단히 하기',
+      8: '최대공약수 활용',
+      9: '(-4) × (-a) = b²',
+      10: '반대 부호 조건',
+      11: '거듭제곱 패턴',
+      12: '일반항 계산',
+      13: '다항식 상수항',
+      14: '복잡한 분수식',
+      15: '항등식',
+      16: '방정식 해의 배수 관계',
+      17: '절댓값 방정식',
+      18: '가우스 기호 방정식',
+      19: '연산 정의',
+      20: '평행사변형 넓이',
+      21: '두 함수 조건',
+      22: '그래프 해석',
+      23: '일차함수 그래프',
+      24: '반비례 그래프',
+      25: '삼각형 넓이'
+    },
+    DI: {
+      1: '순환소수를 분수로',
+      2: '다항식 내림차순',
+      3: '복잡한 분수식',
+      4: '양수 규칙',
+      5: '지수법칙',
+      6: '지수 패턴 인식',
+      7: '유리수 조건',
+      8: '최대공약수',
+      9: '다항식 곱셈',
+      10: '등식 변형',
+      11: '분수식 정리',
+      12: '인수분해 활용',
+      13: '항등식',
+      14: '방정식 해의 배수',
+      15: '연립방정식',
+      16: '치환 연립방정식',
+      17: '일차함수 미지수',
+      18: 'x절편 = y절편',
+      19: '대칭 + 수직',
+      20: '그래프 해석',
+      21: '대칭 최단거리',
+      22: '수직이등분선',
+      23: '삼각형 조건',
+      24: '제4사분면 교점',
+      25: '삼각형 넓이 이등분'
+    },
+    TRI: {
+      1: '제곱근 계산',
+      2: '무리수 조건',
+      3: '실수 대소 비교',
+      4: '근호 간단히',
+      5: '분모 유리화',
+      6: '제곱근 응용',
+      7: '다항식 곱셈',
+      8: '곱셈공식 활용',
+      9: '인수분해 기본',
+      10: '인수분해 심화',
+      11: '복잡한 인수분해',
+      12: '인수분해 응용',
+      13: '이차방정식 풀이',
+      14: '근의 공식',
+      15: '판별식 활용',
+      16: '근과 계수의 관계',
+      17: '이차방정식 활용',
+      18: '새로운 이차방정식',
+      19: '이차함수 그래프',
+      20: '꼭짓점과 축',
+      21: '이차함수 최대/최소',
+      22: '그래프 이동',
+      23: '이차함수 결정',
+      24: '이차함수와 직선',
+      25: '이차함수 종합'
+    }
+  };
+
+  // 난이도 표시 함수
+  const getDifficultyInfo = (difficulty) => {
+    const info = {
+      'LOW': { label: '⭐', text: '기본', color: '#4caf50' },
+      'MID': { label: '⭐⭐', text: '중급', color: '#8bc34a' },
+      'HIGH': { label: '⭐⭐⭐', text: '심화', color: '#ff9800' },
+      'VERY_HIGH': { label: '⭐⭐⭐⭐', text: '고급', color: '#ff5722' },
+      'EXTREME': { label: '⭐⭐⭐⭐⭐', text: '최고급', color: '#f44336' }
+    };
+    return info[difficulty] || { label: '⭐⭐', text: '중급', color: '#888' };
+  };
+
+  // 문항 내용 가져오기
+  const getQuestionContent = (testType, questionNumber) => {
+    return QUESTION_CONTENTS[testType]?.[questionNumber] || '-';
+  };
+
   // 검사 유형별 평균/표준편차 데이터 (진단검사 평균 표준편차.txt 기준)
   const getTestStats = (testType) => {
     const stats = {
@@ -326,6 +428,43 @@ export default function DiagnosticReportPage() {
               </span>
             </div>
           </div>
+
+          {/* 오답 문항 상세 분석 */}
+          {data.question_results.filter(q => !q.isCorrect).length > 0 && (
+            <div className="wrong-answers-section">
+              <h3 className="wrong-answers-title">오답 문항 상세 분석</h3>
+              <div className="wrong-answers-list">
+                {data.question_results
+                  .filter(q => !q.isCorrect)
+                  .map((q, index) => {
+                    const diffInfo = getDifficultyInfo(q.difficulty);
+                    return (
+                      <div key={index} className="wrong-answer-card">
+                        <div className="wrong-answer-header">
+                          <span className="wrong-answer-number">{q.questionNumber}번</span>
+                          <span className="wrong-answer-area">{q.area}</span>
+                        </div>
+                        <div className="wrong-answer-content">
+                          {getQuestionContent(submission?.test_type, q.questionNumber)}
+                        </div>
+                        <div className="wrong-answer-meta">
+                          <div className="meta-item">
+                            <span className="meta-label">난이도</span>
+                            <span className="meta-value" style={{ color: diffInfo.color }}>
+                              {diffInfo.label} {diffInfo.text}
+                            </span>
+                          </div>
+                          <div className="meta-item">
+                            <span className="meta-label">배점</span>
+                            <span className="meta-value">{q.score}점</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 학습 분석 및 코멘트 */}

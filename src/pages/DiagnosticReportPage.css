@@ -413,6 +413,104 @@
   color: #f44336;
 }
 
+/* 오답 문항 상세 분석 */
+.wrong-answers-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px dashed #e0e0e0;
+}
+
+.wrong-answers-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f44336;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wrong-answers-title::before {
+  content: '⚠️';
+}
+
+.wrong-answers-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.wrong-answer-card {
+  background: #fff8f8;
+  border: 1px solid #ffcdd2;
+  border-radius: 10px;
+  padding: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.wrong-answer-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.15);
+}
+
+.wrong-answer-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.wrong-answer-number {
+  background: #f44336;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+}
+
+.wrong-answer-area {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  background: #f0f0f0;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+}
+
+.wrong-answer-content {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 6px;
+  border-left: 3px solid #f44336;
+}
+
+.wrong-answer-meta {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meta-label {
+  font-size: 12px;
+  color: #999;
+}
+
+.meta-value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* 푸터 */
 .report-footer {
   margin-top: 3rem;
@@ -442,8 +540,17 @@
 
   .score-card,
   .difficulty-card,
-  .question-item {
+  .question-item,
+  .wrong-answer-card {
     break-inside: avoid;
+  }
+
+  .wrong-answer-card {
+    box-shadow: none;
+  }
+
+  .wrong-answer-card:hover {
+    transform: none;
   }
 }
 
@@ -483,6 +590,15 @@
 
   .question-grid {
     grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .wrong-answers-list {
+    grid-template-columns: 1fr;
+  }
+
+  .wrong-answer-meta {
+    flex-direction: column;
     gap: 0.5rem;
   }
 }
