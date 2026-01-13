@@ -48,8 +48,15 @@
 
 .strategy-body {
   flex: 1;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   overflow: hidden;
+}
+
+.strategy-subtitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1976d2;
+  margin: 0 0 0.75rem 0;
 }
 
 .strategy-recommendation {
@@ -102,6 +109,31 @@
   background: #a1a1a1;
 }
 
+/* 핵심 요약 섹션 */
+.strategy-keypoint {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+  border-radius: 8px;
+  border-left: 3px solid #ffc107;
+  margin-top: auto;
+}
+
+.keypoint-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f57c00;
+  white-space: nowrap;
+}
+
+.keypoint-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #e65100;
+  line-height: 1.5;
+}
+
 .strategy-footer {
   display: flex;
   gap: 0.5rem;
@@ -136,9 +168,22 @@
     min-height: auto;
   }
 
+  .strategy-subtitle {
+    font-size: 14px;
+  }
+
   .strategy-content {
     font-size: 12px;
     max-height: none;
+  }
+
+  .strategy-keypoint {
+    padding: 0.5rem;
+  }
+
+  .keypoint-label,
+  .keypoint-text {
+    font-size: 12px;
   }
 }
 
