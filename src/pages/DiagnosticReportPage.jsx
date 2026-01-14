@@ -43,23 +43,19 @@ export default function DiagnosticReportPage() {
     }
   };
 
-  const get5GradeColor = (grade) => {
-    const colors = {
-      1: '#4caf50',
-      2: '#8bc34a',
-      3: '#ffc107',
-      4: '#ff9800',
-      5: '#f44336'
-    };
-    return colors[grade] || '#999';
+  // PDF 출력
+  const handlePrint = () => {
+    window.print();
   };
 
+  // 날짜 포맷
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
   };
 
+  // 시험 유형 이름
   const getTestTypeName = (testType) => {
     const names = {
       'DI': 'DI 진단검사',
@@ -157,11 +153,11 @@ export default function DiagnosticReportPage() {
   // 난이도 표시 함수
   const getDifficultyInfo = (difficulty) => {
     const info = {
-      'LOW': { label: '⭐', text: '기본', color: '#4caf50' },
-      'MID': { label: '⭐⭐', text: '중급', color: '#8bc34a' },
-      'HIGH': { label: '⭐⭐⭐', text: '심화', color: '#ff9800' },
-      'VERY_HIGH': { label: '⭐⭐⭐⭐', text: '고급', color: '#ff5722' },
-      'EXTREME': { label: '⭐⭐⭐⭐⭐', text: '최고급', color: '#f44336' }
+      'LOW': { label: '⭐', text: '기본', color: '#4A7C59' },
+      'MID': { label: '⭐⭐', text: '중급', color: '#66BB6A' },
+      'HIGH': { label: '⭐⭐⭐', text: '심화', color: '#C49A3F' },
+      'VERY_HIGH': { label: '⭐⭐⭐⭐', text: '고급', color: '#FF7043' },
+      'EXTREME': { label: '⭐⭐⭐⭐⭐', text: '최고급', color: '#A85454' }
     };
     return info[difficulty] || { label: '⭐⭐', text: '중급', color: '#888' };
   };
@@ -177,17 +173,17 @@ export default function DiagnosticReportPage() {
     return QUESTION_DATA[testType]?.[questionNumber]?.score || 0;
   };
 
-  // 검사 유형별 평균/표준편차 데이터 (진단검사 평균 표준편차.txt 기준)
+  // 검사 유형별 평균/표준편차 데이터
   const getTestStats = (testType) => {
     const stats = {
-      'MONO': { average: 45, stdDev: 22 },  // 평균 43-48점, 표준편차 20-24점
-      'DI': { average: 47, stdDev: 20 },    // 평균 45-50점, 표준편차 18-22점
-      'TRI': { average: 42, stdDev: 24 }    // 평균 40-45점, 표준편차 22-26점
+      'MONO': { average: 45, stdDev: 22 },
+      'DI': { average: 47, stdDev: 20 },
+      'TRI': { average: 42, stdDev: 24 }
     };
     return stats[testType] || { average: 45, stdDev: 20 };
   };
 
-  // 예상 등급 계산 (9등급 기준으로 범위 표시)
+  // 예상 등급 계산
   const getPredictedGrade = (grade9) => {
     if (grade9 <= 2) return `${grade9}~${Math.min(grade9 + 1, 3)}`;
     if (grade9 <= 4) return `${grade9 - 1}~${grade9}`;
@@ -195,13 +191,19 @@ export default function DiagnosticReportPage() {
     return `${grade9 - 1}~${grade9}`;
   };
 
-  // T-Score 기반 평가 레벨 및 색상
+  // T-Score 기반 평가 레벨
   const getTScoreEvaluation = (tScore) => {
-    if (tScore >= 70) return { label: '최상', color: '#e8f5e9', textColor: '#2e7d32' };
-    if (tScore >= 60) return { label: '우수', color: '#e3f2fd', textColor: '#1565c0' };
-    if (tScore >= 40) return { label: '보통', color: '#fff3e0', textColor: '#ef6c00' };
-    if (tScore >= 30) return { label: '주의', color: '#fff8e1', textColor: '#f9a825' };
-    return { label: '위험', color: '#ffebee', textColor: '#c62828' };
+    if (tScore >= 70) return { label: '최상', className: 'excellent' };
+    if (tScore >= 60) return { label: '우수', className: 'good' };
+    if (tScore >= 40) return { label: '보통', className: 'average' };
+    if (tScore >= 30) return { label: '주의', className: 'weak' };
+    return { label: '위험', className: 'critical' };
+  };
+
+  // 5등급 색상
+  const get5GradeColor = (grade) => {
+    const colors = { 1: '#4A7C59', 2: '#66BB6A', 3: '#C49A3F', 4: '#FF7043', 5: '#A85454' };
+    return colors[grade] || '#999';
   };
 
   if (loading) {
@@ -219,7 +221,7 @@ export default function DiagnosticReportPage() {
     return (
       <div className="report-page">
         <div className="report-error">
-          <h2>⚠️ 오류</h2>
+          <h2>오류</h2>
           <p>{error || '결과를 불러올 수 없습니다.'}</p>
         </div>
       </div>
@@ -227,368 +229,609 @@ export default function DiagnosticReportPage() {
   }
 
   const { submission } = data;
+  const wrongAnswers = data.question_results.filter(q => !q.isCorrect);
 
   return (
     <div className="report-page">
-      <div className="report-container">
-        {/* 헤더 */}
-        <div className="report-header">
-          <h1 className="report-title">i.study 수리탐구 진단검사 결과 보고서</h1>
-          <p className="report-subtitle">Mathematical Reasoning Diagnostic Test Report</p>
-        </div>
+      {/* PDF 출력 버튼 */}
+      <div className="print-button-container">
+        <button className="print-button" onClick={handlePrint}>
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
+          </svg>
+          PDF 출력
+        </button>
+      </div>
 
-        {/* 학생 정보 */}
-        <div className="report-section">
-          <h2 className="section-title">학생 정보</h2>
-          <div className="info-grid">
-            <div className="info-item">
-              <span className="info-label">이름</span>
-              <span className="info-value">{submission?.student_name || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">학년</span>
-              <span className="info-value">{submission?.grade || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">학교</span>
-              <span className="info-value">{submission?.school || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">선행정도</span>
-              <span className="info-value">{submission?.math_level || '-'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">검사 유형</span>
-              <span className="info-value">{getTestTypeName(submission?.test_type)}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">검사 일자</span>
-              <span className="info-value">{formatDate(submission?.submitted_at)}</span>
-            </div>
+      <div className="report-document">
+        {/* ========================================
+            표지 (Cover Page)
+            ======================================== */}
+        <div className="page cover-page">
+          <div className="cover-decoration-top"></div>
+          <div className="cover-decoration-bottom"></div>
+
+          <div className="cover-logo">i.STUDY</div>
+
+          <div className="cover-gold-line"></div>
+
+          <div className="cover-title-wrapper">
+            <h1 className="cover-title">수리탐구 진단검사</h1>
+            <p className="cover-subtitle">MATHEMATICAL REASONING DIAGNOSTIC</p>
           </div>
-        </div>
 
-        {/* 종합 성적 */}
-        <div className="report-section">
-          <h2 className="section-title">종합 성적</h2>
-          <div className="score-grid">
-            <div className="score-card primary">
-              <div className="score-label">총점</div>
-              <div className="score-value-large">
-                {data.total_score.toFixed(1)}
-                <span className="score-unit">점</span>
-              </div>
-              <div className="score-max">/ {data.max_score}점</div>
-            </div>
-            <div className="score-card">
-              <div className="score-label">백분위</div>
-              <div className="score-value-large">{data.percentile.toFixed(1)}<span className="score-unit">%</span></div>
-              <div className="score-desc">상위 {(100 - data.percentile).toFixed(1)}%</div>
-            </div>
-            <div className="score-card">
-              <div className="score-label">9등급제</div>
-              <div className="score-value-large">{data.grade9}<span className="score-unit">등급</span></div>
-              <div className="score-desc">현행 수능 기준</div>
-            </div>
-            <div className="score-card">
-              <div className="score-label">5등급제 (2028)</div>
-              <div className="score-value-large" style={{ color: get5GradeColor(data.grade5) }}>
-                {data.grade5}<span className="score-unit">등급</span>
-              </div>
-              <div className="score-desc">2028 개편 수능 기준</div>
+          <div className="cover-gold-line"></div>
+
+          <div className="cover-test-type">{submission?.test_type}</div>
+
+          <div className="cover-student-info">
+            <div className="cover-student-name">{submission?.student_name || '-'}</div>
+            <div className="cover-student-detail">
+              {submission?.school || '-'} | {submission?.grade || '-'}
             </div>
           </div>
 
-          {/* 정규분포 그래프 */}
-          <NormalDistributionChart
-            score={data.total_score}
-            maxScore={data.max_score}
-            average={getTestStats(submission?.test_type).average}
-            stdDev={getTestStats(submission?.test_type).stdDev}
-            predictedGrade={getPredictedGrade(data.grade9)}
-          />
+          <div className="cover-date">{formatDate(submission?.submitted_at)}</div>
         </div>
 
-        {/* 영역별 성적 */}
-        <div className="report-section">
-          <h2 className="section-title">영역별 성적</h2>
-          <div className="area-table">
-            <div className="table-header">
-              <div className="col col-area">영역</div>
-              <div className="col col-score">원점수</div>
-              <div className="col col-tscore">T-Score</div>
-              <div className="col col-percentile">백분위</div>
-              <div className="col col-eval">평가</div>
+        {/* ========================================
+            간지 1: 성적 분석
+            ======================================== */}
+        <div className="page divider-page">
+          <div className="divider-number">01</div>
+          <h2 className="divider-title">성적 분석</h2>
+          <p className="divider-subtitle">SCORE ANALYSIS</p>
+          <div className="divider-gold-line"></div>
+          <p className="divider-description">
+            종합 성적과 영역별 세부 분석을 통해<br/>
+            학생의 현재 수학 역량을 파악합니다.
+          </p>
+        </div>
+
+        {/* ========================================
+            성적 분석 페이지 1: 종합 성적
+            ======================================== */}
+        <div className="page content-page">
+          <div className="page-content">
+            <div className="page-header">
+              <span className="page-header-logo">i.STUDY</span>
+              <span className="page-header-info">{submission?.student_name} | {getTestTypeName(submission?.test_type)}</span>
             </div>
-            {data.area_results.map((area, index) => {
-              const evaluation = getTScoreEvaluation(area.tscore);
-              const topPercentile = (100 - area.percentile).toFixed(0);
-              return (
-                <div key={index} className="table-row">
-                  <div className="col col-area">
-                    <strong>{area.areaName}</strong>
-                  </div>
-                  <div className="col col-score">
-                    {area.earnedScore.toFixed(1)}/{area.totalScore.toFixed(1)}
-                  </div>
-                  <div className="col col-tscore" style={{ color: evaluation.textColor }}>
-                    {area.tscore.toFixed(1)}
-                  </div>
-                  <div className="col col-percentile">{topPercentile}%</div>
-                  <div className="col col-eval">
-                    <span
-                      className="eval-badge"
-                      style={{
-                        backgroundColor: evaluation.color,
-                        color: evaluation.textColor
-                      }}
-                    >
-                      {evaluation.label}
-                    </span>
-                  </div>
+
+            {/* 학생 정보 */}
+            <div className="section-title">
+              <span className="section-title-icon">📋</span>
+              <span className="section-title-text">학생 정보</span>
+              <div className="section-title-line"></div>
+            </div>
+            <div className="student-info-card">
+              <div className="student-info-grid">
+                <div className="student-info-item">
+                  <span className="student-info-label">이름</span>
+                  <span className="student-info-value">{submission?.student_name || '-'}</span>
                 </div>
-              );
-            })}
+                <div className="student-info-item">
+                  <span className="student-info-label">학교</span>
+                  <span className="student-info-value">{submission?.school || '-'}</span>
+                </div>
+                <div className="student-info-item">
+                  <span className="student-info-label">학년</span>
+                  <span className="student-info-value">{submission?.grade || '-'}</span>
+                </div>
+                <div className="student-info-item">
+                  <span className="student-info-label">선행정도</span>
+                  <span className="student-info-value">{submission?.math_level || '-'}</span>
+                </div>
+                <div className="student-info-item">
+                  <span className="student-info-label">검사 유형</span>
+                  <span className="student-info-value">{getTestTypeName(submission?.test_type)}</span>
+                </div>
+                <div className="student-info-item">
+                  <span className="student-info-label">검사 일자</span>
+                  <span className="student-info-value">{formatDate(submission?.submitted_at)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 종합 성적 */}
+            <div className="section-title">
+              <span className="section-title-icon">📊</span>
+              <span className="section-title-text">종합 성적</span>
+              <div className="section-title-line"></div>
+            </div>
+            <div className="overall-score-section">
+              <div className="score-cards-grid">
+                <div className="score-card primary">
+                  <div className="score-card-label">총점</div>
+                  <div className="score-card-value">
+                    {data.total_score.toFixed(1)}
+                    <span className="score-card-unit">점</span>
+                  </div>
+                  <div className="score-card-sub">/ {data.max_score}점 만점</div>
+                </div>
+                <div className="score-card">
+                  <div className="score-card-label">백분위</div>
+                  <div className="score-card-value">
+                    {data.percentile.toFixed(1)}
+                    <span className="score-card-unit">%</span>
+                  </div>
+                  <div className="score-card-sub">상위 {(100 - data.percentile).toFixed(1)}%</div>
+                </div>
+                <div className="score-card">
+                  <div className="score-card-label">9등급제</div>
+                  <div className="score-card-value">
+                    {data.grade9}
+                    <span className="score-card-unit">등급</span>
+                  </div>
+                  <div className="score-card-sub">현행 수능 기준</div>
+                </div>
+                <div className="score-card">
+                  <div className="score-card-label">5등급제</div>
+                  <div className="score-card-value" style={{ color: get5GradeColor(data.grade5) }}>
+                    {data.grade5}
+                    <span className="score-card-unit">등급</span>
+                  </div>
+                  <div className="score-card-sub">2028 수능 기준</div>
+                </div>
+              </div>
+
+              {/* 정규분포 그래프 */}
+              <div className="chart-container">
+                <NormalDistributionChart
+                  score={data.total_score}
+                  maxScore={data.max_score}
+                  average={getTestStats(submission?.test_type).average}
+                  stdDev={getTestStats(submission?.test_type).stdDev}
+                  predictedGrade={getPredictedGrade(data.grade9)}
+                />
+              </div>
+            </div>
+
+            <div className="page-footer">
+              <span>i.study 수리탐구 진단검사</span>
+              <span className="page-number">1</span>
+            </div>
           </div>
-
         </div>
 
-        {/* T-Score 프로필 차트 */}
-        <div className="report-section">
-          <h2 className="section-title">자기주도 학습역량 주요 요인 프로파일</h2>
-          <TScoreBarChart areaResults={data.area_results} />
+        {/* ========================================
+            성적 분석 페이지 2: 영역별 성적
+            ======================================== */}
+        <div className="page content-page">
+          <div className="page-content">
+            <div className="page-header">
+              <span className="page-header-logo">i.STUDY</span>
+              <span className="page-header-info">{submission?.student_name} | {getTestTypeName(submission?.test_type)}</span>
+            </div>
+
+            {/* 영역별 성적 */}
+            <div className="section-title">
+              <span className="section-title-icon">📈</span>
+              <span className="section-title-text">영역별 성적</span>
+              <div className="section-title-line"></div>
+            </div>
+
+            <table className="area-table">
+              <thead>
+                <tr>
+                  <th>영역</th>
+                  <th>원점수</th>
+                  <th>T-Score</th>
+                  <th>백분위</th>
+                  <th>평가</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.area_results.map((area, index) => {
+                  const evaluation = getTScoreEvaluation(area.tscore);
+                  const topPercentile = (100 - area.percentile).toFixed(0);
+                  return (
+                    <tr key={index}>
+                      <td>{area.areaName}</td>
+                      <td>{area.earnedScore.toFixed(1)} / {area.totalScore.toFixed(1)}</td>
+                      <td className="tscore-cell" style={{ color: evaluation.className === 'excellent' ? '#2E7D32' : evaluation.className === 'good' ? '#1565C0' : evaluation.className === 'average' ? '#EF6C00' : evaluation.className === 'weak' ? '#F9A825' : '#C62828' }}>
+                        {area.tscore.toFixed(1)}
+                      </td>
+                      <td>상위 {topPercentile}%</td>
+                      <td>
+                        <span className={`eval-badge ${evaluation.className}`}>
+                          {evaluation.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* T-Score 프로필 차트 */}
+            <div className="chart-container">
+              <div className="chart-title">자기주도 학습역량 주요 요인 프로파일</div>
+              <TScoreBarChart areaResults={data.area_results} />
+            </div>
+
+            <div className="page-footer">
+              <span>i.study 수리탐구 진단검사</span>
+              <span className="page-number">2</span>
+            </div>
+          </div>
         </div>
 
-        {/* 고교 유형별 내신 경쟁력 분석 */}
-        <div className="report-section">
-          <h2 className="section-title">고교 유형별 내신 경쟁력 분석</h2>
-          <SchoolCompetitivenessChart score={data.total_score} maxScore={data.max_score} />
-        </div>
+        {/* ========================================
+            성적 분석 페이지 3: 난이도별 정답률 & 문항별 결과
+            ======================================== */}
+        <div className="page content-page">
+          <div className="page-content">
+            <div className="page-header">
+              <span className="page-header-logo">i.STUDY</span>
+              <span className="page-header-info">{submission?.student_name} | {getTestTypeName(submission?.test_type)}</span>
+            </div>
 
-        {/* 맞춤 학습 전략 가이드 */}
-        <div className="report-section">
-          <h2 className="section-title">맞춤 학습 전략 가이드</h2>
-          <LearningStrategyGuide
-            grade9={data.grade9}
-            studentGrade={submission?.grade}
-            testType={submission?.test_type}
-          />
-        </div>
+            {/* 난이도별 정답률 */}
+            <div className="section-title">
+              <span className="section-title-icon">📉</span>
+              <span className="section-title-text">난이도별 정답률</span>
+              <div className="section-title-line"></div>
+            </div>
 
-        {/* 난이도별 정답률 */}
-        <div className="report-section">
-          <h2 className="section-title">난이도별 정답률</h2>
-          <div className="difficulty-grid">
-            {data.difficulty_results.map((diff, index) => {
-              const labels = { LOW: '하난도', MID: '중난도', HIGH: '고난도' };
-              const colors = { LOW: '#4caf50', MID: '#ff9800', HIGH: '#f44336' };
-              return (
-                <div key={index} className="difficulty-card">
-                  <div className="difficulty-header">
-                    <div className="difficulty-badge" style={{ background: colors[diff.difficulty] }}>
+            <div className="difficulty-cards">
+              {data.difficulty_results.map((diff, index) => {
+                const labels = { LOW: '하난도', MID: '중난도', HIGH: '고난도' };
+                const classNames = { LOW: 'low', MID: 'mid', HIGH: 'high' };
+                return (
+                  <div key={index} className={`difficulty-card ${classNames[diff.difficulty]}`}>
+                    <div className={`difficulty-badge ${classNames[diff.difficulty]}`}>
                       {labels[diff.difficulty]}
                     </div>
                     <div className="difficulty-rate">{diff.correctRate.toFixed(1)}%</div>
-                  </div>
-                  <div className="difficulty-stats">
-                    <div className="stat-item">
-                      <span>정답</span>
-                      <strong>{diff.correctCount} / {diff.totalCount}</strong>
+                    <div className="difficulty-stats">
+                      {diff.correctCount} / {diff.totalCount}문항 | {diff.earnedScore.toFixed(1)} / {diff.totalScore.toFixed(1)}점
                     </div>
-                    <div className="stat-item">
-                      <span>득점</span>
-                      <strong>{diff.earnedScore.toFixed(1)} / {diff.totalScore.toFixed(1)}</strong>
+                    <div className="difficulty-bar">
+                      <div
+                        className={`difficulty-bar-fill ${classNames[diff.difficulty]}`}
+                        style={{ width: `${diff.correctRate}%` }}
+                      ></div>
                     </div>
                   </div>
-                  <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: `${diff.correctRate}%`, background: colors[diff.difficulty] }}></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 문항별 결과 */}
-        <div className="report-section">
-          <h2 className="section-title">문항별 결과</h2>
-          <div className="question-grid">
-            {data.question_results.map((q, index) => (
-              <div key={index} className={`question-item ${q.isCorrect ? 'correct' : 'incorrect'}`}>
-                <div className="question-number">{q.questionNumber}</div>
-                <div className="question-result">{q.isCorrect ? '○' : '✕'}</div>
-              </div>
-            ))}
-          </div>
-          <div className="question-summary">
-            <div className="summary-item">
-              <span className="summary-label">정답</span>
-              <span className="summary-value correct-text">
-                {data.question_results.filter(q => q.isCorrect).length}개
-              </span>
+                );
+              })}
             </div>
-            <div className="summary-item">
-              <span className="summary-label">오답</span>
-              <span className="summary-value incorrect-text">
-                {data.question_results.filter(q => !q.isCorrect).length}개
-              </span>
-            </div>
-          </div>
 
-          {/* 오답 문항 상세 분석 */}
-          {data.question_results.filter(q => !q.isCorrect).length > 0 && (
-            <div className="wrong-answers-section">
-              <h3 className="wrong-answers-title">오답 문항 상세 분석</h3>
-              <div className="wrong-answers-list">
-                {data.question_results
-                  .filter(q => !q.isCorrect)
-                  .map((q, index) => {
-                    const diffInfo = getDifficultyInfo(q.difficulty);
-                    return (
-                      <div key={index} className="wrong-answer-card">
-                        <div className="wrong-answer-header">
-                          <span className="wrong-answer-number">{q.questionNumber}번</span>
-                          <span className="wrong-answer-area">{q.area}</span>
-                        </div>
-                        <div className="wrong-answer-content">
-                          {getQuestionContent(submission?.test_type, q.questionNumber)}
-                        </div>
-                        <div className="wrong-answer-meta">
-                          <div className="meta-item">
-                            <span className="meta-label">난이도</span>
-                            <span className="meta-value" style={{ color: diffInfo.color }}>
-                              {diffInfo.label} {diffInfo.text}
-                            </span>
-                          </div>
-                          <div className="meta-item">
-                            <span className="meta-label">배점</span>
-                            <span className="meta-value">{getQuestionScore(submission?.test_type, q.questionNumber, q.score)}점</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
+            {/* 문항별 결과 */}
+            <div className="section-title">
+              <span className="section-title-icon">✏️</span>
+              <span className="section-title-text">문항별 결과</span>
+              <div className="section-title-line"></div>
             </div>
-          )}
-        </div>
 
-        {/* 학습 분석 및 코멘트 */}
-        {report?.dynamic_comments?.area_comments && Object.keys(report.dynamic_comments.area_comments).length > 0 && (
-          <div className="report-section">
-            <h2 className="section-title">영역별 학습 분석</h2>
-            <div className="comments-container">
-              {Object.entries(report.dynamic_comments.area_comments)
-                .filter(([area]) => !['종합 분석', '강점 영역', '약점 영역', '학습 우선순위', '난이도별 분석'].includes(area))
-                .map(([area, commentData], index) => {
-                  // 레벨을 대문자로 정규화하여 비교
-                  const levelUpper = commentData.level?.toUpperCase();
-                  const levelLabel = levelUpper === 'EXCELLENT' ? '우수' :
-                                     levelUpper === 'GOOD' ? '양호' :
-                                     levelUpper === 'AVERAGE' ? '보통' :
-                                     levelUpper === 'WEAK' ? '미흡' :
-                                     levelUpper === 'CRITICAL' ? '취약' : '보통';
-                  return (
-                    <div key={index} className="comment-card">
-                      <div className="comment-header">
-                        <span className="comment-area">{area}</span>
-                        {commentData.level && (
-                          <span className={`comment-level level-${commentData.level?.toLowerCase()}`}>
-                            {levelLabel}
-                          </span>
-                        )}
-                      </div>
-                      <p className="comment-text">{commentData.comment || commentData}</p>
-                      {commentData.learningTips && commentData.learningTips.length > 0 && (
-                        <div className="learning-tips">
-                          <strong>학습 팁:</strong>
-                          <ul>
-                            {commentData.learningTips.map((tip, tipIndex) => (
-                              <li key={tipIndex}>{tip}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        )}
-
-        {/* 종합 분석 */}
-        {report?.dynamic_comments?.area_comments && (
-          <div className="report-section">
-            <h2 className="section-title">종합 분석</h2>
-            <div className="summary-comments">
-              {report.dynamic_comments.area_comments['종합 분석'] && (
-                <div className="summary-item-block">
-                  <p>{typeof report.dynamic_comments.area_comments['종합 분석'] === 'object'
-                      ? report.dynamic_comments.area_comments['종합 분석'].comment
-                      : report.dynamic_comments.area_comments['종합 분석']}</p>
-                </div>
-              )}
-              {report.dynamic_comments.area_comments['강점 영역'] && (
-                <div className="summary-item-block strength">
-                  <strong>강점 영역</strong>
-                  <p>{typeof report.dynamic_comments.area_comments['강점 영역'] === 'object'
-                      ? report.dynamic_comments.area_comments['강점 영역'].comment
-                      : report.dynamic_comments.area_comments['강점 영역']}</p>
-                </div>
-              )}
-              {report.dynamic_comments.area_comments['약점 영역'] && (
-                <div className="summary-item-block weakness">
-                  <strong>약점 영역</strong>
-                  <p>{typeof report.dynamic_comments.area_comments['약점 영역'] === 'object'
-                      ? report.dynamic_comments.area_comments['약점 영역'].comment
-                      : report.dynamic_comments.area_comments['약점 영역']}</p>
-                </div>
-              )}
-              {report.dynamic_comments.area_comments['학습 우선순위'] && (
-                <div className="summary-item-block priority">
-                  <strong>학습 우선순위</strong>
-                  <p>{typeof report.dynamic_comments.area_comments['학습 우선순위'] === 'object'
-                      ? report.dynamic_comments.area_comments['학습 우선순위'].comment
-                      : report.dynamic_comments.area_comments['학습 우선순위']}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 학습 로드맵 */}
-        {report?.dynamic_comments?.roadmap && (
-          <div className="report-section">
-            <h2 className="section-title">맞춤 학습 로드맵</h2>
-            <div className="roadmap-container">
-              {report.dynamic_comments.roadmap.phases?.map((phase, index) => (
-                <div key={index} className="roadmap-phase">
-                  <div className="phase-header">
-                    <span className="phase-number">{index + 1}단계</span>
-                    <span className="phase-title">{phase.title}</span>
-                    {phase.duration && <span className="phase-duration">{phase.duration}</span>}
-                  </div>
-                  {phase.description && <p className="phase-description">{phase.description}</p>}
-                  {phase.tasks && phase.tasks.length > 0 && (
-                    <ul className="phase-tasks">
-                      {phase.tasks.map((task, taskIndex) => (
-                        <li key={taskIndex}>{task}</li>
-                      ))}
-                    </ul>
-                  )}
+            <div className="question-grid">
+              {data.question_results.map((q, index) => (
+                <div key={index} className={`question-cell ${q.isCorrect ? 'correct' : 'incorrect'}`}>
+                  <span className="question-cell-number">{q.questionNumber}</span>
+                  <span className="question-cell-mark">{q.isCorrect ? '○' : '✕'}</span>
                 </div>
               ))}
             </div>
+
+            <div className="question-summary">
+              <div className="question-summary-item">
+                <span className="question-summary-label">정답</span>
+                <span className="question-summary-value correct">
+                  {data.question_results.filter(q => q.isCorrect).length}개
+                </span>
+              </div>
+              <div className="question-summary-item">
+                <span className="question-summary-label">오답</span>
+                <span className="question-summary-value incorrect">
+                  {wrongAnswers.length}개
+                </span>
+              </div>
+            </div>
+
+            <div className="page-footer">
+              <span>i.study 수리탐구 진단검사</span>
+              <span className="page-number">3</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================
+            오답 문항 분석 (오답이 있는 경우에만)
+            ======================================== */}
+        {wrongAnswers.length > 0 && (
+          <div className="page content-page">
+            <div className="page-content">
+              <div className="page-header">
+                <span className="page-header-logo">i.STUDY</span>
+                <span className="page-header-info">{submission?.student_name} | {getTestTypeName(submission?.test_type)}</span>
+              </div>
+
+              <div className="section-title">
+                <span className="section-title-icon">⚠️</span>
+                <span className="section-title-text">오답 문항 상세 분석</span>
+                <div className="section-title-line"></div>
+              </div>
+
+              <div className="wrong-cards-grid">
+                {wrongAnswers.slice(0, 8).map((q, index) => {
+                  const diffInfo = getDifficultyInfo(q.difficulty);
+                  return (
+                    <div key={index} className="wrong-card">
+                      <div className="wrong-card-header">
+                        <span className="wrong-card-number">{q.questionNumber}번</span>
+                        <span className="wrong-card-area">{q.area}</span>
+                      </div>
+                      <div className="wrong-card-content">
+                        {getQuestionContent(submission?.test_type, q.questionNumber)}
+                      </div>
+                      <div className="wrong-card-meta">
+                        <div className="wrong-card-meta-item">
+                          <span className="wrong-card-meta-label">난이도</span>
+                          <span className="wrong-card-meta-value" style={{ color: diffInfo.color }}>
+                            {diffInfo.label} {diffInfo.text}
+                          </span>
+                        </div>
+                        <div className="wrong-card-meta-item">
+                          <span className="wrong-card-meta-label">배점</span>
+                          <span className="wrong-card-meta-value">
+                            {getQuestionScore(submission?.test_type, q.questionNumber, q.score)}점
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {wrongAnswers.length > 8 && (
+                <p style={{ textAlign: 'center', color: '#8B7B72', fontSize: '12px', marginTop: '15px' }}>
+                  ... 외 {wrongAnswers.length - 8}개 문항
+                </p>
+              )}
+
+              <div className="page-footer">
+                <span>i.study 수리탐구 진단검사</span>
+                <span className="page-number">4</span>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* 푸터 */}
-        <div className="report-footer">
-          <p className="footer-text">
-            본 결과는 i.study 수리탐구 진단검사 시스템을 통해 자동 생성되었습니다.
+        {/* ========================================
+            간지 2: 경쟁력 분석
+            ======================================== */}
+        <div className="page divider-page">
+          <div className="divider-number">02</div>
+          <h2 className="divider-title">경쟁력 분석</h2>
+          <p className="divider-subtitle">COMPETITIVENESS ANALYSIS</p>
+          <div className="divider-gold-line"></div>
+          <p className="divider-description">
+            고교 유형별 내신 경쟁력을 분석하고<br/>
+            맞춤형 학습 전략을 제시합니다.
           </p>
-          <p className="footer-text">
-            상세한 학습 분석 및 맞춤형 커리큘럼 상담을 원하시면 담당 선생님께 문의해주세요.
+        </div>
+
+        {/* ========================================
+            경쟁력 분석 페이지
+            ======================================== */}
+        <div className="page content-page">
+          <div className="page-content">
+            <div className="page-header">
+              <span className="page-header-logo">i.STUDY</span>
+              <span className="page-header-info">{submission?.student_name} | {getTestTypeName(submission?.test_type)}</span>
+            </div>
+
+            <div className="section-title">
+              <span className="section-title-icon">🏫</span>
+              <span className="section-title-text">고교 유형별 내신 경쟁력 분석</span>
+              <div className="section-title-line"></div>
+            </div>
+
+            <div className="chart-container">
+              <SchoolCompetitivenessChart score={data.total_score} maxScore={data.max_score} />
+            </div>
+
+            <div className="section-title">
+              <span className="section-title-icon">🎯</span>
+              <span className="section-title-text">맞춤 학습 전략 가이드</span>
+              <div className="section-title-line"></div>
+            </div>
+
+            <LearningStrategyGuide
+              grade9={data.grade9}
+              studentGrade={submission?.grade}
+              testType={submission?.test_type}
+            />
+
+            <div className="page-footer">
+              <span>i.study 수리탐구 진단검사</span>
+              <span className="page-number">{wrongAnswers.length > 0 ? '5' : '4'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================
+            간지 3: 학습 분석
+            ======================================== */}
+        {report?.dynamic_comments?.area_comments && (
+          <>
+            <div className="page divider-page">
+              <div className="divider-number">03</div>
+              <h2 className="divider-title">학습 분석</h2>
+              <p className="divider-subtitle">LEARNING ANALYSIS</p>
+              <div className="divider-gold-line"></div>
+              <p className="divider-description">
+                영역별 학습 분석과 종합 평가를 통해<br/>
+                효과적인 학습 방향을 안내합니다.
+              </p>
+            </div>
+
+            {/* ========================================
+                학습 분석 페이지
+                ======================================== */}
+            <div className="page content-page">
+              <div className="page-content">
+                <div className="page-header">
+                  <span className="page-header-logo">i.STUDY</span>
+                  <span className="page-header-info">{submission?.student_name} | {getTestTypeName(submission?.test_type)}</span>
+                </div>
+
+                {/* 영역별 학습 분석 */}
+                <div className="section-title">
+                  <span className="section-title-icon">📚</span>
+                  <span className="section-title-text">영역별 학습 분석</span>
+                  <div className="section-title-line"></div>
+                </div>
+
+                <div className="comments-grid">
+                  {Object.entries(report.dynamic_comments.area_comments)
+                    .filter(([area]) => !['종합 분석', '강점 영역', '약점 영역', '학습 우선순위', '난이도별 분석'].includes(area))
+                    .slice(0, 4)
+                    .map(([area, commentData], index) => {
+                      const levelUpper = commentData.level?.toUpperCase();
+                      const levelLabel = levelUpper === 'EXCELLENT' ? '우수' :
+                                        levelUpper === 'GOOD' ? '양호' :
+                                        levelUpper === 'AVERAGE' ? '보통' :
+                                        levelUpper === 'WEAK' ? '미흡' :
+                                        levelUpper === 'CRITICAL' ? '취약' : '보통';
+                      const levelClass = levelUpper?.toLowerCase() || 'average';
+                      return (
+                        <div key={index} className="comment-card">
+                          <div className="comment-header">
+                            <span className="comment-area">{area}</span>
+                            {commentData.level && (
+                              <span className={`comment-level ${levelClass}`}>
+                                {levelLabel}
+                              </span>
+                            )}
+                          </div>
+                          <p className="comment-text">{commentData.comment || commentData}</p>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <div className="page-footer">
+                  <span>i.study 수리탐구 진단검사</span>
+                  <span className="page-number">{wrongAnswers.length > 0 ? '6' : '5'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ========================================
+                종합 분석 페이지
+                ======================================== */}
+            <div className="page content-page">
+              <div className="page-content">
+                <div className="page-header">
+                  <span className="page-header-logo">i.STUDY</span>
+                  <span className="page-header-info">{submission?.student_name} | {getTestTypeName(submission?.test_type)}</span>
+                </div>
+
+                <div className="section-title">
+                  <span className="section-title-icon">📝</span>
+                  <span className="section-title-text">종합 분석</span>
+                  <div className="section-title-line"></div>
+                </div>
+
+                <div className="summary-blocks">
+                  {report.dynamic_comments.area_comments['종합 분석'] && (
+                    <div className="summary-block general">
+                      <p className="summary-block-text">
+                        {typeof report.dynamic_comments.area_comments['종합 분석'] === 'object'
+                          ? report.dynamic_comments.area_comments['종합 분석'].comment
+                          : report.dynamic_comments.area_comments['종합 분석']}
+                      </p>
+                    </div>
+                  )}
+                  {report.dynamic_comments.area_comments['강점 영역'] && (
+                    <div className="summary-block strength">
+                      <div className="summary-block-title">강점 영역</div>
+                      <p className="summary-block-text">
+                        {typeof report.dynamic_comments.area_comments['강점 영역'] === 'object'
+                          ? report.dynamic_comments.area_comments['강점 영역'].comment
+                          : report.dynamic_comments.area_comments['강점 영역']}
+                      </p>
+                    </div>
+                  )}
+                  {report.dynamic_comments.area_comments['약점 영역'] && (
+                    <div className="summary-block weakness">
+                      <div className="summary-block-title">약점 영역</div>
+                      <p className="summary-block-text">
+                        {typeof report.dynamic_comments.area_comments['약점 영역'] === 'object'
+                          ? report.dynamic_comments.area_comments['약점 영역'].comment
+                          : report.dynamic_comments.area_comments['약점 영역']}
+                      </p>
+                    </div>
+                  )}
+                  {report.dynamic_comments.area_comments['학습 우선순위'] && (
+                    <div className="summary-block priority">
+                      <div className="summary-block-title">학습 우선순위</div>
+                      <p className="summary-block-text">
+                        {typeof report.dynamic_comments.area_comments['학습 우선순위'] === 'object'
+                          ? report.dynamic_comments.area_comments['학습 우선순위'].comment
+                          : report.dynamic_comments.area_comments['학습 우선순위']}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* 학습 로드맵 */}
+                {report.dynamic_comments?.roadmap?.phases && (
+                  <>
+                    <div className="section-title" style={{ marginTop: '30px' }}>
+                      <span className="section-title-icon">🗺️</span>
+                      <span className="section-title-text">맞춤 학습 로드맵</span>
+                      <div className="section-title-line"></div>
+                    </div>
+
+                    <div className="roadmap-container">
+                      <div className="roadmap-line"></div>
+                      {report.dynamic_comments.roadmap.phases.map((phase, index) => (
+                        <div key={index} className="roadmap-phase">
+                          <div className="roadmap-dot"></div>
+                          <div className="roadmap-phase-header">
+                            <span className="roadmap-phase-number">{index + 1}단계</span>
+                            <span className="roadmap-phase-title">{phase.title}</span>
+                            {phase.duration && <span className="roadmap-phase-duration">{phase.duration}</span>}
+                          </div>
+                          {phase.description && <p className="roadmap-phase-description">{phase.description}</p>}
+                          {phase.tasks && phase.tasks.length > 0 && (
+                            <ul className="roadmap-tasks">
+                              {phase.tasks.slice(0, 3).map((task, taskIndex) => (
+                                <li key={taskIndex}>{task}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                <div className="page-footer">
+                  <span>i.study 수리탐구 진단검사</span>
+                  <span className="page-number">{wrongAnswers.length > 0 ? '7' : '6'}</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ========================================
+            마지막 페이지 - 안내
+            ======================================== */}
+        <div className="page divider-page">
+          <div className="divider-number" style={{ opacity: 0.08 }}>END</div>
+          <h2 className="divider-title">감사합니다</h2>
+          <p className="divider-subtitle">THANK YOU</p>
+          <div className="divider-gold-line"></div>
+          <p className="divider-description">
+            본 결과는 i.study 수리탐구 진단검사 시스템을 통해<br/>
+            자동 생성되었습니다.<br/><br/>
+            상세한 학습 분석 및 맞춤형 커리큘럼 상담을 원하시면<br/>
+            담당 선생님께 문의해주세요.
           </p>
         </div>
       </div>
