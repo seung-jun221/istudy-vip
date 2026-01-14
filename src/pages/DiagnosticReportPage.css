@@ -134,12 +134,13 @@
 }
 
 .cover-logo {
-  font-family: 'Playfair Display', serif;
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--gold);
   margin-bottom: 60px;
-  letter-spacing: 4px;
+  text-align: center;
+}
+
+.cover-logo-img {
+  max-width: 180px;
+  height: auto;
 }
 
 .cover-title-wrapper {
