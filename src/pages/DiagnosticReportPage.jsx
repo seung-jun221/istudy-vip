@@ -218,35 +218,106 @@ export default function DiagnosticReportPage() {
   };
 
   // 진도를 숫자로 변환 (초6-2=62, 중1-1=71, 고1-1=101)
-  const parseProgressToNumber = (progressStr) => {
+  // studentGrade: 학생의 현재 학년 (현행, 1년선행 등 처리용)
+  const parseProgressToNumber = (progressStr, studentGrade) => {
     if (!progressStr) return null;
-    const str = progressStr.toString();
+    const str = progressStr.toString().trim();
 
-    // 초등 (예: 초6-2, 초5-1)
-    const elemMatch = str.match(/초\s*(\d)[^\d]*(\d)?/);
-    if (elemMatch) {
-      const grade = parseInt(elemMatch[1]);
-      const semester = elemMatch[2] ? parseInt(elemMatch[2]) : 1;
-      return grade * 10 + semester;
+    // 헬퍼 함수: 학년 문자열에서 진도 숫자 추출
+    const extractProgress = (text) => {
+      // 고등
+      const highMatch = text.match(/고\s*(\d)/);
+      if (highMatch) {
+        const grade = parseInt(highMatch[1]);
+        const semMatch = text.match(/고\s*\d[^\d]*(\d)/);
+        const semester = semMatch ? parseInt(semMatch[1]) : 1;
+        return (9 + grade) * 10 + semester;
+      }
+      // 중등
+      const midMatch = text.match(/중\s*(\d)/);
+      if (midMatch) {
+        const grade = parseInt(midMatch[1]);
+        const semMatch = text.match(/중\s*\d[^\d]*(\d)/);
+        const semester = semMatch ? parseInt(semMatch[1]) : 1;
+        return (6 + grade) * 10 + semester;
+      }
+      // 초등
+      const elemMatch = text.match(/초\s*(\d)/);
+      if (elemMatch) {
+        const grade = parseInt(elemMatch[1]);
+        const semMatch = text.match(/초\s*\d[^\d]*(\d)/);
+        const semester = semMatch ? parseInt(semMatch[1]) : 1;
+        return grade * 10 + semester;
+      }
+      // 숫자만 (예: 6학년2학기)
+      const numMatch = text.match(/(\d)\s*학년\s*(\d)?/);
+      if (numMatch) {
+        const grade = parseInt(numMatch[1]);
+        const semester = numMatch[2] ? parseInt(numMatch[2]) : 1;
+        if (grade <= 6) return grade * 10 + semester;
+      }
+      return null;
+    };
+
+    // 학생 학년을 진도로 변환
+    const getStudentProgress = () => {
+      if (!studentGrade) return 81; // 기본값 중2-1
+      return parseGradeToNumber(studentGrade) * 10 + 1;
+    };
+
+    // 1. 괄호 안의 선행 정보 우선 추출 (예: 중2(중3선행중), 초4(중1))
+    const parenMatch = str.match(/\(([^)]+)\)/);
+    if (parenMatch) {
+      const innerProgress = extractProgress(parenMatch[1]);
+      if (innerProgress) return innerProgress;
     }
 
-    // 중등 (예: 중1-1, 중3-2)
-    const midMatch = str.match(/중\s*(\d)[^\d]*(\d)?/);
-    if (midMatch) {
-      const grade = parseInt(midMatch[1]);
-      const semester = midMatch[2] ? parseInt(midMatch[2]) : 1;
-      return (6 + grade) * 10 + semester; // 중1-1=71, 중3-2=92
+    // 2. "X선행중" 패턴 (예: 고1선행중, 중3 선행중, 고2선행중)
+    const advanceMatch = str.match(/(초|중|고)\s*(\d)\s*선행/);
+    if (advanceMatch) {
+      const level = advanceMatch[1];
+      const grade = parseInt(advanceMatch[2]);
+      if (level === '초') return grade * 10 + 1;
+      if (level === '중') return (6 + grade) * 10 + 1;
+      if (level === '고') return (9 + grade) * 10 + 1;
     }
 
-    // 고등 (예: 고1-1, 고2-2)
-    const highMatch = str.match(/고\s*(\d)[^\d]*(\d)?/);
-    if (highMatch) {
-      const grade = parseInt(highMatch[1]);
-      const semester = highMatch[2] ? parseInt(highMatch[2]) : 1;
-      return (9 + grade) * 10 + semester; // 고1-1=101, 고2-2=112
+    // 3. "현행", "학교진도" - 학생 학년과 동일
+    if (str.includes('현행') || str.includes('학교진도')) {
+      return getStudentProgress();
     }
 
-    return null;
+    // 4. "N년선행" 패턴
+    const yearMatch = str.match(/(\d)\s*년\s*선행/);
+    if (yearMatch) {
+      const years = parseInt(yearMatch[1]);
+      return getStudentProgress() + (years * 10);
+    }
+
+    // 5. "심화" 패턴 (예: 중2 심화) - 해당 학년 2학기로 처리
+    if (str.includes('심화')) {
+      const progress = extractProgress(str);
+      if (progress) {
+        // 1학기면 2학기로 변경
+        return progress % 10 === 1 ? progress + 1 : progress;
+      }
+    }
+
+    // 6. 과목명 패턴 (예: 공수1,2 기본, 공통수학)
+    if (str.includes('공수') || str.includes('공통수학')) {
+      return 101; // 고1-1 수준
+    }
+
+    // 7. 숫자만 있는 패턴 (예: 5-1)
+    const numOnlyMatch = str.match(/^(\d)-(\d)$/);
+    if (numOnlyMatch) {
+      const grade = parseInt(numOnlyMatch[1]);
+      const semester = parseInt(numOnlyMatch[2]);
+      if (grade <= 6) return grade * 10 + semester; // 초등
+    }
+
+    // 8. 기본: 단순 학년 패턴 추출
+    return extractProgress(str);
   };
 
   // 진도 비교용 상수
@@ -618,7 +689,7 @@ export default function DiagnosticReportPage() {
   // 학생 조건에 맞는 전략 찾기 (새로운 조건 형식)
   const findStrategy = (categoryData, grade9, studentGrade, mathLevel) => {
     const gradeNum = parseGradeToNumber(studentGrade) || 8; // 기본값 중2
-    const progressNum = parseProgressToNumber(mathLevel);
+    const progressNum = parseProgressToNumber(mathLevel, studentGrade);
 
     // 전략 조건 매칭
     for (const strategy of categoryData.strategies) {
