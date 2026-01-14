@@ -221,15 +221,15 @@ export default function DiagnosticReportPage() {
           keyPoint: '수학 외 경쟁력 있는 과목에 집중' },
         { grade: '고등', progress: '선행', level: '상', recommendation: '선행',
           subtitle: '선행 유지',
-          content: `선행 학습이 효과적으로 진행 중입니다. 수능 대비와 함께 심화까지 병행하세요.`,
+          content: `선행 학습이 효과적으로 진행 중입니다. 현재 진도를 유지하면서 수능 대비와 함께 심화까지 병행하는 것을 권장합니다.\n\n고등학교 수학에서 상위권을 유지하는 학생들은 선행과 심화를 균형있게 병행해야 합니다. 선행만 빠르게 나가면 개념의 깊이가 부족해지고, 심화만 하면 진도에서 뒤처질 수 있습니다.`,
           keyPoint: '선행 유지하며 수능 대비와 심화 병행' },
         { grade: '고등', progress: '정규', level: '하', recommendation: '심화',
           subtitle: '기본 개념 정립',
-          content: `선행을 멈추고 기본 개념 정립에 올인하세요. 기초가 없으면 고등 수학은 무너집니다.`,
+          content: `현재 수학 성적이 기대에 미치지 못한다면, 선행을 멈추고 기본 개념 정립에 집중해야 합니다.\n\n고등 수학은 중학교 때와 달리 개념들이 유기적으로 연결되어 있습니다. 기초가 없는 상태에서 선행을 나가면 결국 모든 단원에서 어려움을 겪게 됩니다. 지금은 현재 배우는 내용의 완벽한 이해가 최우선입니다.`,
           keyPoint: '선행 중단, 기본 개념 정립에 집중 필수' },
         { grade: '전체', progress: '전체', level: '중', recommendation: '심화',
           subtitle: '현행 완성 우선',
-          content: `현재 학습 내용의 완성도를 높이는 것이 선행보다 중요합니다.`,
+          content: `현재 학습 내용의 완성도를 높이는 것이 선행보다 중요합니다.\n\n중위권 학생들이 상위권으로 도약하기 위해서는 현재 배우고 있는 내용을 100% 소화하는 것이 핵심입니다. 선행을 나가더라도 현행이 흔들리면 결국 모래 위에 성을 쌓는 것과 같습니다.`,
           keyPoint: '현행 완성도 우선, 기본기 확립 후 선행' }
       ]
     },
@@ -257,7 +257,7 @@ export default function DiagnosticReportPage() {
           keyPoint: '내신보다 수능 집중이 유리' },
         { grade: '중등', progress: '선행', level: '상', recommendation: '수능',
           subtitle: '수능 사고력 준비',
-          content: `지금부터 수능 유형에 익숙해지면 좋습니다. 수학 사고력을 기르는 문제에 도전하세요.`,
+          content: `상위권 중학생이라면 지금부터 수능 유형에 익숙해지는 것이 좋습니다.\n\n수능 수학은 단순 계산이 아닌 수학적 사고력을 측정합니다. 중학교 때부터 논리적 사고와 문제 해결 능력을 기르는 문제에 도전하면 고등학교에서 수능 대비가 훨씬 수월해집니다.`,
           keyPoint: '수능 유형 익히기 시작' }
       ]
     },
@@ -281,11 +281,11 @@ export default function DiagnosticReportPage() {
           keyPoint: '수학/과학 성취도 낮으면 타 과목 경쟁력 극대화' },
         { grade: '고등', progress: '선행', level: '상', recommendation: '이과',
           subtitle: '이과 강점',
-          content: `수학 실력이 우수합니다. 이과 진학 시 수학이 큰 강점이 될 수 있습니다.`,
+          content: `수학 실력이 우수합니다. 이과 진학 시 수학이 큰 강점이 될 수 있습니다.\n\n현재 수학 성취도가 높은 학생이라면 이과 계열로 진학하여 수학을 무기로 활용하는 것이 입시에서 유리합니다. 의대, 공대 등 이과 계열 상위권 학과에서는 수학 실력이 합격의 핵심 요소입니다.`,
           keyPoint: '수학 우수, 이과 진학시 강점' },
         { grade: '전체', progress: '전체', level: '하', recommendation: '문과',
           subtitle: '기본기 강화 우선',
-          content: `수학 기본기 강화가 필요합니다. 진로 선택 전 수학 실력을 먼저 끌어올리세요.`,
+          content: `수학 기본기 강화가 필요합니다. 진로 선택 전 수학 실력을 먼저 끌어올리세요.\n\n현재 수학 성취도가 낮다면 문·이과 선택보다 먼저 기본기를 다져야 합니다. 기본 개념이 잡히면 문·이과 어느 쪽을 선택하든 수학에서 경쟁력을 가질 수 있습니다.`,
           keyPoint: '수학 기본기 강화 우선' }
       ]
     },
@@ -309,11 +309,11 @@ export default function DiagnosticReportPage() {
           keyPoint: '중위권 이상은 학원 추천' },
         { grade: '고등', progress: '선행', level: '상', recommendation: '학원',
           subtitle: '입시 전문 학원',
-          content: `입시 전문 학원의 체계적인 관리가 효과적입니다.`,
+          content: `입시 전문 학원의 체계적인 관리가 효과적입니다.\n\n고등학교 상위권 학생에게는 입시 전문 학원의 체계적인 커리큘럼과 경쟁 환경이 큰 도움이 됩니다. 내신과 수능을 동시에 관리할 수 있는 시스템을 갖춘 학원을 선택하는 것이 중요합니다.`,
           keyPoint: '입시 전문 학원의 체계적 관리 활용' },
         { grade: '고등', progress: '정규', level: '하', recommendation: '과외',
           subtitle: '1:1 맞춤 지도',
-          content: `개인 맞춤 지도가 절실합니다. 과외 선생님과 기초부터 시작하세요.`,
+          content: `개인 맞춤 지도가 절실합니다. 과외 선생님과 기초부터 시작하세요.\n\n현재 수학 기초가 부족한 상태라면 학원의 빠른 진도를 따라가기 어렵습니다. 1:1 과외를 통해 부족한 부분을 정확히 진단하고 학생 수준에 맞는 맞춤형 학습이 필요합니다.`,
           keyPoint: '개인 맞춤 과외로 기초부터 시작 필요' }
       ]
     },
@@ -341,7 +341,7 @@ export default function DiagnosticReportPage() {
           keyPoint: '모든 사교육보다 목표 시험 설정 후 집중' },
         { grade: '고등', progress: '선행', level: '상', recommendation: '일반',
           subtitle: '페이스 유지',
-          content: `현재 학습 패턴을 유지하되, 수능 D-100부터 몰입 모드로 전환하세요.`,
+          content: `현재 학습 패턴을 유지하되, 수능 D-100부터 몰입 모드로 전환하세요.\n\n고등학교 상위권 학생은 무리한 몰입보다 꾸준한 학습 페이스 유지가 중요합니다. 다만 수능 100일 전부터는 집중적인 실전 대비가 필요하므로 그때 몰입 학습으로 전환하는 것이 효과적입니다.`,
           keyPoint: '현재 패턴 유지, 수능 D-100부터 몰입 전환' }
       ]
     },
@@ -361,11 +361,11 @@ export default function DiagnosticReportPage() {
           keyPoint: '특구 사교육 활용 + 타 지역 내신 전략' },
         { grade: '중등', progress: '선행', level: '상', recommendation: '특구고려',
           subtitle: '고교 진학 대비',
-          content: `고등학교 진학을 고려해 학군지 이동을 검토해볼 수 있습니다.`,
+          content: `고등학교 진학을 고려해 학군지 이동을 검토해볼 수 있습니다.\n\n중학교 상위권 학생이라면 고등학교 진학 전 교육 특구로의 이동을 고려해볼 만합니다. 다만 내신 경쟁이 치열해지는 점도 함께 고려해야 합니다. 목표 대학과 전형을 먼저 정하고 결정하는 것이 좋습니다.`,
           keyPoint: '고교 진학 대비 학군지 이동 검토 가능' },
         { grade: '고등', progress: '전체', level: '전체', recommendation: '현유지',
           subtitle: '현 환경 최선',
-          content: `고등학교에서는 전학보다 현재 환경에서 최선을 다하세요.`,
+          content: `고등학교에서는 전학보다 현재 환경에서 최선을 다하세요.\n\n고등학교 재학 중 환경을 바꾸는 것은 오히려 학습에 방해가 될 수 있습니다. 현재 학교에서 내신 관리에 집중하고, 부족한 부분은 사교육을 통해 보완하는 것이 현실적인 전략입니다.`,
           keyPoint: '고등학교는 전학보다 현재 환경에서 최선' }
       ]
     }
@@ -911,7 +911,7 @@ export default function DiagnosticReportPage() {
 
             <div className="section-title">
               <span className="section-title-icon">📚</span>
-              <span className="section-title-text">아이작 학습 전략 가이드</span>
+              <span className="section-title-text">학습 전략 가이드</span>
               <div className="section-title-line"></div>
             </div>
 
@@ -952,7 +952,7 @@ export default function DiagnosticReportPage() {
 
             <div className="section-title">
               <span className="section-title-icon">📚</span>
-              <span className="section-title-text">아이작 학습 전략 가이드</span>
+              <span className="section-title-text">학습 전략 가이드</span>
               <div className="section-title-line"></div>
             </div>
 
@@ -993,7 +993,7 @@ export default function DiagnosticReportPage() {
 
             <div className="section-title">
               <span className="section-title-icon">📚</span>
-              <span className="section-title-text">아이작 학습 전략 가이드</span>
+              <span className="section-title-text">학습 전략 가이드</span>
               <div className="section-title-line"></div>
             </div>
 
