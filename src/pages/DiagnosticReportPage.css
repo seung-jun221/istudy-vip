@@ -1035,6 +1035,135 @@
 }
 
 /* ========================================
+   학습 전략 가이드 페이지 스타일
+   ======================================== */
+.strategy-page-card {
+  background: var(--beige-light);
+  border-radius: 12px;
+  padding: 20px 25px;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--gold);
+}
+
+.strategy-page-card:last-child {
+  margin-bottom: 0;
+}
+
+.strategy-page-subtitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary-brown);
+  margin: 15px 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.strategy-page-icon {
+  font-size: 20px;
+}
+
+.strategy-page-content {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-medium);
+  white-space: pre-line;
+  margin-bottom: 15px;
+}
+
+.strategy-page-keypoint {
+  display: flex;
+  gap: 8px;
+  padding: 12px 15px;
+  background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+  border-radius: 8px;
+  border-left: 3px solid var(--gold);
+}
+
+.strategy-page-keypoint .keypoint-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f57c00;
+  white-space: nowrap;
+}
+
+.strategy-page-keypoint .keypoint-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #e65100;
+  line-height: 1.5;
+}
+
+/* ========================================
+   스케일 인디케이터 (심화 vs 선행 등)
+   ======================================== */
+.scale-indicator {
+  background: white;
+  border-radius: 10px;
+  padding: 15px 20px;
+  border: 1px solid var(--border-color);
+}
+
+.scale-header {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.scale-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.scale-label {
+  font-size: 15px;
+  font-weight: 700;
+  min-width: 50px;
+}
+
+.scale-label.left {
+  color: var(--primary-brown);
+  text-align: right;
+}
+
+.scale-label.right {
+  color: var(--gold-dark);
+  text-align: left;
+}
+
+.scale-dots {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scale-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.scale-dot.center {
+  border-color: var(--text-light);
+}
+
+.scale-dot.active {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  box-shadow: 0 2px 8px rgba(212, 168, 75, 0.4);
+  transform: scale(1.15);
+}
+
+/* ========================================
    로딩 & 에러
    ======================================== */
 .report-loading,
