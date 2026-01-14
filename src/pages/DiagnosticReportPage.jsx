@@ -334,7 +334,7 @@ export default function DiagnosticReportPage() {
       title: '선행 VS 심화',
       leftLabel: '심화',
       rightLabel: '선행',
-      icon: '📚',
+      icon: '◆',
       strategies: [
         // 중3, 고1-1 이상, 3등급 이하 (386)
         { gradeMin: 9, gradeMax: 9, progressMin: PROGRESS['고1-1'], progressMax: null, levelMin: 3, levelMax: 9,
@@ -457,7 +457,7 @@ export default function DiagnosticReportPage() {
       title: '내신 VS 수능',
       leftLabel: '내신',
       rightLabel: '수능',
-      icon: '🎯',
+      icon: '◇',
       strategies: [
         // 전학년, 전진도, 1등급 (524)
         { gradeMin: 1, gradeMax: 12, progressMin: null, progressMax: null, levelMin: 1, levelMax: 1,
@@ -505,7 +505,7 @@ export default function DiagnosticReportPage() {
       title: '문과 VS 이과',
       leftLabel: '문과',
       rightLabel: '이과',
-      icon: '🔬',
+      icon: '◆',
       strategies: [
         // 중2~3, 고1-1이상, 3등급이상 (284)
         { gradeMin: 8, gradeMax: 9, progressMin: PROGRESS['고1-1'], progressMax: null, levelMin: 1, levelMax: 3,
@@ -543,7 +543,7 @@ export default function DiagnosticReportPage() {
       title: '학원 VS 과외',
       leftLabel: '학원',
       rightLabel: '과외',
-      icon: '👨‍🏫',
+      icon: '◇',
       strategies: [
         // 초5이상, 전진도, 1~2등급 (391)
         { gradeMin: 5, gradeMax: 12, progressMin: null, progressMax: null, levelMin: 1, levelMax: 2,
@@ -592,7 +592,7 @@ export default function DiagnosticReportPage() {
       title: '일반 VS 몰입',
       leftLabel: '일반',
       rightLabel: '몰입',
-      icon: '⚡',
+      icon: '◆',
       strategies: [
         // 중1~2, 전진도, 1~2등급 (576)
         { gradeMin: 7, gradeMax: 8, progressMin: null, progressMax: null, levelMin: 1, levelMax: 2,
@@ -657,7 +657,7 @@ export default function DiagnosticReportPage() {
       title: '일반 VS 특구',
       leftLabel: '일반',
       rightLabel: '특구',
-      icon: '🏫',
+      icon: '◇',
       strategies: [
         // 전학년, 전진도, 1~2등급 (325)
         { gradeMin: 1, gradeMax: 12, progressMin: null, progressMax: null, levelMin: 1, levelMax: 2,
@@ -910,7 +910,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="section-title">
-              <span className="section-title-icon">📋</span>
+              <span className="section-title-icon">▪</span>
               <span className="section-title-text">학생 정보</span>
               <div className="section-title-line"></div>
             </div>
@@ -944,7 +944,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="section-title">
-              <span className="section-title-icon">📊</span>
+              <span className="section-title-icon">▪</span>
               <span className="section-title-text">종합 성적</span>
               <div className="section-title-line"></div>
             </div>
@@ -1011,7 +1011,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="section-title">
-              <span className="section-title-icon">📈</span>
+              <span className="section-title-icon">▪</span>
               <span className="section-title-text">영역별 성적</span>
               <div className="section-title-line"></div>
             </div>
@@ -1070,7 +1070,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="section-title">
-              <span className="section-title-icon">📉</span>
+              <span className="section-title-icon">▪</span>
               <span className="section-title-text">난이도별 정답률</span>
               <div className="section-title-line"></div>
             </div>
@@ -1097,7 +1097,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="section-title">
-              <span className="section-title-icon">✏️</span>
+              <span className="section-title-icon">▪</span>
               <span className="section-title-text">문항별 결과</span>
               <div className="section-title-line"></div>
             </div>
@@ -1143,7 +1143,7 @@ export default function DiagnosticReportPage() {
               </div>
 
               <div className="section-title">
-                <span className="section-title-icon">⚠️</span>
+                <span className="section-title-icon">▪</span>
                 <span className="section-title-text">오답 문항 상세 분석</span>
                 <div className="section-title-line"></div>
               </div>
@@ -1214,7 +1214,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="section-title">
-              <span className="section-title-icon">🏫</span>
+              <span className="section-title-icon">▪</span>
               <span className="section-title-text">고교 유형별 내신 경쟁력 분석</span>
               <div className="section-title-line"></div>
             </div>
@@ -1251,7 +1251,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="section-title">
-              <span className="section-title-icon">📚</span>
+              <span className="section-title-icon">▪</span>
               <span className="section-title-text">학습 전략 가이드</span>
               <div className="section-title-line"></div>
             </div>
@@ -1292,7 +1292,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="section-title">
-              <span className="section-title-icon">📚</span>
+              <span className="section-title-icon">▪</span>
               <span className="section-title-text">학습 전략 가이드</span>
               <div className="section-title-line"></div>
             </div>
@@ -1333,7 +1333,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="section-title">
-              <span className="section-title-icon">📚</span>
+              <span className="section-title-icon">▪</span>
               <span className="section-title-text">학습 전략 가이드</span>
               <div className="section-title-line"></div>
             </div>
@@ -1387,7 +1387,7 @@ export default function DiagnosticReportPage() {
                 </div>
 
                 <div className="section-title">
-                  <span className="section-title-icon">📝</span>
+                  <span className="section-title-icon">▪</span>
                   <span className="section-title-text">종합 분석</span>
                   <div className="section-title-line"></div>
                 </div>
