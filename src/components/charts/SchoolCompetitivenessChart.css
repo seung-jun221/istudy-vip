@@ -1,91 +1,189 @@
-/* 고교 유형별 경쟁력 분석 스타일 */
+/* 고교 유형별 경쟁력 분석 스타일 - 프리미엄 테마 */
+
+/* CSS 변수 */
+.school-competitiveness.premium {
+  --primary-brown: #6B3A2E;
+  --primary-brown-light: #8B5A4A;
+  --gold: #D4A84B;
+  --gold-light: #E8C77B;
+  --gold-dark: #B08830;
+  --beige: #E8DDD4;
+  --beige-light: #F5F0EB;
+  --text-dark: #2C2420;
+  --text-medium: #5A4A42;
+  --text-light: #8B7B72;
+  --border-color: #D4C4B5;
+  --success-color: #4A7C59;
+  --error-color: #A85454;
+}
+
 .school-competitiveness {
-  margin-top: 1rem;
+  margin-top: 0;
 }
 
 .competitiveness-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 15px;
 }
 
 .competitiveness-card {
   background: white;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 1.25rem;
-  transition: box-shadow 0.2s;
+  padding: 18px 20px;
+  transition: all 0.2s;
 }
 
 .competitiveness-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(107, 58, 46, 0.12);
+  border-color: var(--gold);
 }
 
 .card-header {
-  margin-bottom: 1rem;
+  margin-bottom: 15px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--border-color);
 }
 
 .school-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #555;
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-brown);
+  margin-bottom: 4px;
+}
+
+.school-desc {
+  font-size: 11px;
+  color: var(--text-light);
 }
 
 .card-body {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 12px;
 }
 
+/* T-Score 시각화 */
+.t-score-visual {
+  padding: 8px 0;
+}
+
+.t-score-track {
+  position: relative;
+  height: 28px;
+  background: var(--beige-light);
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  overflow: visible;
+}
+
+.t-score-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg,
+    #A85454 0%,
+    #C49A3F 25%,
+    #D4A84B 50%,
+    #66BB6A 75%,
+    #4A7C59 100%
+  );
+  opacity: 0.15;
+  border-radius: 14px;
+}
+
+.t-score-tick {
+  position: absolute;
+  top: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tick-line {
+  display: block;
+  width: 1px;
+  height: 10px;
+  background: var(--border-color);
+  margin-top: -5px;
+}
+
+.tick-label {
+  font-size: 9px;
+  color: var(--text-light);
+  margin-top: 16px;
+  font-weight: 500;
+}
+
+.t-score-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.marker-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--gold);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(212, 168, 75, 0.5);
+  border: 2px solid white;
+}
+
+/* 통계 행 */
 .stats-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .stat-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 0.875rem;
+  padding: 6px 12px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .stat-badge.percentile {
-  background: #ffebee;
-  color: #c62828;
+  background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
+  color: var(--error-color);
+  border: 1px solid rgba(168, 84, 84, 0.2);
 }
 
 .stat-badge.grade {
   min-width: 70px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stat-badge.points {
-  background: #f5f5f5;
-  color: #666;
+  background: var(--beige-light);
+  color: var(--text-medium);
+  border: 1px solid var(--border-color);
   margin-left: auto;
 }
 
-.progress-container {
-  height: 8px;
-  background: #e3f2fd;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #42a5f5, #1976d2);
-  border-radius: 4px;
-  transition: width 0.5s ease-out;
-}
-
 .card-footer {
-  font-size: 12px;
-  color: #999;
-  text-align: right;
+  font-size: 11px;
+  color: var(--text-light);
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--beige);
 }
 
 /* 반응형 */
@@ -99,11 +197,38 @@
   }
 
   .stat-badge {
-    font-size: 12px;
-    padding: 0.375rem 0.625rem;
+    font-size: 11px;
+    padding: 5px 10px;
   }
 
   .stat-badge.points {
     margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .marker-value {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+}
+
+/* 인쇄 스타일 */
+@media print {
+  .competitiveness-card:hover {
+    box-shadow: none;
+    border-color: var(--border-color);
+  }
+
+  .t-score-marker {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .marker-value {
+    background: var(--gold) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }

@@ -1,6 +1,7 @@
 /**
  * 고교 유형별 내신 경쟁력 분석 컴포넌트
  * 학생의 점수를 다양한 고교 유형별로 비교 분석합니다.
+ * T그래프 시각화 포함
  */
 import './SchoolCompetitivenessChart.css';
 
@@ -36,6 +37,42 @@ const SCHOOL_TYPES = [
   }
 ];
 
+// T-Score 시각화 컴포넌트
+const TScoreVisual = ({ tScore }) => {
+  const minT = 20;
+  const maxT = 80;
+  const range = maxT - minT;
+  const clampedScore = Math.max(minT, Math.min(maxT, tScore));
+  const position = ((clampedScore - minT) / range) * 100;
+
+  // T-Score 등급 라벨
+  const ticks = [20, 30, 40, 50, 60, 70, 80];
+
+  return (
+    <div className="t-score-visual">
+      <div className="t-score-track">
+        <div className="t-score-gradient" />
+        {ticks.map(tick => (
+          <div
+            key={tick}
+            className="t-score-tick"
+            style={{ left: `${((tick - minT) / range) * 100}%` }}
+          >
+            <span className="tick-line" />
+            <span className="tick-label">{tick}</span>
+          </div>
+        ))}
+        <div
+          className="t-score-marker"
+          style={{ left: `${position}%` }}
+        >
+          <span className="marker-value">{tScore.toFixed(0)}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function SchoolCompetitivenessChart({ score, maxScore = 100 }) {
   // 정규분포 기반 백분위 계산
   const calculatePercentile = (score, mean, std) => {
@@ -45,6 +82,11 @@ export default function SchoolCompetitivenessChart({ score, maxScore = 100 }) {
     const d = 0.3989423 * Math.exp(-z * z / 2);
     const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
     return z > 0 ? (1 - p) * 100 : p * 100;
+  };
+
+  // 점수를 T-Score로 변환
+  const calculateTScore = (score, mean, std) => {
+    return 50 + 10 * ((score - mean) / std);
   };
 
   // 백분위를 9등급으로 변환
@@ -61,42 +103,44 @@ export default function SchoolCompetitivenessChart({ score, maxScore = 100 }) {
     return { grade: 9, text: '8~9등급' };
   };
 
-  // 등급에 따른 색상
+  // 등급에 따른 색상 (프리미엄 테마)
   const getGradeColor = (grade) => {
-    if (grade <= 2) return '#1976d2';
-    if (grade <= 4) return '#42a5f5';
-    if (grade <= 6) return '#ff9800';
-    return '#f44336';
+    if (grade <= 2) return '#4A7C59'; // 성공 녹색
+    if (grade <= 4) return '#D4A84B'; // 골드
+    if (grade <= 6) return '#C49A3F'; // 경고 황색
+    return '#A85454'; // 에러 적색
   };
 
   // 각 학교 유형별 분석 결과 계산
   const results = SCHOOL_TYPES.map(school => {
     const percentile = calculatePercentile(score, school.average, school.stdDev);
+    const tScore = calculateTScore(score, school.average, school.stdDev);
     const topPercentile = Math.max(1, Math.min(99, 100 - percentile));
     const gradeInfo = percentileToGrade(percentile);
     const pointDiff = score - school.average;
-    const barWidth = Math.min(100, Math.max(5, percentile));
 
     return {
       ...school,
       percentile,
+      tScore,
       topPercentile: Math.round(topPercentile),
       gradeInfo,
       pointDiff: pointDiff >= 0 ? `+${Math.round(pointDiff)}` : Math.round(pointDiff).toString(),
-      barWidth,
       gradeColor: getGradeColor(gradeInfo.grade)
     };
   });
 
   return (
-    <div className="school-competitiveness">
+    <div className="school-competitiveness premium">
       <div className="competitiveness-grid">
         {results.map((result) => (
           <div key={result.id} className="competitiveness-card">
             <div className="card-header">
               <span className="school-name">{result.name}</span>
+              <span className="school-desc">{result.description}</span>
             </div>
             <div className="card-body">
+              <TScoreVisual tScore={result.tScore} />
               <div className="stats-row">
                 <span className="stat-badge percentile">
                   상위 {result.topPercentile}%
@@ -111,17 +155,11 @@ export default function SchoolCompetitivenessChart({ score, maxScore = 100 }) {
                   {result.gradeInfo.text}
                 </span>
                 <span className="stat-badge points">
-                  {result.pointDiff}점
+                  평균 대비 {result.pointDiff}점
                 </span>
               </div>
-              <div className="progress-container">
-                <div
-                  className="progress-bar"
-                  style={{ width: `${result.barWidth}%` }}
-                />
-              </div>
               <div className="card-footer">
-                평균 {result.average}점 (표준편차 {result.stdDev})
+                기준: 평균 {result.average}점 · 표준편차 {result.stdDev}
               </div>
             </div>
           </div>
