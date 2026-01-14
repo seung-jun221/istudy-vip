@@ -484,7 +484,7 @@ function convertQuestionResults(
     isCorrect: qr.isCorrect,
     studentAnswer: studentAnswers[index] || '',
     correctAnswer: '', // TODO: 정답표에서 가져오기
-    score: qr.earnedScore,
+    score: qr.score, // 원래 배점 (earnedScore가 아닌 score)
     area: qr.area,
     difficulty: qr.difficulty,
   }));
