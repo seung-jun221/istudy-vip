@@ -70,87 +70,87 @@ export default function DiagnosticReportPage() {
   };
 
   // 문항별 상세 정보 (배점표 기준)
-  const QUESTION_CONTENTS = {
+  const QUESTION_DATA = {
     MONO: {
-      1: '150 이하 자연수 중 약수의 개수가 3개인 수의 개수',
-      2: 'x^a × y^b × (x+y)의 인수 개수',
-      3: '(a+12)/(a-2)가 정수가 되는 a의 값의 합',
-      4: '연분수 계산',
-      5: '72×a=b²를 만족하는 a',
-      6: '약수 개수가 3개일 때 순서쌍 개수',
-      7: '식 간단히 하기',
-      8: '최대공약수 활용',
-      9: '(-4) × (-a) = b²',
-      10: '반대 부호 조건',
-      11: '거듭제곱 패턴',
-      12: '일반항 계산',
-      13: '다항식 상수항',
-      14: '복잡한 분수식',
-      15: '항등식',
-      16: '방정식 해의 배수 관계',
-      17: '절댓값 방정식',
-      18: '가우스 기호 방정식',
-      19: '연산 정의',
-      20: '평행사변형 넓이',
-      21: '두 함수 조건',
-      22: '그래프 해석',
-      23: '일차함수 그래프',
-      24: '반비례 그래프',
-      25: '삼각형 넓이'
+      1: { content: '150 이하 자연수 중 약수의 개수가 3개인 수의 개수', score: 3.5 },
+      2: { content: 'x^a × y^b × (x+y)의 인수 개수', score: 4.5 },
+      3: { content: '(a+12)/(a-2)가 정수가 되는 a의 값의 합', score: 3.5 },
+      4: { content: '연분수 계산', score: 3.5 },
+      5: { content: '72×a=b²를 만족하는 a', score: 4.0 },
+      6: { content: '약수 개수가 3개일 때 순서쌍 개수', score: 4.5 },
+      7: { content: '식 간단히 하기', score: 3.5 },
+      8: { content: '최대공약수 활용', score: 4.0 },
+      9: { content: '(-4) × (-a) = b²', score: 3.5 },
+      10: { content: '반대 부호 조건', score: 3.5 },
+      11: { content: '거듭제곱 패턴', score: 4.0 },
+      12: { content: '일반항 계산', score: 4.5 },
+      13: { content: '다항식 상수항', score: 3.5 },
+      14: { content: '복잡한 분수식', score: 4.0 },
+      15: { content: '항등식', score: 4.0 },
+      16: { content: '방정식 해의 배수 관계', score: 4.5 },
+      17: { content: '절댓값 방정식', score: 4.0 },
+      18: { content: '가우스 기호 방정식', score: 4.5 },
+      19: { content: '연산 정의', score: 4.0 },
+      20: { content: '평행사변형 넓이', score: 4.0 },
+      21: { content: '두 함수 조건', score: 4.0 },
+      22: { content: '그래프 해석', score: 4.0 },
+      23: { content: '일차함수 그래프', score: 4.0 },
+      24: { content: '반비례 그래프', score: 4.0 },
+      25: { content: '삼각형 넓이', score: 4.5 }
     },
     DI: {
-      1: '순환소수를 분수로',
-      2: '다항식 내림차순',
-      3: '복잡한 분수식',
-      4: '양수 규칙',
-      5: '지수법칙',
-      6: '지수 패턴 인식',
-      7: '유리수 조건',
-      8: '최대공약수',
-      9: '다항식 곱셈',
-      10: '등식 변형',
-      11: '분수식 정리',
-      12: '인수분해 활용',
-      13: '항등식',
-      14: '방정식 해의 배수',
-      15: '연립방정식',
-      16: '치환 연립방정식',
-      17: '일차함수 미지수',
-      18: 'x절편 = y절편',
-      19: '대칭 + 수직',
-      20: '그래프 해석',
-      21: '대칭 최단거리',
-      22: '수직이등분선',
-      23: '삼각형 조건',
-      24: '제4사분면 교점',
-      25: '삼각형 넓이 이등분'
+      1: { content: '순환소수를 분수로', score: 3.0 },
+      2: { content: '다항식 내림차순', score: 3.5 },
+      3: { content: '복잡한 분수식', score: 4.0 },
+      4: { content: '양수 규칙', score: 3.5 },
+      5: { content: '지수법칙', score: 3.5 },
+      6: { content: '지수 패턴 인식', score: 4.5 },
+      7: { content: '유리수 조건', score: 4.0 },
+      8: { content: '최대공약수', score: 4.5 },
+      9: { content: '다항식 곱셈', score: 3.5 },
+      10: { content: '등식 변형', score: 3.5 },
+      11: { content: '분수식 정리', score: 4.0 },
+      12: { content: '인수분해 활용', score: 4.5 },
+      13: { content: '항등식', score: 4.0 },
+      14: { content: '방정식 해의 배수', score: 4.5 },
+      15: { content: '연립방정식', score: 4.0 },
+      16: { content: '치환 연립방정식', score: 5.0 },
+      17: { content: '일차함수 미지수', score: 3.0 },
+      18: { content: 'x절편 = y절편', score: 3.5 },
+      19: { content: '대칭 + 수직', score: 4.0 },
+      20: { content: '그래프 해석', score: 4.0 },
+      21: { content: '대칭 최단거리', score: 4.5 },
+      22: { content: '수직이등분선', score: 4.0 },
+      23: { content: '삼각형 조건', score: 4.5 },
+      24: { content: '제4사분면 교점', score: 4.0 },
+      25: { content: '삼각형 넓이 이등분', score: 5.0 }
     },
     TRI: {
-      1: '제곱근 계산',
-      2: '무리수 조건',
-      3: '실수 대소 비교',
-      4: '근호 간단히',
-      5: '분모 유리화',
-      6: '제곱근 응용',
-      7: '다항식 곱셈',
-      8: '곱셈공식 활용',
-      9: '인수분해 기본',
-      10: '인수분해 심화',
-      11: '복잡한 인수분해',
-      12: '인수분해 응용',
-      13: '이차방정식 풀이',
-      14: '근의 공식',
-      15: '판별식 활용',
-      16: '근과 계수의 관계',
-      17: '이차방정식 활용',
-      18: '새로운 이차방정식',
-      19: '이차함수 그래프',
-      20: '꼭짓점과 축',
-      21: '이차함수 최대/최소',
-      22: '그래프 이동',
-      23: '이차함수 결정',
-      24: '이차함수와 직선',
-      25: '이차함수 종합'
+      1: { content: '제곱근 계산', score: 3.0 },
+      2: { content: '무리수 조건', score: 3.5 },
+      3: { content: '실수 대소 비교', score: 3.5 },
+      4: { content: '근호 간단히', score: 3.5 },
+      5: { content: '분모 유리화', score: 4.0 },
+      6: { content: '제곱근 응용', score: 4.5 },
+      7: { content: '다항식 곱셈', score: 3.5 },
+      8: { content: '곱셈공식 활용', score: 4.0 },
+      9: { content: '인수분해 기본', score: 3.5 },
+      10: { content: '인수분해 심화', score: 4.0 },
+      11: { content: '복잡한 인수분해', score: 4.5 },
+      12: { content: '인수분해 응용', score: 4.5 },
+      13: { content: '이차방정식 풀이', score: 3.5 },
+      14: { content: '근의 공식', score: 4.0 },
+      15: { content: '판별식 활용', score: 4.0 },
+      16: { content: '근과 계수의 관계', score: 4.5 },
+      17: { content: '이차방정식 활용', score: 4.5 },
+      18: { content: '새로운 이차방정식', score: 4.5 },
+      19: { content: '이차함수 그래프', score: 3.5 },
+      20: { content: '꼭짓점과 축', score: 4.0 },
+      21: { content: '이차함수 최대/최소', score: 4.5 },
+      22: { content: '그래프 이동', score: 4.0 },
+      23: { content: '이차함수 결정', score: 4.5 },
+      24: { content: '이차함수와 직선', score: 4.5 },
+      25: { content: '이차함수 종합', score: 5.0 }
     }
   };
 
@@ -168,7 +168,13 @@ export default function DiagnosticReportPage() {
 
   // 문항 내용 가져오기
   const getQuestionContent = (testType, questionNumber) => {
-    return QUESTION_CONTENTS[testType]?.[questionNumber] || '-';
+    return QUESTION_DATA[testType]?.[questionNumber]?.content || '-';
+  };
+
+  // 문항 배점 가져오기 (DB 데이터가 0인 경우 배점표에서 조회)
+  const getQuestionScore = (testType, questionNumber, dbScore) => {
+    if (dbScore && dbScore > 0) return dbScore;
+    return QUESTION_DATA[testType]?.[questionNumber]?.score || 0;
   };
 
   // 검사 유형별 평균/표준편차 데이터 (진단검사 평균 표준편차.txt 기준)
@@ -456,7 +462,7 @@ export default function DiagnosticReportPage() {
                           </div>
                           <div className="meta-item">
                             <span className="meta-label">배점</span>
-                            <span className="meta-value">{q.score}점</span>
+                            <span className="meta-value">{getQuestionScore(submission?.test_type, q.questionNumber, q.score)}점</span>
                           </div>
                         </div>
                       </div>
