@@ -872,9 +872,7 @@ export default function DiagnosticReportPage() {
         <div className="page cover-page">
           <div className="cover-decoration-top"></div>
           <div className="cover-decoration-bottom"></div>
-          <div className="cover-logo">
-            <img src="/assets/images/istudy-logo.png" alt="i.STUDY" className="cover-logo-img" />
-          </div>
+          <div className="cover-logo">i.STUDY</div>
           <div className="cover-gold-line"></div>
           <div className="cover-title-wrapper">
             <h1 className="cover-title">수리탐구 진단검사</h1>
