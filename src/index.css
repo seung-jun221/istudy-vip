@@ -177,6 +177,21 @@ h2 {
   background: #e3f2fd;
 }
 
+.seminar-option.warning {
+  border-color: #FF7846;
+  background: #fff8f5;
+}
+
+.seminar-option.warning:hover {
+  border-color: #FF7846;
+  box-shadow: 0 4px 12px rgba(255, 120, 70, 0.15);
+}
+
+.seminar-option.waitlist {
+  border-color: #1565c0;
+  background: #e3f2fd;
+}
+
 .seminar-option h4 {
   font-size: 16px;
   color: #1a73e8;
