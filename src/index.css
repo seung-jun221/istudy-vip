@@ -228,6 +228,11 @@ h2 {
   color: #E94E3D;
 }
 
+.availability-badge.waitlist {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
 /* ===== 정보 박스 ===== */
 .info-box {
   background: #e3f2fd;
