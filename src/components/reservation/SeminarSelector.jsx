@@ -21,7 +21,7 @@ export default function SeminarSelector() {
             onClick={() => setSelectedSeminar(seminar)}
             className={`seminar-option ${
               selectedSeminar?.id === seminar.id ? 'selected' : ''
-            }`}
+            } ${seminar.status === 'warning' ? 'warning' : ''} ${seminar.status === 'waitlist' ? 'waitlist' : ''}`}
           >
             <h4>{seminar.title}</h4>
             <p>
