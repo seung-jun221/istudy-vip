@@ -31,16 +31,16 @@ export default function SeminarSelector() {
 
             <span
               className={`availability-badge ${
-                seminar.isFull
-                  ? 'full'
-                  : seminar.available < 5
+                seminar.status === 'waitlist'
+                  ? 'waitlist'
+                  : seminar.status === 'warning'
                   ? 'limited'
                   : 'available'
               }`}
             >
-              {seminar.isFull
-                ? '마감'
-                : seminar.available < 5
+              {seminar.status === 'waitlist'
+                ? '대기자 예약'
+                : seminar.status === 'warning'
                 ? '마감임박'
                 : '예약가능'}
             </span>

@@ -72,13 +72,30 @@ export function ReservationProvider({ children }) {
             .in('status', ['예약', '참석']);
 
           const reserved = count || 0;
-          const available = slot.max_capacity - reserved;
+          const displayCapacity = slot.display_capacity || slot.max_capacity;
+          const maxCapacity = slot.max_capacity;
+
+          // 노출정원 기준 잔여석 (음수가 되면 0으로)
+          const displayAvailable = Math.max(0, displayCapacity - reserved);
+          // 실제정원 기준 잔여석
+          const actualAvailable = maxCapacity - reserved;
+
+          // 상태 결정: 실제정원 초과 → 대기자, 노출정원 기준 6석 이하 → 마감임박, 그 외 → 예약가능
+          let status = 'available';
+          if (actualAvailable <= 0) {
+            status = 'waitlist';  // 대기자 예약
+          } else if (displayAvailable <= 6) {
+            status = 'warning';   // 마감 임박
+          }
 
           return {
             ...slot,
             reserved,
-            available,
-            isFull: available <= 0,
+            available: displayAvailable,      // 노출용 잔여석
+            actualAvailable,                  // 실제 잔여석
+            isFull: actualAvailable <= 0,     // 실제정원 기준 마감
+            isWaitlist: actualAvailable <= 0, // 대기자 예약 상태
+            status,                           // 'available' | 'warning' | 'waitlist'
           };
         })
       );
