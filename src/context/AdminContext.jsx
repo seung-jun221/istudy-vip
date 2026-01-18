@@ -946,9 +946,17 @@ export function AdminProvider({ children }) {
     try {
       setLoading(true);
 
-      const { error } = await supabase.from('test_slots').delete().eq('id', slotId);
+      const { error, count } = await supabase
+        .from('test_slots')
+        .delete({ count: 'exact' })
+        .eq('id', slotId);
 
       if (error) throw error;
+
+      if (count === 0) {
+        showToast('삭제 권한이 없거나 슬롯을 찾을 수 없습니다. RLS 설정을 확인해주세요.', 'error');
+        return false;
+      }
 
       showToast('검사 슬롯이 삭제되었습니다.', 'success');
       return true;
