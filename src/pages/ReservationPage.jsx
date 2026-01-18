@@ -101,7 +101,7 @@ export default function ReservationPage() {
             </div>
           )}
 
-          <div className="btn-group">
+          <div className="btn-group" id="reservation-actions">
             <button
               onClick={handleProceedToReservation}
               disabled={!selectedSeminar}

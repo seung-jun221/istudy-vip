@@ -187,9 +187,21 @@ h2 {
   box-shadow: 0 4px 12px rgba(255, 120, 70, 0.15);
 }
 
+.seminar-option.warning.selected {
+  border-color: #E55A2B;
+  background: #ffe8dd;
+  box-shadow: 0 4px 12px rgba(255, 120, 70, 0.25);
+}
+
 .seminar-option.waitlist {
   border-color: #1565c0;
   background: #e3f2fd;
+}
+
+.seminar-option.waitlist.selected {
+  border-color: #0d47a1;
+  background: #bbdefb;
+  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.25);
 }
 
 .seminar-option h4 {
