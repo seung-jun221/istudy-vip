@@ -58,6 +58,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     location: campaign.location || '',
     capacity: 1,
     isAvailable: true, // 기본값: 즉시 오픈
+    slotInterval: 30,  // 시간 간격 (분)
   });
 
   // 설명회 슬롯 생성기 상태
@@ -136,7 +137,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
 
   // 컨설팅 슬롯 생성기 - 시간대별 슬롯 생성
   const generateConsultingSlots = async () => {
-    const { date, startTime, endTime, location, capacity, isAvailable } = consultingGenerator;
+    const { date, startTime, endTime, location, capacity, isAvailable, slotInterval } = consultingGenerator;
 
     if (!date || !startTime || !endTime || !location) {
       alert('모든 필드를 입력해주세요.');
@@ -159,7 +160,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     const dayOfWeek = days[dateObj.getDay()];
 
     const slots = [];
-    for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
+    for (let minutes = startMinutes; minutes < endMinutes; minutes += slotInterval) {
       const hours = Math.floor(minutes / 60);
       const mins = minutes % 60;
       const timeStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
@@ -184,6 +185,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
         location: campaign.location || '',
         capacity: 1,
         isAvailable: true,
+        slotInterval: 30,
       });
     }
   };
@@ -840,7 +842,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
 
             {/* 슬롯 생성기 */}
             <div className="slot-generator">
-          <h4 className="generator-title">새 슬롯 생성 (30분 간격 자동 생성)</h4>
+          <h4 className="generator-title">새 슬롯 생성 (시간 간격별 자동 생성)</h4>
           <div className="generator-form">
             <div className="form-row">
               <div className="form-group">
@@ -878,6 +880,25 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                     setConsultingGenerator({ ...consultingGenerator, endTime: e.target.value })
                   }
                 />
+              </div>
+              <div className="form-group">
+                <label className="form-label">시간 간격</label>
+                <select
+                  className="form-input"
+                  value={consultingGenerator.slotInterval}
+                  onChange={(e) =>
+                    setConsultingGenerator({
+                      ...consultingGenerator,
+                      slotInterval: parseInt(e.target.value),
+                    })
+                  }
+                >
+                  <option value={10}>10분</option>
+                  <option value={15}>15분</option>
+                  <option value={20}>20분</option>
+                  <option value={25}>25분</option>
+                  <option value={30}>30분</option>
+                </select>
               </div>
             </div>
             <div className="form-row">
