@@ -253,3 +253,87 @@
 .campaign-list-container .btn-outline:hover {
   background: #f5f5f5;
 }
+
+/* ===== 모바일 반응형 ===== */
+@media (max-width: 768px) {
+  .campaign-list-container .admin-header {
+    padding: 16px 0;
+  }
+
+  .campaign-list-container .admin-header-content {
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 16px;
+  }
+
+  .campaign-list-container .admin-header-title {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .campaign-list-container .admin-logo {
+    height: 32px;
+  }
+
+  .campaign-list-container .admin-header h1 {
+    font-size: 18px;
+  }
+
+  .campaign-list-container .admin-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .campaign-list-container .admin-header-actions .btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex: 1;
+    min-width: auto;
+    white-space: nowrap;
+  }
+
+  .campaign-list-container .campaign-list-content {
+    padding: 16px;
+  }
+
+  .campaign-list-container .campaign-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .campaign-list-container .campaign-card {
+    padding: 16px;
+  }
+
+  .campaign-list-container .campaign-title {
+    font-size: 16px;
+  }
+
+  .campaign-list-container .campaign-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .campaign-list-container .stat-value {
+    font-size: 20px;
+  }
+
+  .campaign-list-container .stat-label {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .campaign-list-container .admin-header h1 {
+    font-size: 16px;
+  }
+
+  .campaign-list-container .admin-header-actions .btn {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+}
