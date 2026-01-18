@@ -194,14 +194,14 @@ h2 {
 }
 
 .seminar-option.waitlist {
-  border-color: #1565c0;
-  background: #e3f2fd;
+  border-color: #bdbdbd;
+  background: #fafafa;
 }
 
 .seminar-option.waitlist.selected {
-  border-color: #0d47a1;
-  background: #bbdefb;
-  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.25);
+  border-color: #757575;
+  background: #eeeeee;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .seminar-option h4 {
@@ -256,8 +256,124 @@ h2 {
 }
 
 .availability-badge.waitlist {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+/* ===== 대기 예약 모달 ===== */
+.waitlist-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.waitlist-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.waitlist-modal-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.waitlist-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.waitlist-modal-message {
+  font-size: 15px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.waitlist-modal-info {
+  background: #fff8e1;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  text-align: left;
+  list-style: none;
+}
+
+.waitlist-modal-info li {
+  font-size: 13px;
+  color: #795548;
+  padding: 4px 0;
+  padding-left: 20px;
+  position: relative;
+}
+
+.waitlist-modal-info li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #ff9800;
+  font-weight: bold;
+}
+
+.waitlist-modal-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.waitlist-modal-buttons .btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.waitlist-modal-buttons .btn-secondary {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.waitlist-modal-buttons .btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+.waitlist-modal-buttons .btn-primary {
+  background: #1a73e8;
+  color: white;
+}
+
+.waitlist-modal-buttons .btn-primary:hover {
+  background: #1557b0;
 }
 
 /* ===== 정보 박스 ===== */
