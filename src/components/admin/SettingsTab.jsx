@@ -59,6 +59,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     capacity: 1,
     isAvailable: true, // 기본값: 즉시 오픈
     slotInterval: 30,  // 시간 간격 (분)
+    consultantType: 'ceo', // 컨설팅 유형: ceo(대표이사) | director(원장)
   });
 
   // 설명회 슬롯 생성기 상태
@@ -137,7 +138,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
 
   // 컨설팅 슬롯 생성기 - 시간대별 슬롯 생성
   const generateConsultingSlots = async () => {
-    const { date, startTime, endTime, location, capacity, isAvailable, slotInterval } = consultingGenerator;
+    const { date, startTime, endTime, location, capacity, isAvailable, slotInterval, consultantType } = consultingGenerator;
 
     if (!date || !startTime || !endTime || !location) {
       alert('모든 필드를 입력해주세요.');
@@ -172,6 +173,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
         capacity,
         dayOfWeek,
         isAvailable,
+        consultantType,
       });
     }
 
@@ -186,6 +188,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
         capacity: 1,
         isAvailable: true,
         slotInterval: 30,
+        consultantType: 'ceo',
       });
     }
   };
@@ -903,6 +906,22 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
             </div>
             <div className="form-row">
               <div className="form-group">
+                <label className="form-label">컨설팅 유형</label>
+                <select
+                  className="form-input"
+                  value={consultingGenerator.consultantType}
+                  onChange={(e) =>
+                    setConsultingGenerator({
+                      ...consultingGenerator,
+                      consultantType: e.target.value,
+                    })
+                  }
+                >
+                  <option value="ceo">대표이사 컨설팅 (입시상담+입학안내)</option>
+                  <option value="director">원장 컨설팅 (입학안내)</option>
+                </select>
+              </div>
+              <div className="form-group">
                 <label className="form-label">장소</label>
                 <input
                   type="text"
@@ -961,6 +980,9 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
               {consultingSlots.map((slot) => (
                 <div key={slot.id} className="slot-row">
                   <div className="slot-info">
+                    <span className={`slot-type ${slot.consultant_type === 'director' ? 'director' : 'ceo'}`}>
+                      {slot.consultant_type === 'director' ? '원장' : '대표'}
+                    </span>
                     <span className="slot-date">{formatDate(slot.date)}</span>
                     <span className="slot-time">{formatTime(slot.time)}</span>
                     <span className="slot-location">{slot.location}</span>

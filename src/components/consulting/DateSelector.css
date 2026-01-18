@@ -7,7 +7,42 @@
 }
 
 .date-selector-container h2 {
-  margin-bottom: 32px; /* 간격 증가 */
+  margin-bottom: 24px;
+}
+
+/* 대표 컨설팅 마감 안내 */
+.ceo-full-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+  border: 1px solid #ffc107;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.ceo-full-notice .notice-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.ceo-full-notice .notice-content {
+  flex: 1;
+}
+
+.ceo-full-notice .notice-content strong {
+  display: block;
+  color: #e65100;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.ceo-full-notice .notice-content p {
+  color: #795548;
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .no-dates-message {

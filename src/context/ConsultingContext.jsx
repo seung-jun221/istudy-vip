@@ -26,6 +26,10 @@ export function ConsultingProvider({ children }) {
   const [selectedTime, setSelectedTime] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
 
+  // 컨설팅 유형 관련 (대표이사/원장)
+  const [consultantType, setConsultantType] = useState('ceo'); // 'ceo' | 'director'
+  const [isCeoSlotsFull, setIsCeoSlotsFull] = useState(false); // 대표 컨설팅 마감 여부
+
   // ⭐ 진단검사 예약 관련 (신규)
   const [testMethod, setTestMethod] = useState(null); // 'onsite' or 'home'
   const [availableTestDates, setAvailableTestDates] = useState([]);
@@ -226,33 +230,71 @@ export function ConsultingProvider({ children }) {
     }
   };
 
-  // 날짜 로드
+  // 날짜 로드 (컨설팅 유형별 분리)
   const loadAvailableDates = async (locationOrSeminarId, useSeminarId = false) => {
     try {
       setLoading(true);
       const today = new Date().toISOString().split('T')[0];
 
-      let query = supabase
+      // 1. 먼저 대표이사 슬롯 확인
+      let ceoQuery = supabase
         .from('consulting_slots')
         .select('*')
         .gte('date', today)
         .eq('is_available', true)
-        .order('date', { ascending: true});
+        .eq('consultant_type', 'ceo')
+        .order('date', { ascending: true });
 
-      // 설명회 예약자는 linked_seminar_id로, 미예약자는 location으로 검색
       if (useSeminarId) {
-        query = query.eq('linked_seminar_id', locationOrSeminarId); // ⭐ 원본 그대로 사용 (_campaign 포함)
+        ceoQuery = ceoQuery.eq('linked_seminar_id', locationOrSeminarId);
       } else {
-        query = query.eq('location', locationOrSeminarId);
+        ceoQuery = ceoQuery.eq('location', locationOrSeminarId);
       }
 
-      const { data: slots, error } = await query;
+      const { data: ceoSlots, error: ceoError } = await ceoQuery;
+      if (ceoError) throw ceoError;
 
-      if (error) throw error;
+      // 대표 슬롯 중 예약 가능한 슬롯이 있는지 확인
+      const availableCeoSlots = ceoSlots?.filter(
+        (slot) => slot.max_capacity - slot.current_bookings > 0
+      ) || [];
+
+      let slotsToUse = ceoSlots;
+      let isCeoFull = false;
+
+      // 2. 대표 슬롯이 모두 마감된 경우 원장 슬롯 로드
+      if (availableCeoSlots.length === 0) {
+        console.log('🔄 대표이사 컨설팅 마감, 원장 컨설팅으로 전환');
+
+        let directorQuery = supabase
+          .from('consulting_slots')
+          .select('*')
+          .gte('date', today)
+          .eq('is_available', true)
+          .eq('consultant_type', 'director')
+          .order('date', { ascending: true });
+
+        if (useSeminarId) {
+          directorQuery = directorQuery.eq('linked_seminar_id', locationOrSeminarId);
+        } else {
+          directorQuery = directorQuery.eq('location', locationOrSeminarId);
+        }
+
+        const { data: directorSlots, error: directorError } = await directorQuery;
+        if (directorError) throw directorError;
+
+        slotsToUse = directorSlots || [];
+        isCeoFull = true;
+        setConsultantType('director');
+      } else {
+        setConsultantType('ceo');
+      }
+
+      setIsCeoSlotsFull(isCeoFull);
 
       const dateMap = new Map();
 
-      slots.forEach((slot) => {
+      slotsToUse.forEach((slot) => {
         const availableSlots = slot.max_capacity - slot.current_bookings;
 
         if (!dateMap.has(slot.date)) {
@@ -287,17 +329,18 @@ export function ConsultingProvider({ children }) {
     }
   };
 
-  // 선택한 날짜의 시간 슬롯 로드
+  // 선택한 날짜의 시간 슬롯 로드 (컨설팅 유형별)
   const loadTimeSlots = async (date, location) => {
     try {
       setLoading(true);
-      console.log('⏰ 시간 슬롯 로드 시작:', { date, location, selectedSeminarId });
+      console.log('⏰ 시간 슬롯 로드 시작:', { date, location, selectedSeminarId, consultantType });
 
       let query = supabase
         .from('consulting_slots')
         .select('*')
         .eq('date', date)
         .eq('is_available', true) // ⭐ 활성화된 슬롯만
+        .eq('consultant_type', consultantType) // ⭐ 컨설팅 유형 필터
         .order('time');
 
       // 설명회 예약자는 linked_seminar_id로, 미예약자는 location으로 검색
@@ -643,6 +686,10 @@ export function ConsultingProvider({ children }) {
     selectedTime,
     setSelectedTime,
     createConsultingReservation,
+
+    // 컨설팅 유형 관련 (대표/원장)
+    consultantType,
+    isCeoSlotsFull,
 
     // ⭐ 진단검사 예약 관련 (신규)
     testMethod,
