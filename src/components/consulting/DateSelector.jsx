@@ -9,6 +9,8 @@ export default function DateSelector({ onNext, onBack, location }) {
     setSelectedDate,
     loadTimeSlots,
     selectedLocation,
+    consultantType,
+    isCeoSlotsFull,
   } = useConsulting();
 
   // ⭐ prop으로 받은 location 또는 context의 selectedLocation 사용
@@ -23,9 +25,25 @@ export default function DateSelector({ onNext, onBack, location }) {
     onNext();
   };
 
+  // 컨설팅 유형에 따른 타이틀
+  const consultingTitle = consultantType === 'director'
+    ? '원장 컨설팅 날짜 선택'
+    : '대표이사 컨설팅 날짜 선택';
+
   return (
     <div className="date-selector-container">
-      <h2 className="text-2xl font-bold mb-6 text-center">날짜 선택</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">{consultingTitle}</h2>
+
+      {/* 대표 컨설팅 마감 안내 */}
+      {isCeoSlotsFull && (
+        <div className="ceo-full-notice">
+          <div className="notice-icon">ℹ️</div>
+          <div className="notice-content">
+            <strong>대표이사 컨설팅이 마감되었습니다.</strong>
+            <p>원장 컨설팅으로 예약 가능합니다. 입학 안내는 동일하게 진행됩니다.</p>
+          </div>
+        </div>
+      )}
 
       {availableDates.length === 0 ? (
         <div className="no-dates-message">

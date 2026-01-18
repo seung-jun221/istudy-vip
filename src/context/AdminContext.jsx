@@ -851,6 +851,7 @@ export function AdminProvider({ children }) {
         max_capacity: slot.capacity,
         day_of_week: slot.dayOfWeek,
         is_available: slot.isAvailable !== undefined ? slot.isAvailable : true,
+        consultant_type: slot.consultantType || 'ceo',
       }));
 
       const { error } = await supabase.from('consulting_slots').insert(slotsToInsert);
