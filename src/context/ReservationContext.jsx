@@ -82,14 +82,14 @@ export function ReservationProvider({ children }) {
           // 실제정원 기준 잔여석
           const actualAvailable = maxCapacity - reserved;
 
-          // 상태 결정: 마감 → closed, 실제정원 초과 → 대기자, 실제정원 기준 6석 이하 → 마감임박, 그 외 → 예약가능
+          // 상태 결정: 마감 → closed, 실제정원 초과 → 대기자, 노출정원 기준 6석 이하 → 마감임박, 그 외 → 예약가능
           let status = 'available';
           if (slot.isClosed) {
             status = 'closed';    // 관리자가 마감 처리
           } else if (actualAvailable <= 0) {
             status = 'waitlist';  // 대기자 예약
-          } else if (actualAvailable <= 6) {
-            status = 'warning';   // 마감 임박 (실제정원 기준)
+          } else if (displayAvailable <= 6) {
+            status = 'warning';   // 마감 임박 (노출정원 기준)
           }
 
           return {
