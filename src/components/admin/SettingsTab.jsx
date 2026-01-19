@@ -354,6 +354,19 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     }
   };
 
+  // 설명회 슬롯 마감/마감해제 처리
+  const handleToggleSeminarStatus = async (slotId, currentStatus) => {
+    const newStatus = currentStatus === 'active' ? 'closed' : 'active';
+    const actionText = newStatus === 'closed' ? '마감' : '마감 해제';
+
+    if (!window.confirm(`이 설명회를 ${actionText} 처리하시겠습니까?`)) return;
+
+    const success = await updateSeminarSlot(slotId, { status: newStatus });
+    if (success) {
+      onUpdate();
+    }
+  };
+
   // 날짜 포맷팅
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
@@ -807,7 +820,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                                 <span className="slot-location">{slot.location}</span>
                                 <span className="slot-capacity">정원 {slot.max_capacity}명 (노출: {slot.display_capacity}명)</span>
                                 <span className={`slot-status ${slot.status === 'active' ? 'open' : 'closed'}`}>
-                                  {slot.status === 'active' ? '활성' : '비활성'}
+                                  {slot.status === 'active' ? '예약중' : '마감'}
                                 </span>
                               </div>
                               <div style={{ fontSize: '14px', color: slot.title ? '#333' : '#999' }}>
@@ -815,6 +828,13 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                               </div>
                             </div>
                             <div className="slot-actions" style={{ display: 'flex', gap: '8px' }}>
+                              <button
+                                className={`btn-toggle ${slot.status === 'active' ? 'btn-close' : 'btn-open'}`}
+                                onClick={() => handleToggleSeminarStatus(slot.id, slot.status)}
+                                style={{ padding: '6px 12px', fontSize: '13px', minWidth: '80px' }}
+                              >
+                                {slot.status === 'active' ? '마감 처리' : '마감 해제'}
+                              </button>
                               <button
                                 className="btn btn-primary"
                                 onClick={() => startEditingSeminarSlot(slot)}
