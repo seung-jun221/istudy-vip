@@ -40,8 +40,8 @@ export function ReservationProvider({ children }) {
       const allSlots = [];
       campaignsData?.forEach(campaign => {
         campaign.seminar_slots?.forEach(slot => {
-          // 미래 날짜만 포함
-          if (slot.date >= today && slot.status === 'active') {
+          // 미래 날짜만 포함 (active와 closed 모두 표시)
+          if (slot.date >= today && (slot.status === 'active' || slot.status === 'closed')) {
             allSlots.push({
               ...slot,
               // ⭐ 슬롯 title 사용 (없으면 자동 생성)
@@ -51,6 +51,8 @@ export function ReservationProvider({ children }) {
               campaign_title: campaign.title,
               campaign_location: campaign.location,
               campaign_season: campaign.season,
+              // 관리자가 마감 처리한 경우
+              isClosed: slot.status === 'closed',
             });
           }
         });
@@ -80,9 +82,11 @@ export function ReservationProvider({ children }) {
           // 실제정원 기준 잔여석
           const actualAvailable = maxCapacity - reserved;
 
-          // 상태 결정: 실제정원 초과 → 대기자, 노출정원 기준 6석 이하 → 마감임박, 그 외 → 예약가능
+          // 상태 결정: 마감 → closed, 실제정원 초과 → 대기자, 노출정원 기준 6석 이하 → 마감임박, 그 외 → 예약가능
           let status = 'available';
-          if (actualAvailable <= 0) {
+          if (slot.isClosed) {
+            status = 'closed';    // 관리자가 마감 처리
+          } else if (actualAvailable <= 0) {
             status = 'waitlist';  // 대기자 예약
           } else if (displayAvailable <= 6) {
             status = 'warning';   // 마감 임박
@@ -95,7 +99,8 @@ export function ReservationProvider({ children }) {
             actualAvailable,                  // 실제 잔여석
             isFull: actualAvailable <= 0,     // 실제정원 기준 마감
             isWaitlist: actualAvailable <= 0, // 대기자 예약 상태
-            status,                           // 'available' | 'warning' | 'waitlist'
+            isClosed: slot.isClosed,          // 관리자 마감 처리
+            status,                           // 'available' | 'warning' | 'waitlist' | 'closed'
           };
         })
       );
