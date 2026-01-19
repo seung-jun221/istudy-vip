@@ -204,6 +204,22 @@ h2 {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.seminar-option.closed {
+  border-color: #e0e0e0;
+  background: #f0f0f0;
+  cursor: not-allowed;
+}
+
+.seminar-option.closed:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #e0e0e0;
+}
+
+.seminar-option.closed h4 {
+  color: #999;
+}
+
 .seminar-option h4 {
   font-size: 16px;
   color: #1a73e8;
@@ -259,6 +275,12 @@ h2 {
   background: #f5f5f5;
   color: #666;
   border: 1px solid #ddd;
+}
+
+.availability-badge.closed {
+  background: #e0e0e0;
+  color: #757575;
+  border: 1px solid #bdbdbd;
 }
 
 /* ===== 대기 예약 모달 ===== */

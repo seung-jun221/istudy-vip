@@ -9,6 +9,11 @@ export default function SeminarSelector() {
 
   // 설명회 선택 시 예약하기 버튼으로 스크롤
   const handleSelectSeminar = (seminar) => {
+    // 마감된 설명회는 선택 불가
+    if (seminar.status === 'closed') {
+      return;
+    }
+
     // 대기 예약인 경우 모달 먼저 표시
     if (seminar.status === 'waitlist') {
       setPendingSeminar(seminar);
@@ -61,7 +66,8 @@ export default function SeminarSelector() {
             onClick={() => handleSelectSeminar(seminar)}
             className={`seminar-option ${
               selectedSeminar?.id === seminar.id ? 'selected' : ''
-            } ${seminar.status === 'warning' ? 'warning' : ''} ${seminar.status === 'waitlist' ? 'waitlist' : ''}`}
+            } ${seminar.status === 'warning' ? 'warning' : ''} ${seminar.status === 'waitlist' ? 'waitlist' : ''} ${seminar.status === 'closed' ? 'closed' : ''}`}
+            style={seminar.status === 'closed' ? { cursor: 'not-allowed', opacity: 0.7 } : {}}
           >
             <h4>{seminar.title}</h4>
             <p>
@@ -71,14 +77,18 @@ export default function SeminarSelector() {
 
             <span
               className={`availability-badge ${
-                seminar.status === 'waitlist'
+                seminar.status === 'closed'
+                  ? 'closed'
+                  : seminar.status === 'waitlist'
                   ? 'waitlist'
                   : seminar.status === 'warning'
                   ? 'limited'
                   : 'available'
               }`}
             >
-              {seminar.status === 'waitlist'
+              {seminar.status === 'closed'
+                ? '예약 마감'
+                : seminar.status === 'waitlist'
                 ? '마감 (대기접수)'
                 : seminar.status === 'warning'
                 ? '마감임박'
