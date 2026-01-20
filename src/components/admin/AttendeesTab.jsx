@@ -7,7 +7,7 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
   const { updateReservationStatus } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedSlotId, setSelectedSlotId] = useState(null);
+  const [selectedSlotId, setSelectedSlotId] = useState('all'); // 기본값을 'all'로 변경
 
   // 설명회 슬롯별로 예약자 그룹화
   const slotGroups = useMemo(() => {
@@ -57,15 +57,11 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
     });
   }, [slotGroups, campaign, seminarSlots]);
 
-  // 첫 번째 슬롯을 기본 선택
-  if (selectedSlotId === null && enrichedSlotGroups.length > 0) {
-    setSelectedSlotId(enrichedSlotGroups[0].slotId);
-  }
-
-  // 선택된 슬롯의 데이터
-  const selectedGroup = enrichedSlotGroups.find(g => g.slotId === selectedSlotId);
-  const currentAttendees = selectedGroup?.attendees || [];
-  const currentSlot = selectedGroup?.slotData;
+  // 선택된 슬롯의 데이터 ('all'인 경우 전체 예약자)
+  const isAllSelected = selectedSlotId === 'all';
+  const selectedGroup = isAllSelected ? null : enrichedSlotGroups.find(g => g.slotId === selectedSlotId);
+  const currentAttendees = isAllSelected ? attendees : (selectedGroup?.attendees || []);
+  const currentSlot = isAllSelected ? null : selectedGroup?.slotData;
 
   // 필터링
   const filteredAttendees = currentAttendees.filter((attendee) => {
@@ -78,10 +74,16 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
     return matchesSearch && matchesStatus;
   });
 
-  // 통계 계산 (선택된 슬롯 기준)
+  // 통계 계산 (선택된 슬롯 기준, 전체 선택 시 전체 통계)
   const confirmedCount = currentAttendees.filter(a => ['예약', '참석'].includes(a.status)).length;
-  const maxCapacity = currentSlot?.max_capacity || 0;
-  const displayCapacity = currentSlot?.display_capacity || maxCapacity;
+  const totalMaxCapacity = isAllSelected
+    ? enrichedSlotGroups.reduce((sum, g) => sum + (g.slotData?.max_capacity || 0), 0)
+    : (currentSlot?.max_capacity || 0);
+  const totalDisplayCapacity = isAllSelected
+    ? enrichedSlotGroups.reduce((sum, g) => sum + (g.slotData?.display_capacity || g.slotData?.max_capacity || 0), 0)
+    : (currentSlot?.display_capacity || totalMaxCapacity);
+  const maxCapacity = totalMaxCapacity;
+  const displayCapacity = totalDisplayCapacity;
   const reservationRate = maxCapacity > 0 ? Math.round((confirmedCount / maxCapacity) * 100) : 0;
 
   const formatDate = (dateStr) => {
@@ -104,31 +106,64 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
     return `${month}/${day} ${timeStr}`;
   };
 
+  // 설명회 슬롯 정보 가져오기 (전체 탭에서 사용)
+  const getSlotInfoForAttendee = (attendee) => {
+    if (attendee.seminar_slots) {
+      return formatSlotLabel(attendee.seminar_slots);
+    }
+    // seminar_slots가 없으면 enrichedSlotGroups에서 찾기
+    const group = enrichedSlotGroups.find(g => g.slotId === attendee.seminar_slot_id);
+    return group?.slotData ? formatSlotLabel(group.slotData) : '-';
+  };
+
   const handleExportExcel = () => {
-    // 엑셀 데이터 준비 (선택된 슬롯만)
-    const excelData = filteredAttendees.map((attendee) => ({
-      예약일시: formatDateForExcel(attendee.registered_at),
-      학생명: attendee.student_name || '',
-      학년: attendee.grade || '',
-      학교: attendee.school || '',
-      선행정도: attendee.math_level || '',
-      '학부모 연락처': attendee.parent_phone || '',
-      상태: attendee.status || '',
-    }));
+    // 엑셀 데이터 준비
+    const excelData = filteredAttendees.map((attendee) => {
+      const baseData = {
+        예약일시: formatDateForExcel(attendee.registered_at),
+        학생명: attendee.student_name || '',
+        학년: attendee.grade || '',
+        학교: attendee.school || '',
+        선행정도: attendee.math_level || '',
+        '학부모 연락처': attendee.parent_phone || '',
+        상태: attendee.status || '',
+      };
+
+      // 전체 탭일 경우 설명회 일정 컬럼 추가
+      if (isAllSelected) {
+        return {
+          '설명회 일정': getSlotInfoForAttendee(attendee),
+          ...baseData,
+        };
+      }
+      return baseData;
+    });
 
     // 워크시트 생성
     const worksheet = XLSX.utils.json_to_sheet(excelData);
 
     // 컬럼 너비 설정
-    worksheet['!cols'] = [
-      { wch: 20 }, // 예약일시
-      { wch: 12 }, // 학생명
-      { wch: 10 }, // 학년
-      { wch: 20 }, // 학교
-      { wch: 15 }, // 선행정도
-      { wch: 15 }, // 학부모 연락처
-      { wch: 10 }, // 상태
-    ];
+    const cols = isAllSelected
+      ? [
+          { wch: 25 }, // 설명회 일정
+          { wch: 20 }, // 예약일시
+          { wch: 12 }, // 학생명
+          { wch: 10 }, // 학년
+          { wch: 20 }, // 학교
+          { wch: 15 }, // 선행정도
+          { wch: 15 }, // 학부모 연락처
+          { wch: 10 }, // 상태
+        ]
+      : [
+          { wch: 20 }, // 예약일시
+          { wch: 12 }, // 학생명
+          { wch: 10 }, // 학년
+          { wch: 20 }, // 학교
+          { wch: 15 }, // 선행정도
+          { wch: 15 }, // 학부모 연락처
+          { wch: 10 }, // 상태
+        ];
+    worksheet['!cols'] = cols;
 
     // 워크북 생성
     const workbook = XLSX.utils.book_new();
@@ -137,8 +172,14 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
     // 파일명 생성 (현재 날짜 포함)
     const today = new Date();
     const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
-    const slotInfo = formatSlotDateTime(currentSlot?.date, currentSlot?.time);
-    const filename = `설명회_예약자_${slotInfo.replace(/\//g, '')}_${dateStr}.xlsx`;
+
+    let filename;
+    if (isAllSelected) {
+      filename = `설명회_예약자_전체_${dateStr}.xlsx`;
+    } else {
+      const slotInfo = formatSlotDateTime(currentSlot?.date, currentSlot?.time);
+      filename = `설명회_예약자_${slotInfo.replace(/\//g, '')}_${dateStr}.xlsx`;
+    }
 
     // 파일 다운로드
     XLSX.writeFile(workbook, filename);
@@ -173,14 +214,43 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
   return (
     <div className="tab-container">
       {/* 설명회 슬롯 선택 탭 */}
-      {enrichedSlotGroups.length > 1 && (
+      {enrichedSlotGroups.length >= 1 && (
         <div className="slot-tabs" style={{
           display: 'flex',
           gap: '8px',
           marginBottom: '20px',
           borderBottom: '2px solid #e0e0e0',
-          paddingBottom: '0'
+          paddingBottom: '0',
+          flexWrap: 'wrap'
         }}>
+          {/* 전체 탭 */}
+          <button
+            onClick={() => setSelectedSlotId('all')}
+            className={selectedSlotId === 'all' ? 'slot-tab active' : 'slot-tab'}
+            style={{
+              padding: '12px 20px',
+              border: 'none',
+              background: selectedSlotId === 'all' ? '#1976d2' : '#f5f5f5',
+              color: selectedSlotId === 'all' ? 'white' : '#666',
+              cursor: 'pointer',
+              borderRadius: '8px 8px 0 0',
+              fontWeight: selectedSlotId === 'all' ? 'bold' : 'normal',
+              fontSize: '14px',
+              transition: 'all 0.2s',
+              position: 'relative',
+              top: '2px'
+            }}
+          >
+            전체
+            <span style={{
+              marginLeft: '8px',
+              fontSize: '12px',
+              opacity: 0.9
+            }}>
+              ({attendees.length})
+            </span>
+          </button>
+          {/* 개별 슬롯 탭 */}
           {enrichedSlotGroups.map(group => (
             <button
               key={group.slotId}
@@ -259,6 +329,7 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
         <table className="data-table">
           <thead>
             <tr>
+              {isAllSelected && <th>설명회 일정</th>}
               <th>예약일시</th>
               <th>학생명</th>
               <th>학년</th>
@@ -271,13 +342,18 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
           <tbody>
             {filteredAttendees.length === 0 ? (
               <tr>
-                <td colSpan="7" className="empty-cell">
+                <td colSpan={isAllSelected ? 8 : 7} className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
             ) : (
               filteredAttendees.map((attendee) => (
                 <tr key={attendee.id}>
+                  {isAllSelected && (
+                    <td style={{ fontSize: '12px', color: '#666' }}>
+                      {getSlotInfoForAttendee(attendee)}
+                    </td>
+                  )}
                   <td>{formatDate(attendee.registered_at)}</td>
                   <td className="highlight-cell">{attendee.student_name}</td>
                   <td>{attendee.grade || '-'}</td>
