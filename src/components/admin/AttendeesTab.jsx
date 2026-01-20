@@ -374,11 +374,13 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
                         backgroundColor:
                           attendee.status === '참석' ? '#d4edda' :
                           attendee.status === '예약' ? '#d1ecf1' :
+                          attendee.status === '대기' ? '#fff3cd' :
                           attendee.status === '불참' ? '#f8d7da' :
                           attendee.status === '취소' ? '#f5c6cb' : '#fff',
                       }}
                     >
                       <option value="예약">예약</option>
+                      <option value="대기">대기</option>
                       <option value="참석">참석</option>
                       <option value="불참">불참</option>
                       <option value="취소">취소</option>
