@@ -49,6 +49,21 @@ export default function SeminarSelector() {
     setPendingSeminar(null);
   };
 
+  // 설명회 정렬: 활성 슬롯(예약가능, 마감임박, 대기접수) 상단, 마감 슬롯 하단, 날짜순
+  const sortedSeminars = [...seminars].sort((a, b) => {
+    // closed 상태는 뒤로
+    const aIsClosed = a.status === 'closed';
+    const bIsClosed = b.status === 'closed';
+
+    if (aIsClosed && !bIsClosed) return 1;
+    if (!aIsClosed && bIsClosed) return -1;
+
+    // 같은 그룹 내에서는 날짜순 정렬
+    const dateA = new Date(`${a.date}T${a.time}`);
+    const dateB = new Date(`${b.date}T${b.time}`);
+    return dateA - dateB;
+  });
+
   if (seminars.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '40px 20px', color: '#666' }}>
@@ -60,7 +75,7 @@ export default function SeminarSelector() {
   return (
     <div className="seminar-selection">
       <div className="seminar-options">
-        {seminars.map((seminar) => (
+        {sortedSeminars.map((seminar) => (
           <div
             key={seminar.id}
             onClick={() => handleSelectSeminar(seminar)}
