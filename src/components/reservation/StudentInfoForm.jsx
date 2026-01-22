@@ -24,6 +24,10 @@ export default function StudentInfoForm({
   const [surname, setSurname] = useState('');
   const [loadingPrevious, setLoadingPrevious] = useState(false);
 
+  // 중복 예약 변경 확인 모달 상태
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [existingReservation, setExistingReservation] = useState(null);
+
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -83,6 +87,88 @@ export default function StudentInfoForm({
     }
   };
 
+  // 중복 예약 체크
+  const checkDuplicateReservation = async () => {
+    // 캠페인의 중복 예약 허용 여부 확인
+    const { data: campaign } = await supabase
+      .from('campaigns')
+      .select('allow_duplicate_reservation')
+      .eq('id', selectedSeminar.campaign_id)
+      .single();
+
+    // 중복 예약 허용이면 체크 필요 없음
+    if (campaign?.allow_duplicate_reservation !== false) {
+      return null;
+    }
+
+    // 같은 캠페인 내 같은 연락처로 기존 예약이 있는지 확인
+    const { data: existingReservations } = await supabase
+      .from('reservations')
+      .select(`
+        *,
+        seminar_slots (title, date, time, location)
+      `)
+      .eq('campaign_id', selectedSeminar.campaign_id)
+      .eq('parent_phone', phone)
+      .in('status', ['예약', '대기', '참석']);
+
+    if (existingReservations && existingReservations.length > 0) {
+      return existingReservations[0];
+    }
+
+    return null;
+  };
+
+  // 기존 예약 취소 후 새 예약 생성
+  const replaceReservation = async () => {
+    setShowDuplicateModal(false);
+    setLoading(true);
+
+    try {
+      // 기존 예약 취소
+      await supabase
+        .from('reservations')
+        .update({ status: '취소' })
+        .eq('id', existingReservation.id);
+
+      // 새 예약 생성
+      await createReservation();
+    } catch (error) {
+      console.error('예약 변경 실패:', error);
+      showToast('예약 변경 중 오류가 발생했습니다.', 'error');
+      setLoading(false);
+    }
+  };
+
+  // 실제 예약 생성 로직
+  const createReservation = async () => {
+    const reservationData = {
+      reservation_id: 'R' + Date.now(),
+      seminar_slot_id: selectedSeminar.id,
+      campaign_id: selectedSeminar.campaign_id,
+      student_name: formData.studentName,
+      parent_phone: phone,
+      school: formData.school,
+      grade: formData.grade,
+      math_level: formData.mathLevel,
+      password: hashPassword(formData.password),
+      privacy_consent: 'Y',
+      status: selectedSeminar.isFull ? '대기' : '예약',
+    };
+
+    const { data, error } = await supabase
+      .from('reservations')
+      .insert([reservationData])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    showToast('예약이 완료되었습니다!', 'success');
+    onComplete(data);
+    setLoading(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -120,35 +206,22 @@ export default function StudentInfoForm({
     setLoading(true);
 
     try {
-      // 예약 데이터 생성 (중복 체크는 이미 2단계에서 완료!)
-      const reservationData = {
-        reservation_id: 'R' + Date.now(),
-        seminar_slot_id: selectedSeminar.id, // ⭐ seminar_slot ID
-        campaign_id: selectedSeminar.campaign_id, // ⭐ campaign ID
-        student_name: formData.studentName,
-        parent_phone: phone,
-        school: formData.school,
-        grade: formData.grade,
-        math_level: formData.mathLevel,
-        password: hashPassword(formData.password),
-        privacy_consent: 'Y',
-        status: selectedSeminar.isFull ? '대기' : '예약',
-      };
+      // 중복 예약 체크
+      const duplicate = await checkDuplicateReservation();
 
-      const { data, error } = await supabase
-        .from('reservations')
-        .insert([reservationData])
-        .select()
-        .single();
+      if (duplicate) {
+        // 중복 예약이 있으면 모달 표시
+        setExistingReservation(duplicate);
+        setShowDuplicateModal(true);
+        setLoading(false);
+        return;
+      }
 
-      if (error) throw error;
-
-      showToast('예약이 완료되었습니다!', 'success');
-      onComplete(data);
+      // 중복 없으면 바로 예약 생성
+      await createReservation();
     } catch (error) {
       console.error('예약 실패:', error);
       showToast('예약 처리 중 오류가 발생했습니다.', 'error');
-    } finally {
       setLoading(false);
     }
   };
@@ -341,6 +414,109 @@ export default function StudentInfoForm({
           {selectedSeminar?.isFull ? '대기예약 신청' : '예약 확정'}
         </Button>
       </div>
+
+      {/* 중복 예약 변경 확인 모달 */}
+      {showDuplicateModal && existingReservation && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px',
+          }}
+          onClick={() => setShowDuplicateModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '400px',
+              width: '100%',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+              <span style={{ fontSize: '48px' }}>⚠️</span>
+            </div>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              marginBottom: '16px',
+              color: '#1f2937'
+            }}>
+              이미 예약이 있습니다
+            </h3>
+            <div style={{
+              backgroundColor: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '16px',
+            }}>
+              <p style={{ fontSize: '14px', color: '#92400e', marginBottom: '8px' }}>
+                <strong>기존 예약 정보:</strong>
+              </p>
+              <p style={{ fontSize: '14px', color: '#78350f' }}>
+                {existingReservation.seminar_slots?.title || '설명회'}<br />
+                {existingReservation.seminar_slots?.date} {existingReservation.seminar_slots?.time?.slice(0, 5)}<br />
+                {existingReservation.seminar_slots?.location}
+              </p>
+            </div>
+            <p style={{
+              fontSize: '14px',
+              color: '#4b5563',
+              textAlign: 'center',
+              marginBottom: '20px',
+              lineHeight: '1.6'
+            }}>
+              기존 예약을 취소하고<br />
+              선택하신 설명회로 변경하시겠습니까?
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setShowDuplicateModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={replaceReservation}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  backgroundColor: '#f59e0b',
+                  color: 'white',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                예약 변경
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

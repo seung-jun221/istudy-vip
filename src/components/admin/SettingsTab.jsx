@@ -32,6 +32,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     status: campaign.status || 'active',
     access_password: campaign.access_password || '',
     test_method: seminarSlots?.[0]?.test_method || 'home', // ⭐ seminar_slots에서 가져오기
+    allow_duplicate_reservation: campaign.allow_duplicate_reservation !== false, // 기본값 true
   });
 
   // campaign가 업데이트되면 formData도 업데이트
@@ -43,6 +44,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
       status: campaign.status || 'active',
       access_password: campaign.access_password || '',
       test_method: seminarSlots?.[0]?.test_method || 'home', // ⭐ seminar_slots에서 가져오기
+      allow_duplicate_reservation: campaign.allow_duplicate_reservation !== false, // 기본값 true
     });
 
     const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
@@ -564,6 +566,31 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
           <div className="form-hint">
             이 비밀번호로 로그인하면 해당 캠페인 상세 페이지로 직접 접근할 수 있습니다.
             담당자에게만 공유하세요.
+          </div>
+        </div>
+
+        {/* 설명회 중복 예약 설정 */}
+        <div className="form-group">
+          <label className="form-label">설명회 중복 예약 설정</label>
+          {editing ? (
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                name="allow_duplicate_reservation"
+                checked={formData.allow_duplicate_reservation}
+                onChange={(e) => setFormData({ ...formData, allow_duplicate_reservation: e.target.checked })}
+                style={{ width: '18px', height: '18px' }}
+              />
+              <span>동일 연락처로 여러 슬롯 예약 허용</span>
+            </label>
+          ) : (
+            <div className="form-value">
+              {formData.allow_duplicate_reservation ? '중복 예약 허용' : '중복 예약 불가 (1인 1예약)'}
+            </div>
+          )}
+          <div className="form-hint">
+            체크 해제 시, 같은 연락처로는 하나의 설명회만 예약할 수 있습니다.
+            기존 예약이 있으면 변경 여부를 묻는 안내가 표시됩니다.
           </div>
         </div>
 
