@@ -29,54 +29,10 @@ export default function ConsultingComplete({
 
   // 컴포넌트 마운트 시 진단검사 방식 확인
   useEffect(() => {
-    const fetchTestMethod = async () => {
-      setLoading(true);
-
-      // ⭐ 1차: campaigns와 seminar_slots에서 test_method 가져오기
-      const campaignId = reservation.linked_seminar_id;
-      if (campaignId) {
-        const { data: campaign } = await supabase
-          .from('campaigns')
-          .select(`
-            seminar_slots (test_method)
-          `)
-          .eq('id', campaignId)
-          .single();
-
-        // 첫 번째 슬롯의 test_method 사용
-        const testMethodFromSlot = campaign?.seminar_slots?.[0]?.test_method;
-        if (testMethodFromSlot) {
-          setTestMethod(testMethodFromSlot);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // ⭐ 2차: linked_seminar_id가 없는 경우 location 기반으로 seminar_slots 조회
-      if (location) {
-        const { data: slotsByLocation } = await supabase
-          .from('seminar_slots')
-          .select('test_method')
-          .eq('location', location)
-          .eq('status', 'active')
-          .not('test_method', 'is', null)
-          .limit(1)
-          .single();
-
-        if (slotsByLocation?.test_method) {
-          setTestMethod(slotsByLocation.test_method);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // ⭐ 3차 fallback: 기존 test_methods 테이블 조회 (레거시 지원)
-      const method = await loadTestMethod(location);
-      setTestMethod(method);
-      setLoading(false);
-    };
-
-    fetchTestMethod();
+    // ⚠️ 임시: 사직점 오픈 기간(3개월) 동안 모든 지점 방문테스트로 고정
+    // TODO: 추후 원인 파악 후 복원 필요
+    setTestMethod('onsite');
+    setLoading(false);
   }, [location, reservation]);
 
   // ⭐ 진단검사 예약 페이지로 이동 (동의는 이미 받음)

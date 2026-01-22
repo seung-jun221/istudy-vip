@@ -206,46 +206,11 @@ export default function ConsultingPage() {
       setCompletedReservation(reservation);
     }
 
-    // ⭐ campaign의 test_method 확인
-    const seminarId = reservation.linked_seminar_id;
-    let testMethod = 'home'; // 기본값
+    // ⚠️ 임시: 사직점 오픈 기간(3개월) 동안 모든 지점 방문테스트로 고정
+    // TODO: 추후 원인 파악 후 복원 필요
+    const testMethod = 'onsite';
 
-    if (seminarId) {
-      const { data: campaign, error } = await supabase
-        .from('campaigns')
-        .select(`
-          seminar_slots (test_method)
-        `)
-        .eq('id', seminarId)
-        .single();
-
-      if (error) {
-        console.error('test_method 조회 실패:', error);
-      }
-
-      // 첫 번째 슬롯의 test_method 사용
-      testMethod = campaign?.seminar_slots?.[0]?.test_method || 'home';
-      console.log('✅ test_method 확인:', testMethod, 'from campaign:', seminarId);
-    }
-
-    // ⭐ linked_seminar_id가 없으면 location 기반으로 조회
-    if (testMethod === 'home' && !seminarId && location) {
-      const { data: slotsByLocation } = await supabase
-        .from('seminar_slots')
-        .select('test_method')
-        .eq('location', location)
-        .eq('status', 'active')
-        .not('test_method', 'is', null)
-        .limit(1)
-        .single();
-
-      if (slotsByLocation?.test_method) {
-        testMethod = slotsByLocation.test_method;
-        console.log('✅ test_method (location 기반):', testMethod, 'from location:', location);
-      }
-    }
-
-    // test_method에 따라 분기
+    // test_method에 따라 분기 (현재 항상 onsite)
     if (testMethod === 'both') {
       // 방문/가정 선택 화면으로
       await loadAvailableTestDates(location, consultingDate);
