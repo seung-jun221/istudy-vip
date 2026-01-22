@@ -935,6 +935,29 @@ export function AdminProvider({ children }) {
     try {
       setLoading(true);
 
+      // 1. 해당 슬롯에 연결된 컨설팅 예약 ID 조회
+      const { data: reservations } = await supabase
+        .from('consulting_reservations')
+        .select('id')
+        .eq('slot_id', slotId);
+
+      const reservationIds = reservations?.map(r => r.id) || [];
+
+      // 2. 연결된 진단검사 예약 삭제 (있는 경우)
+      if (reservationIds.length > 0) {
+        await supabase
+          .from('test_reservations')
+          .delete()
+          .in('consulting_reservation_id', reservationIds);
+
+        // 3. 컨설팅 예약 삭제
+        await supabase
+          .from('consulting_reservations')
+          .delete()
+          .eq('slot_id', slotId);
+      }
+
+      // 4. 컨설팅 슬롯 삭제
       const { error } = await supabase.from('consulting_slots').delete().eq('id', slotId);
 
       if (error) throw error;
