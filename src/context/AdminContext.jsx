@@ -101,13 +101,12 @@ export function AdminProvider({ children }) {
     try {
       setLoading(true);
 
-      // 1. campaigns와 seminar_slots, consulting_slots join해서 조회
+      // 1. campaigns와 seminar_slots join해서 조회
       const { data: campaignsData, error: campaignsError } = await supabase
         .from('campaigns')
         .select(`
           *,
-          seminar_slots (*),
-          consulting_slots (id)
+          seminar_slots (*)
         `);
 
       if (campaignsError) throw campaignsError;
@@ -117,8 +116,13 @@ export function AdminProvider({ children }) {
         campaignsData.map(async (campaign) => {
           // 설명회 예약 수 (해당 캠페인의 모든 슬롯에 대한 예약)
           const slotIds = campaign.seminar_slots?.map(s => s.id) || [];
-          // 컨설팅 슬롯 ID 목록
-          const consultingSlotIds = campaign.consulting_slots?.map(s => s.id) || [];
+
+          // 컨설팅 슬롯 ID 목록 (별도 조회)
+          const { data: consultingSlotsData } = await supabase
+            .from('consulting_slots')
+            .select('id')
+            .eq('linked_seminar_id', campaign.id);
+          const consultingSlotIds = consultingSlotsData?.map(s => s.id) || [];
 
           const { count: attendeeCount } = slotIds.length > 0
             ? await supabase
