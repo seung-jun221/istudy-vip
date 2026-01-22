@@ -524,7 +524,7 @@ export async function getResultBySubmissionId(
     .from('diagnostic_results')
     .select('*')
     .eq('submission_id', submissionId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('결과 조회 실패:', error);
@@ -590,7 +590,7 @@ export async function getReportByResultId(
     .from('diagnostic_reports')
     .select('*')
     .eq('result_id', resultId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('보고서 조회 실패:', error);
