@@ -32,7 +32,7 @@ export default function ConsultingComplete({
     const fetchTestMethod = async () => {
       setLoading(true);
 
-      // ⭐ campaigns와 seminar_slots에서 test_method 가져오기
+      // ⭐ 1차: campaigns와 seminar_slots에서 test_method 가져오기
       const campaignId = reservation.linked_seminar_id;
       if (campaignId) {
         const { data: campaign } = await supabase
@@ -52,7 +52,25 @@ export default function ConsultingComplete({
         }
       }
 
-      // ⭐ fallback: 기존 test_methods 테이블 조회 (레거시 지원)
+      // ⭐ 2차: linked_seminar_id가 없는 경우 location 기반으로 seminar_slots 조회
+      if (location) {
+        const { data: slotsByLocation } = await supabase
+          .from('seminar_slots')
+          .select('test_method')
+          .eq('location', location)
+          .eq('status', 'active')
+          .not('test_method', 'is', null)
+          .limit(1)
+          .single();
+
+        if (slotsByLocation?.test_method) {
+          setTestMethod(slotsByLocation.test_method);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // ⭐ 3차 fallback: 기존 test_methods 테이블 조회 (레거시 지원)
       const method = await loadTestMethod(location);
       setTestMethod(method);
       setLoading(false);

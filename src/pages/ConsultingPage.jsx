@@ -228,6 +228,23 @@ export default function ConsultingPage() {
       console.log('✅ test_method 확인:', testMethod, 'from campaign:', seminarId);
     }
 
+    // ⭐ linked_seminar_id가 없으면 location 기반으로 조회
+    if (testMethod === 'home' && !seminarId && location) {
+      const { data: slotsByLocation } = await supabase
+        .from('seminar_slots')
+        .select('test_method')
+        .eq('location', location)
+        .eq('status', 'active')
+        .not('test_method', 'is', null)
+        .limit(1)
+        .single();
+
+      if (slotsByLocation?.test_method) {
+        testMethod = slotsByLocation.test_method;
+        console.log('✅ test_method (location 기반):', testMethod, 'from location:', location);
+      }
+    }
+
     // test_method에 따라 분기
     if (testMethod === 'both') {
       // 방문/가정 선택 화면으로

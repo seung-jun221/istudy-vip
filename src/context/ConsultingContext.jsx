@@ -483,16 +483,37 @@ export function ConsultingProvider({ children }) {
   // 지점별 진단검사 방식 확인
   const loadTestMethod = async (location) => {
     try {
+      // 1차: test_methods 테이블 조회 (레거시)
       const { data, error } = await supabase
         .from('test_methods')
         .select('method')
         .eq('location', location)
         .single();
 
-      if (error) throw error;
+      if (!error && data?.method) {
+        setTestMethod(data.method);
+        return data.method;
+      }
 
-      setTestMethod(data?.method || 'home'); // 기본값: 가정 셀프테스트
-      return data?.method || 'home';
+      // 2차: seminar_slots에서 location 기반으로 test_method 조회
+      const { data: slotData } = await supabase
+        .from('seminar_slots')
+        .select('test_method')
+        .eq('location', location)
+        .eq('status', 'active')
+        .not('test_method', 'is', null)
+        .limit(1)
+        .single();
+
+      if (slotData?.test_method) {
+        console.log('✅ test_method (seminar_slots 기반):', slotData.test_method);
+        setTestMethod(slotData.test_method);
+        return slotData.test_method;
+      }
+
+      // 기본값: 가정 셀프테스트
+      setTestMethod('home');
+      return 'home';
     } catch (error) {
       console.error('진단검사 방식 확인 실패:', error);
       setTestMethod('home'); // 오류 시 기본값
