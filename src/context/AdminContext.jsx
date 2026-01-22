@@ -101,12 +101,13 @@ export function AdminProvider({ children }) {
     try {
       setLoading(true);
 
-      // 1. campaigns와 seminar_slots join해서 조회
+      // 1. campaigns와 seminar_slots, consulting_slots join해서 조회
       const { data: campaignsData, error: campaignsError } = await supabase
         .from('campaigns')
         .select(`
           *,
-          seminar_slots (*)
+          seminar_slots (*),
+          consulting_slots (id)
         `);
 
       if (campaignsError) throw campaignsError;
@@ -116,6 +117,8 @@ export function AdminProvider({ children }) {
         campaignsData.map(async (campaign) => {
           // 설명회 예약 수 (해당 캠페인의 모든 슬롯에 대한 예약)
           const slotIds = campaign.seminar_slots?.map(s => s.id) || [];
+          // 컨설팅 슬롯 ID 목록
+          const consultingSlotIds = campaign.consulting_slots?.map(s => s.id) || [];
 
           const { count: attendeeCount } = slotIds.length > 0
             ? await supabase
@@ -125,19 +128,23 @@ export function AdminProvider({ children }) {
                 .in('status', ['예약', '참석'])
             : { count: 0 };
 
-          // 컨설팅 예약 수 (취소 제외)
-          const { count: consultingCount } = await supabase
-            .from('consulting_reservations')
-            .select('*', { count: 'exact', head: true })
-            .eq('linked_seminar_id', campaign.id)
-            .not('status', 'in', '(cancelled,auto_cancelled)');
+          // 컨설팅 예약 수 (slot_id 기반으로 조회)
+          const { count: consultingCount } = consultingSlotIds.length > 0
+            ? await supabase
+                .from('consulting_reservations')
+                .select('*', { count: 'exact', head: true })
+                .in('slot_id', consultingSlotIds)
+                .not('status', 'in', '(cancelled,auto_cancelled)')
+            : { count: 0 };
 
           // 진단검사 예약 수
-          const { data: consultingIds } = await supabase
-            .from('consulting_reservations')
-            .select('id')
-            .eq('linked_seminar_id', campaign.id)
-            .not('status', 'in', '(cancelled,auto_cancelled)');
+          const { data: consultingIds } = consultingSlotIds.length > 0
+            ? await supabase
+                .from('consulting_reservations')
+                .select('id')
+                .in('slot_id', consultingSlotIds)
+                .not('status', 'in', '(cancelled,auto_cancelled)')
+            : { data: [] };
 
           const consultingIdList = consultingIds?.map(c => c.id) || [];
 
@@ -149,13 +156,15 @@ export function AdminProvider({ children }) {
                 .in('status', ['confirmed', '예약'])
             : { count: 0 };
 
-          // 최종 등록 수
-          const { count: enrolledCount } = await supabase
-            .from('consulting_reservations')
-            .select('*', { count: 'exact', head: true })
-            .eq('linked_seminar_id', campaign.id)
-            .eq('enrollment_status', '확정')
-            .not('status', 'in', '(cancelled,auto_cancelled)');
+          // 최종 등록 수 (slot_id 기반으로 조회)
+          const { count: enrolledCount } = consultingSlotIds.length > 0
+            ? await supabase
+                .from('consulting_reservations')
+                .select('*', { count: 'exact', head: true })
+                .in('slot_id', consultingSlotIds)
+                .eq('enrollment_status', '확정')
+                .not('status', 'in', '(cancelled,auto_cancelled)')
+            : { count: 0 };
 
           // 첫 번째 슬롯의 날짜/시간을 대표값으로 사용 (정렬용)
           const firstSlot = campaign.seminar_slots?.[0];
@@ -250,19 +259,36 @@ export function AdminProvider({ children }) {
       }
       console.log('✅ 참석자 수:', attendees?.length || 0);
 
-      // 3. 컨설팅 예약 목록 (취소된 예약 제외)
-      console.log('3️⃣ 컨설팅 예약 조회...');
-      const { data: consultings, error: consultingsError } = await supabase
-        .from('consulting_reservations')
-        .select('*')
-        .eq('linked_seminar_id', campaignId)
-        .not('status', 'in', '(cancelled,auto_cancelled)') // ⭐ 자동 취소도 제외
-        .order('id', { ascending: false });
+      // 3. 먼저 해당 캠페인의 컨설팅 슬롯 ID 목록 조회
+      console.log('3️⃣ 컨설팅 슬롯 ID 조회...');
+      const { data: campaignSlots } = await supabase
+        .from('consulting_slots')
+        .select('id')
+        .eq('linked_seminar_id', campaignId);
 
-      if (consultingsError) {
-        console.error('❌ 컨설팅 조회 실패:', consultingsError);
-        throw consultingsError;
+      const slotIds = campaignSlots?.map(s => s.id) || [];
+      console.log('✅ 캠페인 컨설팅 슬롯 수:', slotIds.length);
+
+      // 3-1. 컨설팅 예약 목록 (linked_seminar_id 또는 slot_id로 조회)
+      console.log('3️⃣-1 컨설팅 예약 조회...');
+      let consultings = [];
+
+      if (slotIds.length > 0) {
+        // slot_id 기반으로 조회 (linked_seminar_id가 null인 경우도 포함)
+        const { data: consultingsBySlot, error: consultingsError } = await supabase
+          .from('consulting_reservations')
+          .select('*')
+          .in('slot_id', slotIds)
+          .not('status', 'in', '(cancelled,auto_cancelled)')
+          .order('id', { ascending: false });
+
+        if (consultingsError) {
+          console.error('❌ 컨설팅 조회 실패:', consultingsError);
+          throw consultingsError;
+        }
+        consultings = consultingsBySlot || [];
       }
+
       console.log('✅ 컨설팅 예약 수:', consultings?.length || 0);
 
       // 3-1. 컨설팅 슬롯 정보 및 진단검사 정보 추가
@@ -696,7 +722,8 @@ export function AdminProvider({ children }) {
         .from('campaigns')
         .select(`
           *,
-          seminar_slots (id)
+          seminar_slots (id),
+          consulting_slots (id)
         `)
         .eq('id', campaignId)
         .single();
@@ -708,13 +735,16 @@ export function AdminProvider({ children }) {
 
       console.log('✅ 캠페인 정보:', campaign);
       const slotIds = campaign.seminar_slots?.map(s => s.id) || [];
+      const consultingSlotIds = campaign.consulting_slots?.map(s => s.id) || [];
 
-      // 1. 컨설팅 예약 조회 (test_reservations 삭제를 위해)
+      // 1. 컨설팅 예약 조회 (test_reservations 삭제를 위해) - slot_id 기반으로 조회
       console.log('1️⃣ 컨설팅 예약 조회 중...');
-      const { data: consultings } = await supabase
-        .from('consulting_reservations')
-        .select('id')
-        .eq('linked_seminar_id', campaignId);
+      const { data: consultings } = consultingSlotIds.length > 0
+        ? await supabase
+            .from('consulting_reservations')
+            .select('id')
+            .in('slot_id', consultingSlotIds)
+        : { data: [] };
 
       const consultingIds = consultings?.map(c => c.id) || [];
       console.log('📋 컨설팅 예약 ID 목록:', consultingIds.length + '개');
@@ -736,16 +766,20 @@ export function AdminProvider({ children }) {
         console.log('⏭️ 진단검사 예약이 없습니다.');
       }
 
-      // 3. 컨설팅 예약 삭제
+      // 3. 컨설팅 예약 삭제 (slot_id 기반)
       console.log('3️⃣ 컨설팅 예약 삭제 중...');
-      const { error: consultingsError, count: consultingCount } = await supabase
-        .from('consulting_reservations')
-        .delete({ count: 'exact' })
-        .eq('linked_seminar_id', campaignId);
+      let consultingCount = 0;
+      if (consultingSlotIds.length > 0) {
+        const { error: consultingsError, count } = await supabase
+          .from('consulting_reservations')
+          .delete({ count: 'exact' })
+          .in('slot_id', consultingSlotIds);
 
-      if (consultingsError) {
-        console.error('❌ 컨설팅 예약 삭제 실패:', consultingsError);
-        throw consultingsError;
+        if (consultingsError) {
+          console.error('❌ 컨설팅 예약 삭제 실패:', consultingsError);
+          throw consultingsError;
+        }
+        consultingCount = count || 0;
       }
       console.log('✅ 컨설팅 예약 삭제 완료:', consultingCount + '개');
 
@@ -1095,11 +1129,12 @@ export function AdminProvider({ children }) {
       // 2. 현재 오픈된 슬롯만 필터링 (is_available = true)
       const availableSlots = allSlots.filter((slot) => slot.is_available);
 
-      // 3. 각 슬롯의 예약 수 조회
+      // 3. 각 슬롯의 예약 수 조회 (slot_id 기반)
+      const slotIdList = allSlots.map(s => s.id);
       const { data: reservations, error: reservationsError } = await supabase
         .from('consulting_reservations')
         .select('slot_id')
-        .eq('linked_seminar_id', campaignId)
+        .in('slot_id', slotIdList)
         .neq('status', 'cancelled');
 
       if (reservationsError) throw reservationsError;
