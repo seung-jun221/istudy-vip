@@ -482,43 +482,10 @@ export function ConsultingProvider({ children }) {
 
   // 지점별 진단검사 방식 확인
   const loadTestMethod = async (location) => {
-    try {
-      // 1차: test_methods 테이블 조회 (레거시)
-      const { data, error } = await supabase
-        .from('test_methods')
-        .select('method')
-        .eq('location', location)
-        .single();
-
-      if (!error && data?.method) {
-        setTestMethod(data.method);
-        return data.method;
-      }
-
-      // 2차: seminar_slots에서 location 기반으로 test_method 조회
-      const { data: slotData } = await supabase
-        .from('seminar_slots')
-        .select('test_method')
-        .eq('location', location)
-        .eq('status', 'active')
-        .not('test_method', 'is', null)
-        .limit(1)
-        .single();
-
-      if (slotData?.test_method) {
-        console.log('✅ test_method (seminar_slots 기반):', slotData.test_method);
-        setTestMethod(slotData.test_method);
-        return slotData.test_method;
-      }
-
-      // 기본값: 가정 셀프테스트
-      setTestMethod('home');
-      return 'home';
-    } catch (error) {
-      console.error('진단검사 방식 확인 실패:', error);
-      setTestMethod('home'); // 오류 시 기본값
-      return 'home';
-    }
+    // ⚠️ 임시: 사직점 오픈 기간(3개월) 동안 모든 지점 방문테스트로 고정
+    // TODO: 추후 원인 파악 후 복원 필요
+    setTestMethod('onsite');
+    return 'onsite';
   };
 
   // 진단검사 가능 날짜 로드 (컨설팅 날짜 전까지만)
