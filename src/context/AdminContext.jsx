@@ -261,24 +261,24 @@ export function AdminProvider({ children }) {
 
       // 3. 먼저 해당 캠페인의 컨설팅 슬롯 ID 목록 조회
       console.log('3️⃣ 컨설팅 슬롯 ID 조회...');
-      const { data: campaignSlots } = await supabase
+      const { data: campaignConsultingSlots } = await supabase
         .from('consulting_slots')
         .select('id')
         .eq('linked_seminar_id', campaignId);
 
-      const slotIds = campaignSlots?.map(s => s.id) || [];
-      console.log('✅ 캠페인 컨설팅 슬롯 수:', slotIds.length);
+      const consultingSlotIds = campaignConsultingSlots?.map(s => s.id) || [];
+      console.log('✅ 캠페인 컨설팅 슬롯 수:', consultingSlotIds.length);
 
       // 3-1. 컨설팅 예약 목록 (linked_seminar_id 또는 slot_id로 조회)
       console.log('3️⃣-1 컨설팅 예약 조회...');
       let consultings = [];
 
-      if (slotIds.length > 0) {
+      if (consultingSlotIds.length > 0) {
         // slot_id 기반으로 조회 (linked_seminar_id가 null인 경우도 포함)
         const { data: consultingsBySlot, error: consultingsError } = await supabase
           .from('consulting_reservations')
           .select('*')
-          .in('slot_id', slotIds)
+          .in('slot_id', consultingSlotIds)
           .not('status', 'in', '(cancelled,auto_cancelled)')
           .order('id', { ascending: false });
 
