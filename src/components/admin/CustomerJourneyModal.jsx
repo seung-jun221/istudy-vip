@@ -154,6 +154,16 @@ export default function CustomerJourneyModal({ phone, onClose }) {
           icon: '🎓',
         });
       }
+      if (s.status === '취소') {
+        events.push({
+          date: s.updated_at || s.created_at,
+          type: 'seminar_cancel',
+          label: '설명회 취소',
+          detail: s.seminar_slots?.location || '',
+          status: '취소',
+          icon: '❌',
+        });
+      }
     });
 
     // 컨설팅 예약
@@ -198,6 +208,16 @@ export default function CustomerJourneyModal({ phone, onClose }) {
         status: t.status,
         icon: '📋',
       });
+      if (t.status === '취소' || t.status === 'cancelled') {
+        events.push({
+          date: t.updated_at || t.created_at,
+          type: 'test_cancel',
+          label: '진단검사 취소',
+          detail: t.test_slots?.location || '',
+          status: '취소',
+          icon: '❌',
+        });
+      }
     });
 
     // 진단검사 결과
