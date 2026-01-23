@@ -27,7 +27,7 @@ export default function CustomerJourneyModal({ phone, onClose }) {
         .from('reservations')
         .select('*, seminar_slots(*)')
         .eq('parent_phone', phone)
-        .order('created_at', { ascending: false });
+        .order('registered_at', { ascending: false });
       console.log('📝 설명회 예약:', seminars?.length || 0, '건', seminarError || '');
 
       // 2. 컨설팅 예약 조회
@@ -46,13 +46,13 @@ export default function CustomerJourneyModal({ phone, onClose }) {
         .order('created_at', { ascending: false });
       console.log('📋 진단검사 예약:', tests?.length || 0, '건', testError || '');
 
-      // 4. 진단검사 결과 조회
+      // 4. 진단검사 제출 이력 조회 (diagnostic_submissions)
       const { data: results, error: resultError } = await supabase
-        .from('diagnostic_results')
+        .from('diagnostic_submissions')
         .select('*')
         .eq('parent_phone', phone)
-        .order('created_at', { ascending: false });
-      console.log('🏆 진단검사 결과:', results?.length || 0, '건', resultError || '');
+        .order('submitted_at', { ascending: false });
+      console.log('🏆 진단검사 제출:', results?.length || 0, '건', resultError || '');
 
       // 프로필 정보 추출 (가장 최근 데이터에서)
       const profile = extractProfile(seminars, consultings, tests);
@@ -142,7 +142,7 @@ export default function CustomerJourneyModal({ phone, onClose }) {
     // 설명회 예약
     journey.seminars.forEach(s => {
       events.push({
-        date: s.created_at,
+        date: s.registered_at,
         type: 'seminar_reservation',
         label: '설명회 예약',
         detail: `${formatDateTime(s.seminar_slots?.date, s.seminar_slots?.time)} ${s.seminar_slots?.location || ''}`,
@@ -161,7 +161,7 @@ export default function CustomerJourneyModal({ phone, onClose }) {
       }
       if (s.status === '취소') {
         events.push({
-          date: s.updated_at || s.created_at,
+          date: s.updated_at || s.registered_at,
           type: 'seminar_cancel',
           label: '설명회 취소',
           detail: s.seminar_slots?.location || '',
@@ -225,13 +225,13 @@ export default function CustomerJourneyModal({ phone, onClose }) {
       }
     });
 
-    // 진단검사 결과
+    // 진단검사 제출
     journey.results.forEach(r => {
       events.push({
-        date: r.created_at,
+        date: r.submitted_at,
         type: 'test_result',
-        label: '진단검사 완료',
-        detail: `총점: ${r.total_score?.toFixed(1) || 0}점`,
+        label: '진단검사 제출',
+        detail: `${r.test_type || ''} - ${r.student_name || ''}`,
         status: '완료',
         icon: '🏆',
       });
