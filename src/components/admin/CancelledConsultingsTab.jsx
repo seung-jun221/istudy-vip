@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import './AdminTabs.css';
 
-export default function CancelledConsultingsTab({ cancelledConsultings, consultingSlots }) {
+export default function CancelledConsultingsTab({ cancelledConsultings, consultingSlots, onPhoneClick }) {
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
@@ -141,7 +141,14 @@ export default function CancelledConsultingsTab({ cancelledConsultings, consulti
                   <td className="highlight-cell">{consulting.student_name}</td>
                   <td>{consulting.grade || '-'}</td>
                   <td>{consulting.school || '-'}</td>
-                  <td style={{ fontWeight: '600' }}>{consulting.parent_phone}</td>
+                  <td style={{ fontWeight: '600' }}>
+                    <span
+                      onClick={() => onPhoneClick?.(consulting.parent_phone)}
+                      style={{ cursor: onPhoneClick ? 'pointer' : 'default', color: onPhoneClick ? '#1a73e8' : 'inherit', textDecoration: onPhoneClick ? 'underline' : 'none' }}
+                    >
+                      {consulting.parent_phone}
+                    </span>
+                  </td>
                   <td>{consulting.math_level || '-'}</td>
                 </tr>
               );
