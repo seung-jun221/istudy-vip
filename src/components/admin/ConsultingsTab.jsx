@@ -4,7 +4,7 @@ import { useAdmin } from '../../context/AdminContext';
 import ConsultingResultModal from './ConsultingResultModal';
 import './AdminTabs.css';
 
-export default function ConsultingsTab({ consultings, consultingSlots, onUpdate }) {
+export default function ConsultingsTab({ consultings, consultingSlots, onUpdate, onPhoneClick }) {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedConsulting, setSelectedConsulting] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -233,7 +233,13 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate 
                         <div className="reservation-info">
                           <div className="student-name">{consulting.student_name}</div>
                           <div className="student-details">
-                            {consulting.school} · {consulting.grade} · {consulting.parent_phone}
+                            {consulting.school} · {consulting.grade} ·{' '}
+                            <span
+                              onClick={() => onPhoneClick?.(consulting.parent_phone)}
+                              style={{ cursor: onPhoneClick ? 'pointer' : 'default', color: onPhoneClick ? '#1a73e8' : 'inherit', textDecoration: onPhoneClick ? 'underline' : 'none' }}
+                            >
+                              {consulting.parent_phone}
+                            </span>
                           </div>
                           {consulting.math_level && (
                             <div className="math-level">수학 선행: {consulting.math_level}</div>

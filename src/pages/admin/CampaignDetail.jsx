@@ -6,6 +6,7 @@ import ConsultingsTab from '../../components/admin/ConsultingsTab';
 import CancelledConsultingsTab from '../../components/admin/CancelledConsultingsTab';
 import TestsTab from '../../components/admin/TestsTab';
 import SettingsTab from '../../components/admin/SettingsTab';
+import CustomerJourneyModal from '../../components/admin/CustomerJourneyModal';
 import './CampaignDetail.css';
 
 export default function CampaignDetail() {
@@ -16,6 +17,11 @@ export default function CampaignDetail() {
   const [activeTab, setActiveTab] = useState('attendees');
   const [campaignData, setCampaignData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedPhone, setSelectedPhone] = useState(null); // 고객 여정 모달용
+
+  const handlePhoneClick = (phone) => {
+    setSelectedPhone(phone);
+  };
 
   useEffect(() => {
     fetchCampaignDetail();
@@ -151,21 +157,23 @@ export default function CampaignDetail() {
 
       {/* 탭 컨텐츠 */}
       <div className="tab-content">
-        {activeTab === 'attendees' && <AttendeesTab attendees={attendees} campaign={campaign} seminarSlots={seminarSlots || []} onUpdate={fetchCampaignDetail} />}
+        {activeTab === 'attendees' && <AttendeesTab attendees={attendees} campaign={campaign} seminarSlots={seminarSlots || []} onUpdate={fetchCampaignDetail} onPhoneClick={handlePhoneClick} />}
         {activeTab === 'consultings' && (
           <ConsultingsTab
             consultings={consultings}
             consultingSlots={consultingSlots}
             onUpdate={fetchCampaignDetail}
+            onPhoneClick={handlePhoneClick}
           />
         )}
         {activeTab === 'cancelled' && (
           <CancelledConsultingsTab
             cancelledConsultings={cancelledConsultings}
             consultingSlots={consultingSlots}
+            onPhoneClick={handlePhoneClick}
           />
         )}
-        {activeTab === 'tests' && <TestsTab tests={tests} testSlots={testSlots} campaignId={id} />}
+        {activeTab === 'tests' && <TestsTab tests={tests} testSlots={testSlots} campaignId={id} onPhoneClick={handlePhoneClick} />}
         {activeTab === 'settings' && (
           <SettingsTab
             campaign={campaign}
@@ -176,6 +184,14 @@ export default function CampaignDetail() {
           />
         )}
       </div>
+
+      {/* 고객 여정 모달 */}
+      {selectedPhone && (
+        <CustomerJourneyModal
+          phone={selectedPhone}
+          onClose={() => setSelectedPhone(null)}
+        />
+      )}
     </div>
   );
 }

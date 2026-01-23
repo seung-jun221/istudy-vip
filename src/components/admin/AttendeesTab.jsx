@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import { useAdmin } from '../../context/AdminContext';
 import './AdminTabs.css';
 
-export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpdate }) {
+export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpdate, onPhoneClick }) {
   const { updateReservationStatus } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -359,7 +359,14 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
                   <td>{attendee.grade || '-'}</td>
                   <td>{attendee.school || '-'}</td>
                   <td>{attendee.math_level || '-'}</td>
-                  <td>{attendee.parent_phone}</td>
+                  <td>
+                    <span
+                      onClick={() => onPhoneClick?.(attendee.parent_phone)}
+                      style={{ cursor: onPhoneClick ? 'pointer' : 'default', color: onPhoneClick ? '#1a73e8' : 'inherit', textDecoration: onPhoneClick ? 'underline' : 'none' }}
+                    >
+                      {attendee.parent_phone}
+                    </span>
+                  </td>
                   <td>
                     <select
                       value={attendee.status}

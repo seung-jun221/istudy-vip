@@ -11,7 +11,7 @@ import { supabase } from '../../utils/supabase';
 import StudentAddModal from './StudentAddModal';
 import './AdminTabs.css';
 
-export default function TestsTab({ tests, testSlots, campaignId }) {
+export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick }) {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [resultsMap, setResultsMap] = useState({});
@@ -433,7 +433,14 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
                     <td>{test.grade || '-'}</td>
                     <td>{test.school || '-'}</td>
                     <td>{test.math_level || '-'}</td>
-                    <td>{test.parent_phone}</td>
+                    <td>
+                      <span
+                        onClick={() => onPhoneClick?.(test.parent_phone)}
+                        style={{ cursor: onPhoneClick ? 'pointer' : 'default', color: onPhoneClick ? '#1a73e8' : 'inherit', textDecoration: onPhoneClick ? 'underline' : 'none' }}
+                      >
+                        {test.parent_phone}
+                      </span>
+                    </td>
                     <td>
                       {test.test_date
                         ? formatTestDate(test.test_date)
