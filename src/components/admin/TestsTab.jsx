@@ -219,6 +219,8 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
 
   // 시험지 지정 변경 핸들러 (DB 저장)
   const handlePaperTypeChange = async (studentId, value, source) => {
+    console.log('📝 시험지 지정 변경:', { studentId, value, source });
+
     // 로컬 상태 즉시 업데이트
     setPaperTypeMap(prev => ({
       ...prev,
@@ -228,17 +230,22 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
     // reservation 소스인 경우 DB에 저장
     if (source === 'reservation') {
       try {
+        console.log('💾 DB 저장 시도...');
         const { error } = await supabase
           .from('test_reservations')
           .update({ paper_type: value })
           .eq('id', studentId);
 
         if (error) {
-          console.error('시험지 지정 저장 실패:', error);
+          console.error('❌ 시험지 지정 저장 실패:', error);
+        } else {
+          console.log('✅ 시험지 지정 저장 완료');
         }
       } catch (error) {
-        console.error('시험지 지정 저장 오류:', error);
+        console.error('❌ 시험지 지정 저장 오류:', error);
       }
+    } else {
+      console.log('⚠️ source가 reservation이 아님:', source);
     }
   };
 
