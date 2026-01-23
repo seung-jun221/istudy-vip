@@ -230,16 +230,19 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
     // reservation 소스인 경우 DB에 저장
     if (source === 'reservation') {
       try {
-        console.log('💾 DB 저장 시도...');
-        const { error } = await supabase
+        console.log('💾 DB 저장 시도... ID:', studentId);
+        const { data, error } = await supabase
           .from('test_reservations')
           .update({ paper_type: value })
-          .eq('id', studentId);
+          .eq('id', studentId)
+          .select();
 
         if (error) {
           console.error('❌ 시험지 지정 저장 실패:', error);
+        } else if (!data || data.length === 0) {
+          console.error('❌ 매칭되는 레코드 없음! ID:', studentId);
         } else {
-          console.log('✅ 시험지 지정 저장 완료');
+          console.log('✅ 시험지 지정 저장 완료:', data);
         }
       } catch (error) {
         console.error('❌ 시험지 지정 저장 오류:', error);
