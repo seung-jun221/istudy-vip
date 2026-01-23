@@ -7,6 +7,7 @@ import {
   createDiagnosticRegistration,
   updateDiagnosticRegistration
 } from '../../utils/diagnosticService';
+import { supabase } from '../../utils/supabase';
 import StudentAddModal from './StudentAddModal';
 import './AdminTabs.css';
 
@@ -24,6 +25,17 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
 
   // 시험지 옵션
   const paperTypeOptions = ['미선택', '초등', '모노', '다이', '트라이'];
+
+  // tests에서 paper_type 초기화
+  useEffect(() => {
+    const initialPaperTypes = {};
+    tests.forEach(test => {
+      if (test.paper_type) {
+        initialPaperTypes[test.id] = test.paper_type;
+      }
+    });
+    setPaperTypeMap(prev => ({ ...prev, ...initialPaperTypes }));
+  }, [tests]);
 
   // Supabase에서 등록 목록 로드 (캠페인별 필터링)
   useEffect(() => {
@@ -205,12 +217,29 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
     return matchesSearch && matchesSlot;
   });
 
-  // 시험지 지정 변경 핸들러
-  const handlePaperTypeChange = (studentId, value) => {
+  // 시험지 지정 변경 핸들러 (DB 저장)
+  const handlePaperTypeChange = async (studentId, value, source) => {
+    // 로컬 상태 즉시 업데이트
     setPaperTypeMap(prev => ({
       ...prev,
       [studentId]: value
     }));
+
+    // reservation 소스인 경우 DB에 저장
+    if (source === 'reservation') {
+      try {
+        const { error } = await supabase
+          .from('test_reservations')
+          .update({ paper_type: value })
+          .eq('id', studentId);
+
+        if (error) {
+          console.error('시험지 지정 저장 실패:', error);
+        }
+      } catch (error) {
+        console.error('시험지 지정 저장 오류:', error);
+      }
+    }
   };
 
   // 슬롯별 예약 현황 계산
@@ -476,7 +505,7 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
                     <td>
                       <select
                         value={paperTypeMap[test.id] || '미선택'}
-                        onChange={(e) => handlePaperTypeChange(test.id, e.target.value)}
+                        onChange={(e) => handlePaperTypeChange(test.id, e.target.value, test.source)}
                         style={{
                           padding: '0.4rem 0.6rem',
                           fontSize: '0.85rem',
