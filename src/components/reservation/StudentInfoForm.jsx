@@ -101,6 +101,9 @@ export default function StudentInfoForm({
       return null;
     }
 
+    // 오늘 날짜
+    const today = new Date().toISOString().split('T')[0];
+
     // 같은 캠페인 내 같은 연락처로 기존 예약이 있는지 확인
     const { data: existingReservations } = await supabase
       .from('reservations')
@@ -110,10 +113,15 @@ export default function StudentInfoForm({
       `)
       .eq('campaign_id', selectedSeminar.campaign_id)
       .eq('parent_phone', phone)
-      .in('status', ['예약', '대기', '참석']);
+      .in('status', ['예약', '대기']);
 
-    if (existingReservations && existingReservations.length > 0) {
-      return existingReservations[0];
+    // 미래 날짜의 예약만 필터링 (날짜가 지난 예약은 제외)
+    const futureReservations = existingReservations?.filter(
+      (r) => r.seminar_slots?.date >= today
+    );
+
+    if (futureReservations && futureReservations.length > 0) {
+      return futureReservations[0];
     }
 
     return null;
