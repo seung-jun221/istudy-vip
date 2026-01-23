@@ -35,10 +35,10 @@ export default function CancelledConsultingsTab({ cancelledConsultings, consulti
       const slot = consulting.consulting_slots;
 
       return {
-        '취소 일시': consulting.updated_at ? formatDateTime(consulting.updated_at) : '-',
+        '취소 일시': consulting.cancelled_at ? formatDateTime(consulting.cancelled_at) : '-',
         '취소 유형': getStatusText(consulting.status),
-        '원래 예약일': slot?.date || '-',
-        '원래 예약시간': formatTime(slot?.time),
+        '컨설팅 예약일': slot?.date || '-',
+        '컨설팅 시간': formatTime(slot?.time),
         지점: slot?.location || '-',
         학생명: consulting.student_name || '',
         학년: consulting.grade || '',
@@ -104,8 +104,8 @@ export default function CancelledConsultingsTab({ cancelledConsultings, consulti
             <tr>
               <th>취소 일시</th>
               <th>취소 유형</th>
-              <th>원래 예약일</th>
-              <th>예약 시간</th>
+              <th>컨설팅 예약일</th>
+              <th>컨설팅 시간</th>
               <th>학생명</th>
               <th>학년</th>
               <th>학교</th>
@@ -120,7 +120,7 @@ export default function CancelledConsultingsTab({ cancelledConsultings, consulti
               return (
                 <tr key={consulting.id}>
                   <td style={{ color: '#dc2626', fontWeight: '500' }}>
-                    {consulting.updated_at ? formatDateTime(consulting.updated_at) : '-'}
+                    {consulting.cancelled_at ? formatDateTime(consulting.cancelled_at) : '-'}
                   </td>
                   <td>
                     <span

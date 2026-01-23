@@ -305,7 +305,7 @@ export function AdminProvider({ children }) {
           .select('*')
           .in('slot_id', consultingSlotIds)
           .in('status', ['cancelled', 'auto_cancelled'])
-          .order('updated_at', { ascending: false });
+          .order('cancelled_at', { ascending: false });
 
         if (cancelledError) {
           console.error('❌ 취소된 컨설팅 조회 실패:', cancelledError);
