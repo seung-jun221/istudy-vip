@@ -35,7 +35,7 @@ export default function CancelledConsultingsTab({ cancelledConsultings, consulti
       const slot = consulting.consulting_slots;
 
       return {
-        '예약 생성일': consulting.created_at ? formatDateTime(consulting.created_at) : '-',
+        '취소 일시': consulting.cancelled_at ? formatDateTime(consulting.cancelled_at) : '-',
         '취소 유형': getStatusText(consulting.status),
         '컨설팅 예약일': slot?.date || '-',
         '컨설팅 시간': formatTime(slot?.time),
@@ -102,7 +102,7 @@ export default function CancelledConsultingsTab({ cancelledConsultings, consulti
         <table className="data-table">
           <thead>
             <tr>
-              <th>예약 생성일</th>
+              <th>취소 일시</th>
               <th>취소 유형</th>
               <th>컨설팅 예약일</th>
               <th>컨설팅 시간</th>
@@ -119,8 +119,8 @@ export default function CancelledConsultingsTab({ cancelledConsultings, consulti
 
               return (
                 <tr key={consulting.id}>
-                  <td>
-                    {consulting.created_at ? formatDateTime(consulting.created_at) : '-'}
+                  <td style={{ color: '#dc2626', fontWeight: '500' }}>
+                    {consulting.cancelled_at ? formatDateTime(consulting.cancelled_at) : '-'}
                   </td>
                   <td>
                     <span
