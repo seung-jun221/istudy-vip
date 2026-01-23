@@ -20,34 +20,39 @@ export default function CustomerJourneyModal({ phone, onClose }) {
 
   const loadJourney = async () => {
     setLoading(true);
+    console.log('🔍 고객 여정 조회 시작:', phone);
     try {
       // 1. 설명회 예약 조회
-      const { data: seminars } = await supabase
+      const { data: seminars, error: seminarError } = await supabase
         .from('reservations')
         .select('*, seminar_slots(*)')
         .eq('parent_phone', phone)
         .order('created_at', { ascending: false });
+      console.log('📝 설명회 예약:', seminars?.length || 0, '건', seminarError || '');
 
       // 2. 컨설팅 예약 조회
-      const { data: consultings } = await supabase
+      const { data: consultings, error: consultingError } = await supabase
         .from('consulting_reservations')
         .select('*, consulting_slots(*)')
         .eq('parent_phone', phone)
         .order('created_at', { ascending: false });
+      console.log('📅 컨설팅 예약:', consultings?.length || 0, '건', consultingError || '');
 
       // 3. 진단검사 예약 조회
-      const { data: tests } = await supabase
+      const { data: tests, error: testError } = await supabase
         .from('test_reservations')
         .select('*, test_slots(*)')
         .eq('parent_phone', phone)
         .order('created_at', { ascending: false });
+      console.log('📋 진단검사 예약:', tests?.length || 0, '건', testError || '');
 
       // 4. 진단검사 결과 조회
-      const { data: results } = await supabase
+      const { data: results, error: resultError } = await supabase
         .from('diagnostic_results')
         .select('*')
         .eq('parent_phone', phone)
         .order('created_at', { ascending: false });
+      console.log('🏆 진단검사 결과:', results?.length || 0, '건', resultError || '');
 
       // 프로필 정보 추출 (가장 최근 데이터에서)
       const profile = extractProfile(seminars, consultings, tests);
