@@ -295,6 +295,44 @@ export function AdminProvider({ children }) {
 
       console.log('✅ 컨설팅 예약 수:', consultings?.length || 0);
 
+      // 3-1-1. 취소된 컨설팅 예약 조회 (auto_cancelled 또는 cancelled)
+      console.log('3️⃣-1-1 취소된 컨설팅 예약 조회...');
+      let cancelledConsultings = [];
+
+      if (consultingSlotIds.length > 0) {
+        const { data: cancelledData, error: cancelledError } = await supabase
+          .from('consulting_reservations')
+          .select('*')
+          .in('slot_id', consultingSlotIds)
+          .in('status', ['cancelled', 'auto_cancelled'])
+          .order('updated_at', { ascending: false });
+
+        if (cancelledError) {
+          console.error('❌ 취소된 컨설팅 조회 실패:', cancelledError);
+        } else {
+          cancelledConsultings = cancelledData || [];
+        }
+      }
+      console.log('✅ 취소된 컨설팅 예약 수:', cancelledConsultings?.length || 0);
+
+      // 취소된 컨설팅에 슬롯 정보 추가
+      const cancelledWithSlots = await Promise.all(
+        (cancelledConsultings || []).map(async (consulting) => {
+          let result = { ...consulting };
+
+          if (consulting.slot_id) {
+            const { data: slot } = await supabase
+              .from('consulting_slots')
+              .select('*')
+              .eq('id', consulting.slot_id)
+              .single();
+            result.consulting_slots = slot;
+          }
+
+          return result;
+        })
+      );
+
       // 3-1. 컨설팅 슬롯 정보 및 진단검사 정보 추가
       const consultingsWithSlots = await Promise.all(
         (consultings || []).map(async (consulting) => {
@@ -413,6 +451,7 @@ export function AdminProvider({ children }) {
         campaign,
         attendees: attendees || [],
         consultings: consultingsWithSlots || [],
+        cancelledConsultings: cancelledWithSlots || [], // ⭐ 취소된 컨설팅 예약
         consultingSlots: allConsultingSlots || [],
         tests: testsWithSlots || [],
         testSlots: allTestSlots || [],

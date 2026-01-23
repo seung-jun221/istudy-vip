@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import AttendeesTab from '../../components/admin/AttendeesTab';
 import ConsultingsTab from '../../components/admin/ConsultingsTab';
+import CancelledConsultingsTab from '../../components/admin/CancelledConsultingsTab';
 import TestsTab from '../../components/admin/TestsTab';
 import SettingsTab from '../../components/admin/SettingsTab';
 import './CampaignDetail.css';
@@ -59,12 +60,13 @@ export default function CampaignDetail() {
     );
   }
 
-  const { campaign, attendees, consultings, consultingSlots, tests, testSlots, seminarSlots } = campaignData;
+  const { campaign, attendees, consultings, cancelledConsultings, consultingSlots, tests, testSlots, seminarSlots } = campaignData;
 
   // 통계 계산
   const stats = {
     attendees: attendees.length,
     consultings: consultings.length,
+    cancelled: cancelledConsultings?.length || 0,
     tests: tests.length,
     enrolled: consultings.filter((c) => c.enrollment_status === '확정').length,
   };
@@ -124,6 +126,15 @@ export default function CampaignDetail() {
         >
           컨설팅 현황 ({stats.consultings})
         </button>
+        {stats.cancelled > 0 && (
+          <button
+            className={`tab-btn ${activeTab === 'cancelled' ? 'active' : ''}`}
+            onClick={() => setActiveTab('cancelled')}
+            style={{ color: '#ef4444' }}
+          >
+            취소 내역 ({stats.cancelled})
+          </button>
+        )}
         <button
           className={`tab-btn ${activeTab === 'tests' ? 'active' : ''}`}
           onClick={() => setActiveTab('tests')}
@@ -146,6 +157,12 @@ export default function CampaignDetail() {
             consultings={consultings}
             consultingSlots={consultingSlots}
             onUpdate={fetchCampaignDetail}
+          />
+        )}
+        {activeTab === 'cancelled' && (
+          <CancelledConsultingsTab
+            cancelledConsultings={cancelledConsultings}
+            consultingSlots={consultingSlots}
           />
         )}
         {activeTab === 'tests' && <TestsTab tests={tests} testSlots={testSlots} campaignId={id} />}
