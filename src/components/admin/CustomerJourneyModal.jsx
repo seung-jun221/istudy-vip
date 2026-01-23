@@ -38,7 +38,7 @@ export default function CustomerJourneyModal({ phone, onClose }) {
       // 3. 진단검사 예약 조회
       const { data: tests } = await supabase
         .from('test_reservations')
-        .select('*, test_slots(*), consulting_reservations(student_name, school, grade)')
+        .select('*, test_slots(*)')
         .eq('parent_phone', phone)
         .order('created_at', { ascending: false });
 
