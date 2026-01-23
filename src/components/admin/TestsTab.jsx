@@ -19,6 +19,11 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
   const [registrations, setRegistrations] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [selectedSlotId, setSelectedSlotId] = useState(null); // 슬롯 필터링
+  const [paperTypeMap, setPaperTypeMap] = useState({}); // 시험지 지정 상태
+
+  // 시험지 옵션
+  const paperTypeOptions = ['미선택', '초등', '모노', '다이', '트라이'];
 
   // Supabase에서 등록 목록 로드 (캠페인별 필터링)
   useEffect(() => {
@@ -188,14 +193,25 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
       }))
   ];
 
-  // 필터링
+  // 필터링 (검색어 + 슬롯 필터)
   const filteredTests = allStudents.filter((test) => {
     const matchesSearch =
       test.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       test.parent_phone?.includes(searchTerm);
 
-    return matchesSearch;
+    // 슬롯 필터링 (null이면 전체)
+    const matchesSlot = !selectedSlotId || test.slot_id === selectedSlotId;
+
+    return matchesSearch && matchesSlot;
   });
+
+  // 시험지 지정 변경 핸들러
+  const handlePaperTypeChange = (studentId, value) => {
+    setPaperTypeMap(prev => ({
+      ...prev,
+      [studentId]: value
+    }));
+  };
 
   // 슬롯별 예약 현황 계산
   const slotStats = (testSlots || []).map(slot => {
@@ -276,13 +292,42 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
 
   return (
     <div className="tab-container">
-      {/* 슬롯별 예약 현황 */}
+      {/* 슬롯별 예약 현황 (클릭하여 필터링) */}
       {slotStats.length > 0 && (
         <div className="stats-info-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <span className="stat-info-label">슬롯별 예약 현황:</span>
+            {/* 전체 버튼 */}
+            <div
+              onClick={() => setSelectedSlotId(null)}
+              style={{
+                fontSize: '13px',
+                padding: '4px 12px',
+                background: selectedSlotId === null ? '#1a73e8' : '#fff',
+                color: selectedSlotId === null ? '#fff' : '#333',
+                border: selectedSlotId === null ? '1px solid #1a73e8' : '1px solid #ddd',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              <strong>전체</strong>: {allStudents.length}명
+            </div>
             {slotStats.map(slot => (
-              <div key={slot.id} style={{ fontSize: '13px', padding: '4px 12px', background: '#fff', border: '1px solid #ddd', borderRadius: '4px' }}>
+              <div
+                key={slot.id}
+                onClick={() => setSelectedSlotId(slot.id)}
+                style={{
+                  fontSize: '13px',
+                  padding: '4px 12px',
+                  background: selectedSlotId === slot.id ? '#1a73e8' : '#fff',
+                  color: selectedSlotId === slot.id ? '#fff' : '#333',
+                  border: selectedSlotId === slot.id ? '1px solid #1a73e8' : '1px solid #ddd',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
                 <strong>{formatTestDate(slot.date)} {slot.time?.slice(0, 5)}</strong>: {slot.reservations}/{slot.max_capacity}
               </div>
             ))}
@@ -328,12 +373,13 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
               <th>지점</th>
               <th>성적 관리</th>
               <th>수정</th>
+              <th>시험지 지정</th>
             </tr>
           </thead>
           <tbody>
             {filteredTests.length === 0 ? (
               <tr>
-                <td colSpan="10" className="empty-cell">
+                <td colSpan="11" className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -427,6 +473,27 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
                         수정
                       </button>
                     </td>
+                    <td>
+                      <select
+                        value={paperTypeMap[test.id] || '미선택'}
+                        onChange={(e) => handlePaperTypeChange(test.id, e.target.value)}
+                        style={{
+                          padding: '0.4rem 0.6rem',
+                          fontSize: '0.85rem',
+                          border: '1.5px solid #ddd',
+                          borderRadius: '6px',
+                          background: paperTypeMap[test.id] && paperTypeMap[test.id] !== '미선택'
+                            ? '#e8f5e9'
+                            : '#fff',
+                          cursor: 'pointer',
+                          minWidth: '80px',
+                        }}
+                      >
+                        {paperTypeOptions.map(option => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    </td>
                   </tr>
                 );
               })
@@ -439,6 +506,7 @@ export default function TestsTab({ tests, testSlots, campaignId }) {
       <div className="summary-bar">
         총 {filteredTests.length}명
         {searchTerm && ` (검색 결과)`}
+        {selectedSlotId && ` (슬롯 필터 적용중)`}
       </div>
 
       {/* 학생 추가/수정 모달 */}
