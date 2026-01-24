@@ -41,10 +41,10 @@ export default function EntranceTestResult({ reservation, onBack, onHome }) {
     setLoading(true);
 
     try {
-      // 예약 상태를 'cancelled'로 변경
+      // 예약 상태를 '취소'로 변경
       const { error: updateError } = await supabase
         .from('test_reservations')
-        .update({ status: 'cancelled' })
+        .update({ status: '취소' })
         .eq('id', reservation.id);
 
       if (updateError) throw updateError;
