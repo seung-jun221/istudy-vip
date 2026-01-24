@@ -29,6 +29,7 @@ export function ConsultingProvider({ children }) {
   // 컨설팅 유형 관련 (대표이사/원장)
   const [consultantType, setConsultantType] = useState('ceo'); // 'ceo' | 'director'
   const [isCeoSlotsFull, setIsCeoSlotsFull] = useState(false); // 대표 컨설팅 마감 여부
+  const [isEligibleForCeo, setIsEligibleForCeo] = useState(false); // ⭐ 대표 컨설팅 자격 여부
 
   // ⭐ 진단검사 예약 관련 (신규)
   const [testMethod, setTestMethod] = useState(null); // 'onsite' or 'home'
@@ -231,40 +232,59 @@ export function ConsultingProvider({ children }) {
   };
 
   // 날짜 로드 (컨설팅 유형별 분리)
-  const loadAvailableDates = async (locationOrSeminarId, useSeminarId = false) => {
+  // ⭐ eligibleForCeo: 대표 컨설팅 자격 여부 (설명회 참석 + 시간 경과)
+  const loadAvailableDates = async (locationOrSeminarId, useSeminarId = false, eligibleForCeo = false) => {
     try {
       setLoading(true);
+      setIsEligibleForCeo(eligibleForCeo); // ⭐ 자격 상태 저장
       const today = new Date().toISOString().split('T')[0];
 
-      // 1. 먼저 대표이사 슬롯 확인
-      let ceoQuery = supabase
-        .from('consulting_slots')
-        .select('*')
-        .gte('date', today)
-        .eq('is_available', true)
-        .eq('consultant_type', 'ceo')
-        .order('date', { ascending: true });
+      console.log('📅 날짜 로드 시작:', { locationOrSeminarId, useSeminarId, eligibleForCeo });
 
-      if (useSeminarId) {
-        ceoQuery = ceoQuery.eq('linked_seminar_id', locationOrSeminarId);
-      } else {
-        ceoQuery = ceoQuery.eq('location', locationOrSeminarId);
-      }
-
-      const { data: ceoSlots, error: ceoError } = await ceoQuery;
-      if (ceoError) throw ceoError;
-
-      // 대표 슬롯 중 예약 가능한 슬롯이 있는지 확인
-      const availableCeoSlots = ceoSlots?.filter(
-        (slot) => slot.max_capacity - slot.current_bookings > 0
-      ) || [];
-
-      let slotsToUse = ceoSlots;
+      let slotsToUse = [];
       let isCeoFull = false;
 
-      // 2. 대표 슬롯이 모두 마감된 경우 원장 슬롯 로드
-      if (availableCeoSlots.length === 0) {
-        console.log('🔄 대표이사 컨설팅 마감, 원장 컨설팅으로 전환');
+      // ⭐ 대표 컨설팅 자격이 있는 경우에만 대표 슬롯 확인
+      if (eligibleForCeo) {
+        // 1. 대표이사 슬롯 확인
+        let ceoQuery = supabase
+          .from('consulting_slots')
+          .select('*')
+          .gte('date', today)
+          .eq('is_available', true)
+          .eq('consultant_type', 'ceo')
+          .order('date', { ascending: true });
+
+        if (useSeminarId) {
+          ceoQuery = ceoQuery.eq('linked_seminar_id', locationOrSeminarId);
+        } else {
+          ceoQuery = ceoQuery.eq('location', locationOrSeminarId);
+        }
+
+        const { data: ceoSlots, error: ceoError } = await ceoQuery;
+        if (ceoError) throw ceoError;
+
+        // 대표 슬롯 중 예약 가능한 슬롯이 있는지 확인
+        const availableCeoSlots = ceoSlots?.filter(
+          (slot) => slot.max_capacity - slot.current_bookings > 0
+        ) || [];
+
+        if (availableCeoSlots.length > 0) {
+          slotsToUse = ceoSlots;
+          setConsultantType('ceo');
+          console.log('✅ 대표 컨설팅 슬롯 사용');
+        } else {
+          isCeoFull = true;
+          console.log('🔄 대표이사 컨설팅 마감, 원장 컨설팅으로 전환');
+        }
+      } else {
+        console.log('⚠️ 대표 컨설팅 자격 없음 - 원장 컨설팅으로 진행');
+        isCeoFull = true; // 자격이 없으면 대표 컨설팅 비활성화
+      }
+
+      // 2. 대표 슬롯 사용 불가 시 원장 슬롯 로드
+      if (isCeoFull || slotsToUse.length === 0) {
+        console.log('🔄 원장 컨설팅 슬롯 로드');
 
         let directorQuery = supabase
           .from('consulting_slots')
@@ -678,6 +698,7 @@ export function ConsultingProvider({ children }) {
     // 컨설팅 유형 관련 (대표/원장)
     consultantType,
     isCeoSlotsFull,
+    isEligibleForCeo, // ⭐ 대표 컨설팅 자격 여부
 
     // ⭐ 진단검사 예약 관련 (신규)
     testMethod,

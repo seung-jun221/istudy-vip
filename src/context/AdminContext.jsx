@@ -698,6 +698,7 @@ export function AdminProvider({ children }) {
         season: campaignData.season,
         status: campaignData.status,
         access_password: campaignData.access_password,
+        allow_duplicate_reservation: campaignData.allow_duplicate_reservation, // ⭐ 중복 예약 설정
       };
 
       const { data, error } = await supabase

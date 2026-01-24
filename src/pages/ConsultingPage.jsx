@@ -89,7 +89,8 @@ export default function ConsultingPage() {
     }
 
     // 캠페인 ID로 날짜 로드 (location이 아닌 linked_seminar_id 사용)
-    await loadAvailableDates(attendeeData.linkedSeminarId, true);
+    // ⭐ 대표 컨설팅 자격 여부 전달 (참석 + 설명회 시간 경과)
+    await loadAvailableDates(attendeeData.linkedSeminarId, true, attendeeData.isEligibleForCeo || false);
 
     setStep('date');
   };

@@ -105,6 +105,20 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
         const location = seminarSlot.location;
         const campaignId = campaign?.id; // ⭐ 원본 그대로 유지 (_campaign 포함)
 
+        // ⭐ 대표 컨설팅 자격 확인: "참석" 상태 + 설명회 시간 경과
+        const now = new Date();
+        const seminarDateTime = new Date(`${seminarSlot.date}T${seminarSlot.time}`);
+        const isEligibleForCeo = attendeeInfo.status === '참석' && seminarDateTime < now;
+
+        console.log('🎯 대표 컨설팅 자격 확인:', {
+          status: attendeeInfo.status,
+          seminarDate: seminarSlot.date,
+          seminarTime: seminarSlot.time,
+          seminarDateTime: seminarDateTime.toISOString(),
+          now: now.toISOString(),
+          isEligibleForCeo
+        });
+
         // Context에 지역 자동 선택
         setSelectedLocation(location);
 
@@ -122,6 +136,8 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
           location: location, // ⭐ 원본 location 사용
           linkedSeminarId: campaignId, // ⭐ 원본 campaign ID 사용 (_campaign 포함)
           isSeminarAttendee: true,
+          isEligibleForCeo: isEligibleForCeo, // ⭐ 대표 컨설팅 자격 여부 추가
+          seminarStatus: attendeeInfo.status, // ⭐ 설명회 상태 추가
         });
       } else {
         // 🎯 설명회 미예약자
