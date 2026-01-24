@@ -2,7 +2,6 @@
 // 입학테스트 전용 개인정보 입력 폼 (설명회 미참석자용)
 import { useState, useEffect } from 'react';
 import Input from '../common/Input';
-import Select from '../common/Select';
 import Button from '../common/Button';
 import { validatePhone, validateName } from '../../utils/format';
 import { useConsulting } from '../../context/ConsultingContext';
@@ -19,12 +18,10 @@ export default function EntranceTestInfoForm({ onNext, onBack }) {
     mathLevel: '',
     location: '',
     password: '',
-    passwordConfirm: '',
     privacyConsent: false,
   });
 
   const [availableLocations, setAvailableLocations] = useState([]);
-  const [errors, setErrors] = useState({});
 
   // 입학테스트 가능한 지역 로드
   useEffect(() => {
@@ -46,47 +43,15 @@ export default function EntranceTestInfoForm({ onNext, onBack }) {
 
       // 고유한 지역 목록 추출
       const uniqueLocations = [...new Set(slots?.map(s => s.location) || [])];
-      setAvailableLocations(uniqueLocations.map(loc => ({
-        value: loc,
-        label: loc,
-      })));
+      setAvailableLocations(uniqueLocations);
     } catch (error) {
       console.error('지역 로드 실패:', error);
       showToast('지역 정보를 불러오는데 실패했습니다.', 'error');
     }
   };
 
-  const gradeOptions = [
-    { value: '', label: '학년 선택' },
-    { value: '초5', label: '초등학교 5학년' },
-    { value: '초6', label: '초등학교 6학년' },
-    { value: '중1', label: '중학교 1학년' },
-    { value: '중2', label: '중학교 2학년' },
-    { value: '중3', label: '중학교 3학년' },
-    { value: '고1', label: '고등학교 1학년' },
-    { value: '고2', label: '고등학교 2학년' },
-    { value: '고3', label: '고등학교 3학년' },
-  ];
-
-  const mathLevelOptions = [
-    { value: '', label: '수학 선행 정도 선택' },
-    { value: '현행', label: '현행 (학교 진도)' },
-    { value: '1학기 선행', label: '1학기 선행' },
-    { value: '1년 선행', label: '1년 선행' },
-    { value: '2년 이상 선행', label: '2년 이상 선행' },
-  ];
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-
-    // 에러 클리어
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
-    }
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handlePhoneChange = (e) => {
@@ -100,46 +65,49 @@ export default function EntranceTestInfoForm({ onNext, onBack }) {
     }
 
     setFormData(prev => ({ ...prev, parentPhone: formatted }));
-    if (errors.parentPhone) {
-      setErrors(prev => ({ ...prev, parentPhone: null }));
-    }
   };
 
-  const validate = () => {
-    const newErrors = {};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
+    // 유효성 검사
     if (!validateName(formData.studentName)) {
-      newErrors.studentName = '학생 이름을 정확히 입력해주세요.';
+      showToast('학생명을 정확히 입력해주세요.', 'error');
+      return;
     }
+
     if (!validatePhone(formData.parentPhone)) {
-      newErrors.parentPhone = '올바른 연락처를 입력해주세요.';
+      showToast('올바른 연락처를 입력해주세요.', 'error');
+      return;
     }
-    if (!formData.school.trim()) {
-      newErrors.school = '학교명을 입력해주세요.';
+
+    if (formData.school.length < 2) {
+      showToast('학교를 정확히 입력해주세요.', 'error');
+      return;
     }
+
     if (!formData.grade) {
-      newErrors.grade = '학년을 선택해주세요.';
+      showToast('학년을 선택해주세요.', 'error');
+      return;
     }
+
+    if (formData.mathLevel.length < 2) {
+      showToast('수학 선행정도를 입력해주세요.', 'error');
+      return;
+    }
+
     if (!formData.location) {
-      newErrors.location = '지역을 선택해주세요.';
+      showToast('희망 지역을 선택해주세요.', 'error');
+      return;
     }
-    if (!formData.password || formData.password.length < 4) {
-      newErrors.password = '비밀번호는 4자리 이상 입력해주세요.';
+
+    if (formData.password.length !== 6) {
+      showToast('비밀번호는 6자리 숫자여야 합니다.', 'error');
+      return;
     }
-    if (formData.password !== formData.passwordConfirm) {
-      newErrors.passwordConfirm = '비밀번호가 일치하지 않습니다.';
-    }
+
     if (!formData.privacyConsent) {
-      newErrors.privacyConsent = '개인정보 수집에 동의해주세요.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validate()) {
-      showToast('입력 정보를 확인해주세요.', 'error');
+      showToast('개인정보 수집 및 이용에 동의해주세요.', 'error');
       return;
     }
 
@@ -177,7 +145,7 @@ export default function EntranceTestInfoForm({ onNext, onBack }) {
         parentPhone: formData.parentPhone,
         school: formData.school,
         grade: formData.grade,
-        mathLevel: formData.mathLevel || '상담 시 확인',
+        mathLevel: formData.mathLevel,
         location: formData.location,
         password: hashPassword(formData.password),
         privacyConsent: 'Y',
@@ -191,12 +159,13 @@ export default function EntranceTestInfoForm({ onNext, onBack }) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="info-box" style={{
-        background: '#eff6ff',
-        border: '1px solid #93c5fd',
-        marginBottom: '20px'
-      }}>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <p className="text-gray-600 mb-4">
+        입학테스트 예약을 위해 정보를 입력해주세요.
+      </p>
+
+      {/* 안내 메시지 */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <p style={{ fontSize: '13px', color: '#1e40af', lineHeight: '1.6' }}>
           <strong>📝 입학테스트 안내</strong><br />
           • 소요시간: 약 80분<br />
@@ -204,120 +173,171 @@ export default function EntranceTestInfoForm({ onNext, onBack }) {
         </p>
       </div>
 
+      {/* 학생명 */}
       <Input
-        label="학생 이름"
-        name="studentName"
+        label="학생명"
         value={formData.studentName}
-        onChange={handleChange}
-        placeholder="학생 이름을 입력해주세요"
+        onChange={(e) => handleChange('studentName', e.target.value)}
+        placeholder="홍길동"
         required
-        error={errors.studentName}
       />
 
+      {/* 학부모 연락처 */}
       <Input
         label="학부모 연락처"
-        name="parentPhone"
         type="tel"
         value={formData.parentPhone}
         onChange={handlePhoneChange}
         placeholder="010-0000-0000"
         required
-        error={errors.parentPhone}
       />
 
+      {/* 학교 & 학년 */}
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="학교"
+          value={formData.school}
+          onChange={(e) => handleChange('school', e.target.value)}
+          placeholder="○○중학교"
+          required
+        />
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-700">
+            학년 <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={formData.grade}
+            onChange={(e) => handleChange('grade', e.target.value)}
+            className="px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-primary"
+            required
+          >
+            <option value="">선택</option>
+            <option value="초5">초등학교 5학년</option>
+            <option value="초6">초등학교 6학년</option>
+            <option value="중1">중학교 1학년</option>
+            <option value="중2">중학교 2학년</option>
+            <option value="중3">중학교 3학년</option>
+            <option value="고1">고등학교 1학년</option>
+            <option value="고2">고등학교 2학년</option>
+            <option value="고3">고등학교 3학년</option>
+          </select>
+        </div>
+      </div>
+
+      {/* 수학 선행정도 */}
       <Input
-        label="학교명"
-        name="school"
-        value={formData.school}
-        onChange={handleChange}
-        placeholder="예: OO중학교"
-        required
-        error={errors.school}
-      />
-
-      <Select
-        label="학년"
-        name="grade"
-        value={formData.grade}
-        onChange={handleChange}
-        options={gradeOptions}
-        required
-        error={errors.grade}
-      />
-
-      <Select
-        label="수학 선행 정도"
-        name="mathLevel"
+        label="수학 선행정도"
         value={formData.mathLevel}
-        onChange={handleChange}
-        options={mathLevelOptions}
-      />
-
-      <Select
-        label="희망 지역"
-        name="location"
-        value={formData.location}
-        onChange={handleChange}
-        options={[
-          { value: '', label: '지역 선택' },
-          ...availableLocations,
-        ]}
+        onChange={(e) => handleChange('mathLevel', e.target.value)}
+        placeholder="예: 중3 (고1 선행 중)"
         required
-        error={errors.location}
       />
 
+      {/* 희망 지역 선택 */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-gray-700">
+          희망 지역 <span className="text-red-500">*</span>
+        </label>
+        <select
+          value={formData.location}
+          onChange={(e) => handleChange('location', e.target.value)}
+          className="px-4 py-3 border border-gray-300 rounded-lg outline-none focus:border-primary"
+          required
+        >
+          <option value="">선택하세요</option>
+          {availableLocations.map((loc) => (
+            <option key={loc} value={loc}>
+              {loc}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* 비밀번호 */}
       <Input
-        label="예약 비밀번호"
-        name="password"
+        label="비밀번호 (숫자 6자리)"
         type="password"
         value={formData.password}
-        onChange={handleChange}
-        placeholder="예약 확인/취소 시 사용"
+        onChange={(e) =>
+          handleChange(
+            'password',
+            e.target.value.replace(/[^0-9]/g, '').slice(0, 6)
+          )
+        }
+        placeholder="000000"
+        maxLength={6}
         required
-        error={errors.password}
       />
 
-      <Input
-        label="비밀번호 확인"
-        name="passwordConfirm"
-        type="password"
-        value={formData.passwordConfirm}
-        onChange={handleChange}
-        placeholder="비밀번호를 다시 입력해주세요"
-        required
-        error={errors.passwordConfirm}
-      />
+      {/* 개인정보 수집 동의 섹션 */}
+      <div className="privacy-section">
+        <div className="privacy-title">개인정보 수집 및 이용 동의</div>
 
-      <div className="mt-4">
-        <label className="flex items-start gap-2 cursor-pointer">
+        <div className="privacy-content">
+          <h4>1. 개인정보 수집 목적</h4>
+          <p>- 입학테스트 예약 신청 및 관리</p>
+          <p>- 테스트 관련 안내 사항 전달</p>
+          <p>- 테스트 결과 기반 컨설팅 안내</p>
+
+          <h4>2. 수집하는 개인정보 항목</h4>
+          <table>
+            <tbody>
+              <tr>
+                <th>필수항목</th>
+                <td>학생명, 학부모 연락처, 학교, 학년, 수학 선행정도</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>3. 개인정보 보유 및 이용기간</h4>
+          <p>- 수집일로부터 1년간 보유</p>
+          <p>
+            - 관계 법령에 따라 보존할 필요가 있는 경우 해당 법령에서 정한 기간
+            동안 보유
+          </p>
+
+          <h4>4. 개인정보 제3자 제공</h4>
+          <p>- 원칙적으로 이용자의 개인정보를 제3자에게 제공하지 않습니다.</p>
+          <p>- 단, 이용자의 동의가 있거나 법령에 의한 경우는 예외로 합니다.</p>
+
+          <h4>5. 동의 거부권 및 불이익</h4>
+          <p>- 개인정보 수집 및 이용에 대한 동의를 거부할 권리가 있습니다.</p>
+          <p>- 다만, 동의를 거부할 경우 입학테스트 예약이 불가능합니다.</p>
+        </div>
+
+        <div className="checkbox-group">
           <input
             type="checkbox"
-            name="privacyConsent"
+            id="privacyConsent"
             checked={formData.privacyConsent}
-            onChange={handleChange}
-            className="mt-1"
+            onChange={(e) => handleChange('privacyConsent', e.target.checked)}
           />
-          <span className="text-sm text-gray-600">
-            개인정보 수집 및 이용에 동의합니다. (필수)
-            <br />
-            <span className="text-xs text-gray-400">
-              수집항목: 학생명, 연락처, 학교, 학년 / 이용목적: 입학테스트 예약 및 안내
-            </span>
-          </span>
-        </label>
-        {errors.privacyConsent && (
-          <p className="text-red-500 text-xs mt-1">{errors.privacyConsent}</p>
-        )}
+          <label htmlFor="privacyConsent" className="checkbox-label">
+            <strong>[필수]</strong> 위 개인정보 수집 및 이용에 동의합니다.
+          </label>
+        </div>
+
+        <div className="privacy-notice">
+          ※ 만 14세 미만 아동의 경우 법정대리인의 동의가 필요합니다.
+        </div>
       </div>
 
-      <div className="flex gap-2 mt-6">
-        <Button variant="secondary" onClick={onBack} style={{ flex: 1 }}>
-          뒤로
-        </Button>
-        <Button onClick={handleSubmit} style={{ flex: 2 }}>
-          다음
-        </Button>
+      {/* 비밀번호 경고 */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <p className="text-yellow-800 text-sm">
+          ⚠️ 비밀번호는 예약 확인 및 취소 시 필요합니다. 안전한 곳에
+          기록해두세요.
+        </p>
       </div>
-    </div>
+
+      {/* 버튼 */}
+      <div className="flex gap-3">
+        <Button type="button" variant="secondary" onClick={onBack}>
+          ← 뒤로
+        </Button>
+        <Button type="submit">날짜 선택하기</Button>
+      </div>
+    </form>
   );
 }
