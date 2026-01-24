@@ -32,25 +32,66 @@ export default function PhoneInput({
   // 중복 체크 함수
   const checkDuplicate = async (phoneNumber) => {
     try {
-      const { data, error } = await supabase
+      // 1. 동일 슬롯 중복 체크 (항상 체크)
+      const { data: slotDuplicate, error: slotError } = await supabase
         .from('reservations')
         .select('*')
         .eq('parent_phone', phoneNumber)
         .eq('seminar_slot_id', selectedSeminar.id)
         .in('status', ['예약', '대기']);
 
-      if (error) throw error;
+      if (slotError) throw slotError;
 
-      // 중복 예약이 있으면 true 반환
-      if (data && data.length > 0) {
+      if (slotDuplicate && slotDuplicate.length > 0) {
         const reservationWithSeminar = {
-          ...data[0],
+          ...slotDuplicate[0],
           seminar_title: selectedSeminar.title,
           seminar_date: selectedSeminar.date,
           seminar_time: selectedSeminar.time,
         };
         setDuplicateReservation(reservationWithSeminar);
         return true;
+      }
+
+      // 2. 캠페인 전체 중복 체크 (allow_duplicate_reservation이 false인 경우)
+      const { data: campaign } = await supabase
+        .from('campaigns')
+        .select('allow_duplicate_reservation')
+        .eq('id', selectedSeminar.campaign_id)
+        .single();
+
+      // 중복 예약 불가 설정인 경우
+      if (campaign?.allow_duplicate_reservation === false) {
+        const today = new Date().toISOString().split('T')[0];
+
+        const { data: campaignDuplicate, error: campaignError } = await supabase
+          .from('reservations')
+          .select(`
+            *,
+            seminar_slots (title, date, time, location)
+          `)
+          .eq('campaign_id', selectedSeminar.campaign_id)
+          .eq('parent_phone', phoneNumber)
+          .in('status', ['예약', '대기']);
+
+        if (campaignError) throw campaignError;
+
+        // 미래 날짜의 예약만 필터링
+        const futureReservations = campaignDuplicate?.filter(
+          (r) => r.seminar_slots?.date >= today
+        );
+
+        if (futureReservations && futureReservations.length > 0) {
+          const existing = futureReservations[0];
+          const reservationWithSeminar = {
+            ...existing,
+            seminar_title: existing.seminar_slots?.title || selectedSeminar.title,
+            seminar_date: existing.seminar_slots?.date,
+            seminar_time: existing.seminar_slots?.time,
+          };
+          setDuplicateReservation(reservationWithSeminar);
+          return true;
+        }
       }
 
       return false;
