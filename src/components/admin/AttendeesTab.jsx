@@ -4,10 +4,19 @@ import { useAdmin } from '../../context/AdminContext';
 import './AdminTabs.css';
 
 export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpdate, onPhoneClick }) {
-  const { updateReservationStatus } = useAdmin();
+  const { updateReservationStatus, updateReservationInfo } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedSlotId, setSelectedSlotId] = useState('all'); // 기본값을 'all'로 변경
+
+  // 수정 모달 상태
+  const [editingAttendee, setEditingAttendee] = useState(null);
+  const [editForm, setEditForm] = useState({
+    student_name: '',
+    school: '',
+    grade: '',
+    math_level: '',
+  });
 
   // 설명회 슬롯별로 예약자 그룹화
   const slotGroups = useMemo(() => {
@@ -211,6 +220,28 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
     }
   };
 
+  // 수정 모달 열기
+  const handleEditClick = (attendee) => {
+    setEditingAttendee(attendee);
+    setEditForm({
+      student_name: attendee.student_name || '',
+      school: attendee.school || '',
+      grade: attendee.grade || '',
+      math_level: attendee.math_level || '',
+    });
+  };
+
+  // 수정 저장
+  const handleEditSave = async () => {
+    if (!editingAttendee) return;
+
+    const success = await updateReservationInfo(editingAttendee.id, editForm);
+    if (success) {
+      setEditingAttendee(null);
+      if (onUpdate) onUpdate();
+    }
+  };
+
   return (
     <div className="tab-container">
       {/* 설명회 슬롯 선택 탭 */}
@@ -337,12 +368,13 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
               <th>선행정도</th>
               <th>학부모 연락처</th>
               <th>상태</th>
+              <th>수정</th>
             </tr>
           </thead>
           <tbody>
             {filteredAttendees.length === 0 ? (
               <tr>
-                <td colSpan={isAllSelected ? 8 : 7} className="empty-cell">
+                <td colSpan={isAllSelected ? 9 : 8} className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -393,6 +425,21 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
                       <option value="취소">취소</option>
                     </select>
                   </td>
+                  <td>
+                    <button
+                      onClick={() => handleEditClick(attendee)}
+                      style={{
+                        padding: '4px 10px',
+                        background: '#f3f4f6',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      수정
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
@@ -405,6 +452,172 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
         총 {filteredAttendees.length}명
         {searchTerm && ` (검색 결과)`}
       </div>
+
+      {/* 수정 모달 */}
+      {editingAttendee && (
+        <div
+          className="modal-overlay"
+          onClick={() => setEditingAttendee(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              width: '90%',
+              maxWidth: '400px',
+              maxHeight: '90vh',
+              overflow: 'auto',
+            }}
+          >
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>학생 정보 수정</h3>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', color: '#666', marginBottom: '4px' }}>
+                학부모 연락처 (수정 불가)
+              </label>
+              <input
+                type="text"
+                value={editingAttendee.parent_phone}
+                disabled
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '6px',
+                  background: '#f9fafb',
+                  color: '#6b7280',
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', color: '#666', marginBottom: '4px' }}>
+                학생명 <span style={{ color: 'red' }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={editForm.student_name}
+                onChange={(e) => setEditForm({ ...editForm, student_name: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', color: '#666', marginBottom: '4px' }}>
+                학교
+              </label>
+              <input
+                type="text"
+                value={editForm.school}
+                onChange={(e) => setEditForm({ ...editForm, school: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', color: '#666', marginBottom: '4px' }}>
+                학년
+              </label>
+              <select
+                value={editForm.grade}
+                onChange={(e) => setEditForm({ ...editForm, grade: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                }}
+              >
+                <option value="">선택</option>
+                <option value="초1">초등학교 1학년</option>
+                <option value="초2">초등학교 2학년</option>
+                <option value="초3">초등학교 3학년</option>
+                <option value="초4">초등학교 4학년</option>
+                <option value="초5">초등학교 5학년</option>
+                <option value="초6">초등학교 6학년</option>
+                <option value="중1">중학교 1학년</option>
+                <option value="중2">중학교 2학년</option>
+                <option value="중3">중학교 3학년</option>
+                <option value="고1">고등학교 1학년</option>
+                <option value="고2">고등학교 2학년</option>
+                <option value="고3">고등학교 3학년</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', fontSize: '13px', color: '#666', marginBottom: '4px' }}>
+                수학 선행정도
+              </label>
+              <input
+                type="text"
+                value={editForm.math_level}
+                onChange={(e) => setEditForm({ ...editForm, math_level: e.target.value })}
+                placeholder="예: 중3 (고1 선행 중)"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setEditingAttendee(null)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  background: 'white',
+                  cursor: 'pointer',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleEditSave}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  background: '#1976d2',
+                  color: 'white',
+                  cursor: 'pointer',
+                }}
+              >
+                저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
