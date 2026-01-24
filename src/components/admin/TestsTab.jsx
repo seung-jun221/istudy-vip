@@ -22,6 +22,8 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
   const [editingStudent, setEditingStudent] = useState(null);
   const [selectedSlotId, setSelectedSlotId] = useState(null); // 슬롯 필터링
   const [paperTypeMap, setPaperTypeMap] = useState({}); // 시험지 지정 상태
+  const [reservationTypeFilter, setReservationTypeFilter] = useState('all'); // ⭐ 예약 유형 필터
+  const [entranceTests, setEntranceTests] = useState([]); // ⭐ 입학테스트 예약 목록
 
   // 시험지 옵션
   const paperTypeOptions = ['미선택', '초등', '모노', '다이', '트라이'];
@@ -40,6 +42,7 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
   // Supabase에서 등록 목록 로드 (캠페인별 필터링)
   useEffect(() => {
     loadRegistrations();
+    loadEntranceTests();
   }, [campaignId]);
 
   const loadRegistrations = async () => {
@@ -51,13 +54,30 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
     }
   };
 
+  // ⭐ 입학테스트 예약 로드 (독립 예약)
+  const loadEntranceTests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('test_reservations')
+        .select('*, test_slots(*)')
+        .eq('reservation_type', 'entrance_test')
+        .in('status', ['confirmed', '예약'])
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setEntranceTests(data || []);
+    } catch (error) {
+      console.error('입학테스트 목록 로드 실패:', error);
+    }
+  };
+
   // 각 예약자 및 등록 학생의 제출 결과 로드
   useEffect(() => {
     loadAllResults();
-  }, [tests, registrations]);
+  }, [tests, registrations, entranceTests]);
 
   const loadAllResults = async () => {
-    if (tests.length === 0 && registrations.length === 0) return;
+    if (tests.length === 0 && registrations.length === 0 && entranceTests.length === 0) return;
 
     setLoading(true);
     const newResultsMap = {};
@@ -89,6 +109,19 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
         } catch (error) {
           console.error(`결과 로드 실패 (${reg.parent_phone}):`, error);
         }
+      }
+    }
+
+    // ⭐ 입학테스트 학생들의 전화번호로 결과 조회
+    for (const test of entranceTests) {
+      try {
+        const results = await getAllResultsByPhone(test.parent_phone);
+        const submissionWithResult = results.find(r => r.result);
+        if (submissionWithResult && submissionWithResult.result) {
+          newResultsMap[test.id] = submissionWithResult.result;
+        }
+      } catch (error) {
+        console.error(`결과 로드 실패 (${test.parent_phone}):`, error);
       }
     }
 
@@ -186,7 +219,13 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
 
   // 예약 학생과 등록 학생 합치기
   const allStudents = [
-    ...tests.map(test => ({ ...test, source: 'reservation' })),
+    // 컨설팅 연계 진단검사
+    ...tests.map(test => ({
+      ...test,
+      source: 'reservation',
+      reservation_type: test.reservation_type || 'consulting_linked',
+    })),
+    // 수동 등록 학생
     ...registrations
       .filter(reg => reg.submission_type === 'registration')
       .map(reg => ({
@@ -202,10 +241,28 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
         location: reg.location,
         test_slots: null,
         source: 'registration',
-      }))
+        reservation_type: 'manual',
+      })),
+    // ⭐ 입학테스트 (독립 예약)
+    ...entranceTests.map(test => ({
+      id: test.id,
+      student_name: test.student_name,
+      parent_phone: test.parent_phone,
+      school: test.school,
+      grade: test.grade,
+      math_level: test.math_level,
+      test_date: test.test_slots?.date,
+      test_time: test.test_slots?.time,
+      location: test.location || test.test_slots?.location,
+      slot_id: test.slot_id,
+      test_slots: test.test_slots,
+      source: 'reservation',
+      reservation_type: 'entrance_test',
+      paper_type: test.paper_type,
+    })),
   ];
 
-  // 필터링 (검색어 + 슬롯 필터)
+  // 필터링 (검색어 + 슬롯 필터 + 예약 유형 필터)
   const filteredTests = allStudents.filter((test) => {
     const matchesSearch =
       test.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -214,7 +271,12 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
     // 슬롯 필터링 (null이면 전체)
     const matchesSlot = !selectedSlotId || test.slot_id === selectedSlotId;
 
-    return matchesSearch && matchesSlot;
+    // ⭐ 예약 유형 필터링
+    const matchesType =
+      reservationTypeFilter === 'all' ||
+      test.reservation_type === reservationTypeFilter;
+
+    return matchesSearch && matchesSlot && matchesType;
   });
 
   // 시험지 지정 변경 핸들러 (DB 저장)
@@ -373,6 +435,40 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
           </div>
         </div>
       )}
+
+      {/* ⭐ 예약 유형 필터 탭 */}
+      <div style={{
+        display: 'flex',
+        gap: '8px',
+        marginBottom: '16px',
+        padding: '12px',
+        background: '#f8fafc',
+        borderRadius: '8px',
+      }}>
+        {[
+          { value: 'all', label: '전체', count: allStudents.length },
+          { value: 'consulting_linked', label: '컨설팅 연계', count: allStudents.filter(s => s.reservation_type === 'consulting_linked' || !s.reservation_type).length },
+          { value: 'entrance_test', label: '입학테스트', count: allStudents.filter(s => s.reservation_type === 'entrance_test').length },
+          { value: 'manual', label: '수동등록', count: allStudents.filter(s => s.reservation_type === 'manual').length },
+        ].map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setReservationTypeFilter(tab.value)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '6px',
+              border: reservationTypeFilter === tab.value ? '2px solid #1a73e8' : '1px solid #e2e8f0',
+              background: reservationTypeFilter === tab.value ? '#e0f2fe' : 'white',
+              color: reservationTypeFilter === tab.value ? '#1a73e8' : '#64748b',
+              fontWeight: reservationTypeFilter === tab.value ? '600' : '400',
+              cursor: 'pointer',
+              fontSize: '13px',
+            }}
+          >
+            {tab.label} ({tab.count})
+          </button>
+        ))}
+      </div>
 
       {/* 필터 영역 */}
       <div className="filter-bar">

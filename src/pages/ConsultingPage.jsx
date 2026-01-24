@@ -14,6 +14,10 @@ import TestMethodSelector from '../components/consulting/TestMethodSelector';
 import TestDateSelector from '../components/consulting/TestDateSelector';
 import TestTimeSelector from '../components/consulting/TestTimeSelector';
 import TestComplete from '../components/consulting/TestComplete';
+// ⭐ 입학테스트 전용 컴포넌트 import
+import EntranceTestInfoForm from '../components/consulting/EntranceTestInfoForm';
+import EntranceTestComplete from '../components/consulting/EntranceTestComplete';
+import EntranceTestResult from '../components/consulting/EntranceTestResult';
 
 export default function ConsultingPage() {
   const [step, setStep] = useState('home');
@@ -28,6 +32,12 @@ export default function ConsultingPage() {
   const [agreed, setAgreed] = useState(false);
   // ⭐ 진단검사 가능 날짜 미리보기
   const [testPreviewDates, setTestPreviewDates] = useState([]);
+  // ⭐ 입학테스트 전용 사용자 정보
+  const [entranceTestUserInfo, setEntranceTestUserInfo] = useState(null);
+  // ⭐ 입학테스트 완료 예약 정보
+  const [completedEntranceTest, setCompletedEntranceTest] = useState(null);
+  // ⭐ 입학테스트 예약 확인 결과
+  const [checkedEntranceTest, setCheckedEntranceTest] = useState(null);
 
   const {
     createConsultingReservation,
@@ -35,17 +45,21 @@ export default function ConsultingPage() {
     selectedTime,
     selectedLocation,
     setSelectedSeminarId,
+    setSelectedLocation,
     loadAvailableDates,
     // ⭐ 진단검사 관련
     loadTestMethod,
     loadAvailableTestDates,
-    availableTestDates, // ⭐ 추가
+    availableTestDates,
     selectedTestDate,
     selectedTestTime,
     testTimeSlots,
     loadTestTimeSlots,
     createTestReservation,
     showToast,
+    // ⭐ 입학테스트 전용
+    createEntranceTestReservation,
+    loadEntranceTestDates,
   } = useConsulting();
 
   // ========================================
@@ -315,12 +329,57 @@ export default function ConsultingPage() {
   };
 
   // ========================================
+  // ⭐ 입학테스트 전용 플로우 (신규)
+  // ========================================
+
+  // 입학테스트 개인정보 입력 완료
+  const handleEntranceInfoNext = async (infoData) => {
+    setEntranceTestUserInfo(infoData);
+    setSelectedLocation(infoData.location);
+
+    // 해당 지역의 입학테스트 날짜 로드
+    await loadEntranceTestDates(infoData.location);
+    setStep('entrance-date');
+  };
+
+  // 입학테스트 날짜 선택 완료
+  const handleEntranceDateNext = async () => {
+    setStep('entrance-time');
+  };
+
+  // 입학테스트 시간 선택 완료 → 예약 생성
+  const handleEntranceTimeNext = async () => {
+    try {
+      const reservation = await createEntranceTestReservation({
+        parentPhone: entranceTestUserInfo.parentPhone,
+        studentName: entranceTestUserInfo.studentName,
+        school: entranceTestUserInfo.school,
+        grade: entranceTestUserInfo.grade,
+        mathLevel: entranceTestUserInfo.mathLevel,
+        location: entranceTestUserInfo.location,
+        password: entranceTestUserInfo.password,
+      });
+
+      setCompletedEntranceTest(reservation);
+      setStep('entrance-complete');
+    } catch (error) {
+      console.error('입학테스트 예약 실패:', error);
+    }
+  };
+
+  // ========================================
   // 공통 핸들러
   // ========================================
 
   const handleCheckResult = (reservation) => {
     setCheckedReservation(reservation);
     setStep('result');
+  };
+
+  // ⭐ 입학테스트 예약 확인 결과
+  const handleEntranceTestResult = (reservation) => {
+    setCheckedEntranceTest(reservation);
+    setStep('entrance-result');
   };
 
   const handleHome = () => {
@@ -330,6 +389,10 @@ export default function ConsultingPage() {
     setCompletedReservation(null);
     setCheckedReservation(null);
     setCompletedTestReservation(null);
+    // ⭐ 입학테스트 상태 초기화
+    setEntranceTestUserInfo(null);
+    setCompletedEntranceTest(null);
+    setCheckedEntranceTest(null);
   };
 
   const handleCheckReservation = () => {
@@ -408,35 +471,66 @@ export default function ConsultingPage() {
               </div>
             </div>
 
-            {/* 안내 문구 */}
-            <p style={{
-              fontSize: '13px',
-              color: '#6b7280',
-              textAlign: 'center',
-              marginBottom: '16px'
+            {/* 대표 컨설팅 예약 (설명회 참석자 전용) */}
+            <div style={{
+              background: '#f0fdf4',
+              border: '1px solid #86efac',
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '12px',
             }}>
-              ※ 입학테스트 신청은 컨설팅 예약 후 진행 가능합니다.
-            </p>
-
-            <div className="info-box" style={{ marginBottom: '20px' }}>
-              <p style={{ fontSize: '14px', lineHeight: '1.6' }}>
-                • <strong>컨설팅 시간:</strong> 지역별 상이
-                <br />• <strong>소요 시간:</strong> 약 30분
-                <br />• <strong>장소:</strong> 선택하신 학원
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '18px' }}>🎯</span>
+                <span style={{ fontWeight: '700', color: '#166534' }}>설명회 참석자 전용</span>
+              </div>
+              <p style={{ fontSize: '13px', color: '#4b5563', marginBottom: '12px', lineHeight: '1.5' }}>
+                설명회에 참석하신 분들께 대치동 컨설턴트 대표이사의<br />
+                <strong>무료 개별 컨설팅</strong>을 제공합니다.
               </p>
+              <button
+                onClick={() => setStep('phone')}
+                className="btn btn-primary"
+                style={{ width: '100%' }}
+              >
+                대표 컨설팅 예약
+              </button>
             </div>
 
-            <button
-              onClick={() => setStep('phone')}
-              className="btn btn-primary"
-              style={{ marginBottom: '10px' }}
-            >
-              컨설팅 예약하기
-            </button>
+            {/* 입학테스트 예약 (미참석자용) */}
+            <div style={{
+              background: '#eff6ff',
+              border: '1px solid #93c5fd',
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '12px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '18px' }}>📝</span>
+                <span style={{ fontWeight: '700', color: '#1e40af' }}>입학테스트 신청</span>
+              </div>
+              <p style={{ fontSize: '13px', color: '#4b5563', marginBottom: '12px', lineHeight: '1.5' }}>
+                설명회에 참석하지 않으셨어도 입학테스트 신청이 가능합니다.<br />
+                <span style={{ color: '#6b7280' }}>※ 컨설팅은 추후 학원에서 개별 연락드립니다.</span>
+              </p>
+              <button
+                onClick={() => setStep('entrance-info')}
+                className="btn"
+                style={{
+                  width: '100%',
+                  background: '#2563eb',
+                  color: 'white',
+                  border: 'none',
+                }}
+              >
+                입학테스트 예약
+              </button>
+            </div>
 
+            {/* 예약 확인/취소 */}
             <button
               onClick={handleCheckReservation}
               className="btn btn-secondary"
+              style={{ width: '100%' }}
             >
               예약 확인/취소
             </button>
@@ -672,6 +766,97 @@ export default function ConsultingPage() {
           </div>
         )}
 
+        {/* ========================================
+            ⭐ 입학테스트 전용 플로우 (신규)
+            ======================================== */}
+
+        {/* 입학테스트 개인정보 입력 */}
+        {step === 'entrance-info' && (
+          <div className="card">
+            <button onClick={handleHome} className="btn-back">
+              ← 뒤로
+            </button>
+
+            <h1>입학테스트 예약</h1>
+            <h2>참석자 정보 입력</h2>
+
+            <EntranceTestInfoForm
+              onNext={handleEntranceInfoNext}
+              onBack={handleHome}
+            />
+          </div>
+        )}
+
+        {/* 입학테스트 날짜 선택 */}
+        {step === 'entrance-date' && (
+          <div className="card">
+            <h1 className="mb-6">입학테스트 예약</h1>
+
+            <div style={{ maxWidth: '800px', margin: '0 auto 1.5rem auto' }}>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">📝</span>
+                  <span className="font-bold text-blue-800">
+                    입학테스트 안내
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700">
+                  <strong>학생명:</strong> {entranceTestUserInfo?.studentName}<br />
+                  <strong>지역:</strong> {entranceTestUserInfo?.location}<br />
+                  <strong>소요시간:</strong> 약 80분
+                </p>
+              </div>
+            </div>
+
+            <TestDateSelector
+              consultingDate={null} // 컨설팅 날짜 제약 없음
+              location={entranceTestUserInfo?.location}
+              onNext={handleEntranceDateNext}
+              onBack={() => setStep('entrance-info')}
+              isEntranceTest={true} // ⭐ 입학테스트 모드
+            />
+          </div>
+        )}
+
+        {/* 입학테스트 시간 선택 */}
+        {step === 'entrance-time' && (
+          <div className="card">
+            <h1 className="mb-6">입학테스트 예약</h1>
+
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+              <div className="text-sm space-y-1">
+                <div>
+                  <strong>학생명:</strong> {entranceTestUserInfo?.studentName}
+                </div>
+                <div>
+                  <strong>학교:</strong> {entranceTestUserInfo?.school}
+                </div>
+                <div>
+                  <strong>학년:</strong> {entranceTestUserInfo?.grade}
+                </div>
+                <div>
+                  <strong>지역:</strong> {entranceTestUserInfo?.location}
+                </div>
+              </div>
+            </div>
+
+            <TestTimeSelector
+              onNext={handleEntranceTimeNext}
+              onBack={() => setStep('entrance-date')}
+            />
+          </div>
+        )}
+
+        {/* 입학테스트 예약 완료 */}
+        {step === 'entrance-complete' && (
+          <div className="card">
+            <EntranceTestComplete
+              reservation={completedEntranceTest}
+              onHome={handleHome}
+            />
+          </div>
+        )}
+
         {/* 예약 확인 */}
         {step === 'check' && (
           <div className="card">
@@ -681,7 +866,22 @@ export default function ConsultingPage() {
 
             <h1>예약 확인/취소</h1>
 
-            <ConsultingCheck onBack={handleHome} onResult={handleCheckResult} />
+            <ConsultingCheck
+              onBack={handleHome}
+              onResult={handleCheckResult}
+              onEntranceTestResult={handleEntranceTestResult}
+            />
+          </div>
+        )}
+
+        {/* 입학테스트 예약 확인 결과 */}
+        {step === 'entrance-result' && (
+          <div className="card">
+            <EntranceTestResult
+              reservation={checkedEntranceTest}
+              onBack={() => setStep('check')}
+              onHome={handleHome}
+            />
           </div>
         )}
 
