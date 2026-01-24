@@ -11,6 +11,9 @@ export default function CustomerJourneyModal({ phone, onClose }) {
     tests: [],
     results: [],
   });
+  const [memo, setMemo] = useState('');
+  const [memoSaving, setMemoSaving] = useState(false);
+  const [memoSaved, setMemoSaved] = useState(false);
 
   useEffect(() => {
     if (phone) {
@@ -54,6 +57,16 @@ export default function CustomerJourneyModal({ phone, onClose }) {
         .order('submitted_at', { ascending: false });
       console.log('🏆 진단검사 제출:', results?.length || 0, '건', resultError || '');
 
+      // 5. 고객 메모 조회
+      const { data: memoData } = await supabase
+        .from('customer_memos')
+        .select('memo')
+        .eq('parent_phone', phone)
+        .single();
+      if (memoData?.memo) {
+        setMemo(memoData.memo);
+      }
+
       // 프로필 정보 추출 (가장 최근 데이터에서)
       const profile = extractProfile(seminars, consultings, tests);
 
@@ -93,6 +106,32 @@ export default function CustomerJourneyModal({ phone, onClose }) {
       };
     }
     return null;
+  };
+
+  // 메모 저장
+  const saveMemo = async () => {
+    setMemoSaving(true);
+    try {
+      const { error } = await supabase
+        .from('customer_memos')
+        .upsert({
+          parent_phone: phone,
+          memo: memo,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'parent_phone',
+        });
+
+      if (error) throw error;
+
+      setMemoSaved(true);
+      setTimeout(() => setMemoSaved(false), 2000);
+    } catch (error) {
+      console.error('메모 저장 실패:', error);
+      alert('메모 저장에 실패했습니다.');
+    } finally {
+      setMemoSaving(false);
+    }
   };
 
   const formatDateTime = (dateStr, timeStr) => {
@@ -294,6 +333,55 @@ export default function CustomerJourneyModal({ phone, onClose }) {
                   <span style={{ color: '#94a3b8', fontSize: '12px' }}>수학 선행</span>
                   <div>{journey.profile?.math_level || '-'}</div>
                 </div>
+              </div>
+            </div>
+
+            {/* 메모 섹션 */}
+            <div style={{
+              background: '#fffbeb',
+              border: '1px solid #fcd34d',
+              padding: '16px',
+              borderRadius: '8px',
+              marginBottom: '20px',
+            }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>📝</span> 메모
+              </h3>
+              <textarea
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                placeholder="고객에 대한 메모를 입력하세요..."
+                style={{
+                  width: '100%',
+                  minHeight: '80px',
+                  padding: '10px',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px', gap: '8px', alignItems: 'center' }}>
+                {memoSaved && (
+                  <span style={{ color: '#16a34a', fontSize: '13px' }}>✓ 저장됨</span>
+                )}
+                <button
+                  onClick={saveMemo}
+                  disabled={memoSaving}
+                  style={{
+                    padding: '6px 16px',
+                    background: memoSaving ? '#d1d5db' : '#f59e0b',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    cursor: memoSaving ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {memoSaving ? '저장 중...' : '메모 저장'}
+                </button>
               </div>
             </div>
 
