@@ -7,6 +7,7 @@ export default function TestDateSelector({
   location,
   onNext,
   onBack,
+  isEntranceTest = false, // ⭐ 입학테스트 모드
 }) {
   const {
     availableTestDates,
@@ -31,19 +32,21 @@ export default function TestDateSelector({
   return (
     <div className="date-selector-container">
       <h2 className="text-2xl font-bold mb-6 text-center">
-        진단검사 날짜 선택
+        {isEntranceTest ? '입학테스트 날짜 선택' : '진단검사 날짜 선택'}
       </h2>
 
-      {/* 안내 메시지 */}
-      <div
-        style={{ maxWidth: '800px', margin: '0 auto 1.5rem auto' }}
-        className="bg-blue-50 border border-blue-200 rounded-lg p-4"
-      >
-        <p className="text-sm text-blue-800">
-          💡 <strong>컨설팅 날짜({formatDate(consultingDate)}) 이전</strong>
-          에만 진단검사 응시가 가능합니다.
-        </p>
-      </div>
+      {/* 안내 메시지 - 입학테스트 모드가 아닐 때만 컨설팅 날짜 안내 표시 */}
+      {!isEntranceTest && consultingDate && (
+        <div
+          style={{ maxWidth: '800px', margin: '0 auto 1.5rem auto' }}
+          className="bg-blue-50 border border-blue-200 rounded-lg p-4"
+        >
+          <p className="text-sm text-blue-800">
+            💡 <strong>컨설팅 날짜({formatDate(consultingDate)}) 이전</strong>
+            에만 진단검사 응시가 가능합니다.
+          </p>
+        </div>
+      )}
 
       {availableTestDates.length === 0 ? (
         <div className="no-dates-message">

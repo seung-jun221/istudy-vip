@@ -646,6 +646,135 @@ export function ConsultingProvider({ children }) {
     }
   };
 
+  // ⭐ 입학테스트 전용 예약 생성 (컨설팅 없이 독립 예약)
+  const createEntranceTestReservation = async (testData) => {
+    try {
+      setLoading(true);
+
+      // 선택한 시간의 슬롯 정보 찾기
+      const selectedSlot = testTimeSlots.find((slot) => {
+        const slotTime = slot.time.slice(0, 5);
+        return slotTime === selectedTestTime;
+      });
+
+      if (!selectedSlot) {
+        showToast('선택한 시간 슬롯을 찾을 수 없습니다.', 'error');
+        throw new Error('Slot not found');
+      }
+
+      // 슬롯 여유 확인
+      if (selectedSlot.current_bookings >= selectedSlot.max_capacity) {
+        showToast('해당 시간은 이미 마감되었습니다.', 'error');
+        throw new Error('Slot is full');
+      }
+
+      // 직접 INSERT (RPC 대신 - consulting_reservation_id가 null이므로)
+      const { data: reservation, error: insertError } = await supabase
+        .from('test_reservations')
+        .insert({
+          slot_id: selectedSlot.id,
+          consulting_reservation_id: null, // ⭐ 컨설팅 연결 없음
+          parent_phone: testData.parentPhone,
+          student_name: testData.studentName,
+          school: testData.school,
+          grade: testData.grade,
+          math_level: testData.mathLevel,
+          location: testData.location,
+          password: testData.password,
+          status: 'confirmed',
+          reservation_type: 'entrance_test', // ⭐ 입학테스트 유형
+        })
+        .select('*, test_slots(*)')
+        .single();
+
+      if (insertError) throw insertError;
+
+      // 슬롯 예약 카운트 증가
+      const { error: updateError } = await supabase
+        .from('test_slots')
+        .update({ current_bookings: selectedSlot.current_bookings + 1 })
+        .eq('id', selectedSlot.id);
+
+      if (updateError) {
+        console.error('슬롯 카운트 업데이트 실패:', updateError);
+        // 예약은 이미 생성되었으므로 에러를 던지지 않음
+      }
+
+      showToast('입학테스트 예약이 완료되었습니다!', 'success');
+      return reservation;
+    } catch (error) {
+      console.error('입학테스트 예약 실패:', error);
+
+      const errorMessage =
+        error.message === 'Slot is full'
+          ? '해당 시간은 방금 다른 분이 예약하셨습니다. 다른 시간을 선택해주세요.'
+          : '예약 처리 중 오류가 발생했습니다.';
+
+      showToast(errorMessage, 'error', 5000);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ⭐ 입학테스트용 날짜 로드 (컨설팅 날짜 제약 없음)
+  const loadEntranceTestDates = async (location) => {
+    try {
+      setLoading(true);
+      const today = new Date().toISOString().split('T')[0];
+
+      console.log('🎯 입학테스트 날짜 로드:', { location, today });
+
+      const { data: slots, error } = await supabase
+        .from('test_slots')
+        .select('*')
+        .eq('location', location)
+        .gte('date', today)
+        .eq('status', 'active')
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+
+      console.log('✅ 로드된 test_slots:', slots);
+
+      const dateMap = new Map();
+
+      slots.forEach((slot) => {
+        const availableSlots = slot.max_capacity - slot.current_bookings;
+
+        if (!dateMap.has(slot.date)) {
+          dateMap.set(slot.date, {
+            date: slot.date,
+            display: formatDateDisplay(slot.date),
+            dayOfWeek: getDayOfWeek(slot.date),
+            availableSlotCount: 0,
+          });
+        }
+
+        const dateInfo = dateMap.get(slot.date);
+        dateInfo.availableSlotCount += availableSlots;
+      });
+
+      const dates = Array.from(dateMap.values()).map((dateInfo) => ({
+        ...dateInfo,
+        status:
+          dateInfo.availableSlotCount === 0
+            ? 'full'
+            : dateInfo.availableSlotCount < 4
+            ? 'warning'
+            : 'available',
+      }));
+
+      console.log('📅 최종 입학테스트 날짜 목록:', dates);
+      setAvailableTestDates(dates);
+    } catch (error) {
+      console.error('입학테스트 날짜 로드 실패:', error);
+      showToast('날짜 정보를 불러오는데 실패했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ========================================
   // 유틸리티 함수들
   // ========================================
@@ -712,7 +841,10 @@ export function ConsultingProvider({ children }) {
     selectedTestTime,
     setSelectedTestTime,
     createTestReservation,
-    refreshTestTimeSlots: loadTestTimeSlots, // ⭐ 추가
+    refreshTestTimeSlots: loadTestTimeSlots,
+    // ⭐ 입학테스트 전용 (컨설팅 없이)
+    createEntranceTestReservation,
+    loadEntranceTestDates,
   };
 
   return (

@@ -78,6 +78,83 @@ export default function ReservationPage() {
           </div>
           <h2>설명회 참석 예약 시스템</h2>
 
+          {/* 사직 직영점 오픈 안내 */}
+          <div style={{
+            background: '#ffffff',
+            border: '2px solid #1e3a5f',
+            padding: '24px 20px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            textAlign: 'center',
+          }}>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: '500',
+              color: '#1e3a5f',
+              letterSpacing: '2px',
+              marginBottom: '8px',
+              textTransform: 'uppercase',
+            }}>
+              NEW BRANCH
+            </div>
+            <div style={{
+              fontSize: '18px',
+              fontWeight: '700',
+              color: '#1e3a5f',
+              marginBottom: '4px',
+            }}>
+              부산 사직 직영점
+            </div>
+            <div style={{
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '16px',
+            }}>
+              2026. 03. 02 OPEN
+            </div>
+            <div style={{
+              borderTop: '1px solid #e5e7eb',
+              paddingTop: '12px',
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '24px',
+            }}>
+              <div style={{ fontSize: '13px', color: '#4b5563' }}>
+                사직역 3번출구 도보 1분
+              </div>
+              <div style={{ fontSize: '13px', color: '#4b5563' }}>
+                051-715-1580
+              </div>
+            </div>
+          </div>
+
+          {/* 설명회 마감 안내 */}
+          <div style={{
+            background: '#fef3c7',
+            border: '1px solid #f59e0b',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            textAlign: 'center',
+          }}>
+            <p style={{
+              fontSize: '14px',
+              fontWeight: '700',
+              color: '#92400e',
+              margin: 0,
+            }}>
+              🎉 1회~9회차 설명회 전석 마감!!
+            </p>
+            <p style={{
+              fontSize: '12px',
+              color: '#b45309',
+              margin: '4px 0 0 0',
+            }}>
+              성원에 감사합니다.
+            </p>
+          </div>
+
           <p className="select-guide">참석하실 설명회를 선택해주세요</p>
 
           <SeminarSelector />

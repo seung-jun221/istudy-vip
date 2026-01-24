@@ -24,6 +24,14 @@ export function validatePhone(phone) {
   return cleaned.length === 10 || cleaned.length === 11;
 }
 
+// 이름 유효성 검사
+export function validateName(name) {
+  if (!name || typeof name !== 'string') return false;
+  const trimmed = name.trim();
+  // 최소 2글자 이상, 한글/영문만 허용
+  return trimmed.length >= 2 && /^[가-힣a-zA-Z\s]+$/.test(trimmed);
+}
+
 // 날짜 포맷팅
 export function formatDate(dateStr) {
   const date = new Date(dateStr);
