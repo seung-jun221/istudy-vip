@@ -79,23 +79,37 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
         .from('reservations')
         .select(`
           *,
-          seminar_slots!inner(
+          seminar_slots(
             *,
             campaigns(*)
           )
         `)
         .eq('parent_phone', phone)
-        .eq('seminar_slots.status', 'active')
-        .order('id', { ascending: false })
-        .limit(1);
+        .order('id', { ascending: false });
+
+      console.log('🔍 설명회 예약 조회 결과:', {
+        count: seminarAttendance?.length,
+        data: seminarAttendance,
+        error: seminarError
+      });
 
       if (seminarError) throw seminarError;
+
+      // active 슬롯만 필터링
+      const activeReservations = seminarAttendance?.filter(
+        r => r.seminar_slots?.status === 'active'
+      ) || [];
 
       // ========================================
       // 3단계: 설명회 상태에 따른 분기
       // ========================================
-      if (seminarAttendance && seminarAttendance.length > 0) {
-        const attendeeInfo = seminarAttendance[0];
+      // 가장 최근 예약 (active 슬롯 우선, 없으면 전체에서)
+      const targetReservation = activeReservations.length > 0
+        ? activeReservations[0]
+        : seminarAttendance?.[0];
+
+      if (targetReservation) {
+        const attendeeInfo = targetReservation;
         const seminarSlot = attendeeInfo.seminar_slots;
         const campaign = seminarSlot?.campaigns;
         const status = attendeeInfo.status;
