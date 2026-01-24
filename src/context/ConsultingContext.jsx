@@ -681,7 +681,7 @@ export function ConsultingProvider({ children }) {
           math_level: testData.mathLevel,
           location: testData.location,
           password: testData.password,
-          status: 'confirmed',
+          status: '예약',
           reservation_type: 'entrance_test', // ⭐ 입학테스트 유형
           test_date: selectedSlot.date, // ⭐ 슬롯 날짜 추가
           test_time: selectedSlot.time, // ⭐ 슬롯 시간 추가
