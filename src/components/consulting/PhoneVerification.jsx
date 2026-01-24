@@ -95,70 +95,67 @@ export default function PhoneVerification({ onNext, onAttendeeNext }) {
 
       if (seminarError) throw seminarError;
 
-      // active 슬롯만 필터링
-      const activeReservations = seminarAttendance?.filter(
-        r => r.seminar_slots?.status === 'active'
-      ) || [];
-
       // ========================================
-      // 3단계: 설명회 상태에 따른 분기
+      // 3단계: "참석" 기록이 하나라도 있는지 확인
       // ========================================
-      // 가장 최근 예약 (active 슬롯 우선, 없으면 전체에서)
-      const targetReservation = activeReservations.length > 0
-        ? activeReservations[0]
-        : seminarAttendance?.[0];
+      // "참석" 상태인 예약 찾기 (하나라도 있으면 OK)
+      const attendedReservation = seminarAttendance?.find(r => r.status === '참석');
 
-      if (targetReservation) {
-        const attendeeInfo = targetReservation;
+      console.log('🎯 설명회 예약 확인:', {
+        totalCount: seminarAttendance?.length,
+        attendedReservation: attendedReservation ? {
+          status: attendedReservation.status,
+          date: attendedReservation.seminar_slots?.date,
+        } : null,
+      });
+
+      if (attendedReservation) {
+        // ⭐ "참석" 기록이 있음 - 컨설팅 예약 가능
+        const attendeeInfo = attendedReservation;
         const seminarSlot = attendeeInfo.seminar_slots;
         const campaign = seminarSlot?.campaigns;
-        const status = attendeeInfo.status;
 
-        console.log('🎯 설명회 예약 확인:', {
-          status,
-          seminarDate: seminarSlot?.date,
-          seminarTime: seminarSlot?.time,
+        const location = seminarSlot?.location;
+        const campaignId = campaign?.id;
+
+        // 대표 컨설팅 자격 확인: 설명회 시간 경과
+        const now = new Date();
+        const seminarDateTime = new Date(`${seminarSlot?.date}T${seminarSlot?.time}`);
+        const isEligibleForCeo = seminarDateTime < now;
+
+        console.log('✅ 컨설팅 예약 자격 있음:', { isEligibleForCeo });
+
+        setSelectedLocation(location);
+        setLoading(false);
+
+        showToast(`${campaign?.title || '설명회'} 참석자로 확인되었습니다.`, 'success', 3000);
+
+        onAttendeeNext(phone, {
+          studentName: attendeeInfo.student_name,
+          school: attendeeInfo.school,
+          grade: attendeeInfo.grade,
+          mathLevel: attendeeInfo.math_level,
+          password: attendeeInfo.password,
+          location: location,
+          linkedSeminarId: campaignId,
+          isSeminarAttendee: true,
+          isEligibleForCeo: isEligibleForCeo,
+          seminarStatus: '참석',
         });
+      } else if (seminarAttendance && seminarAttendance.length > 0) {
+        // 예약 이력은 있지만 "참석" 기록 없음
+        const latestReservation = seminarAttendance[0];
+        const status = latestReservation.status;
 
-        // ⭐ "참석" 상태만 컨설팅 예약 가능
-        if (status === '참석') {
-          const location = seminarSlot.location;
-          const campaignId = campaign?.id;
-
-          // 대표 컨설팅 자격 확인: "참석" 상태 + 설명회 시간 경과
-          const now = new Date();
-          const seminarDateTime = new Date(`${seminarSlot.date}T${seminarSlot.time}`);
-          const isEligibleForCeo = seminarDateTime < now;
-
-          console.log('✅ 컨설팅 예약 자격 있음:', { isEligibleForCeo });
-
-          setSelectedLocation(location);
-          setLoading(false);
-
-          showToast(`${campaign?.title || '설명회'} 참석자로 확인되었습니다.`, 'success', 3000);
-
-          onAttendeeNext(phone, {
-            studentName: attendeeInfo.student_name,
-            school: attendeeInfo.school,
-            grade: attendeeInfo.grade,
-            mathLevel: attendeeInfo.math_level,
-            password: attendeeInfo.password,
-            location: location,
-            linkedSeminarId: campaignId,
-            isSeminarAttendee: true,
-            isEligibleForCeo: isEligibleForCeo,
-            seminarStatus: status,
-          });
-        }
-        // ⭐ "예약", "대기" 상태 - 아직 참석 전
-        else if (status === '예약' || status === '대기') {
+        // "예약", "대기" 상태 - 아직 참석 전
+        if (status === '예약' || status === '대기') {
           setLoading(false);
           showToast('설명회 참석 확인 후 컨설팅 예약이 가능합니다.', 'warning', 5000);
         }
-        // ⭐ "불참", "취소" 등 - 예약 불가
+        // "불참", "취소" 등 - 참석 기록 없음
         else {
           setLoading(false);
-          showToast('설명회 미참석자로 현재 컨설팅 예약이 불가합니다.', 'error', 5000);
+          showToast('설명회 참석 기록이 없어 컨설팅 예약이 불가합니다.', 'error', 5000);
         }
       } else {
         // 🎯 설명회 예약 이력 없음
