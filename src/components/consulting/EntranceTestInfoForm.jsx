@@ -213,6 +213,10 @@ export default function EntranceTestInfoForm({ onNext, onBack }) {
             required
           >
             <option value="">선택</option>
+            <option value="초1">초등학교 1학년</option>
+            <option value="초2">초등학교 2학년</option>
+            <option value="초3">초등학교 3학년</option>
+            <option value="초4">초등학교 4학년</option>
             <option value="초5">초등학교 5학년</option>
             <option value="초6">초등학교 6학년</option>
             <option value="중1">중학교 1학년</option>
