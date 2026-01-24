@@ -1289,6 +1289,29 @@ export function AdminProvider({ children }) {
     }
   };
 
+  // 설명회 예약 정보 업데이트 (학생 정보 수정)
+  const updateReservationInfo = async (reservationId, updateData) => {
+    try {
+      setLoading(true);
+
+      const { error } = await supabase
+        .from('reservations')
+        .update(updateData)
+        .eq('id', reservationId);
+
+      if (error) throw error;
+
+      showToast('정보가 수정되었습니다.', 'success');
+      return true;
+    } catch (error) {
+      console.error('정보 업데이트 실패:', error);
+      showToast('정보 수정에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     isAuthenticated,
     authMode,
@@ -1315,6 +1338,7 @@ export function AdminProvider({ children }) {
     deleteTestSlot,
     checkAndOpenNextSlots,
     updateReservationStatus,
+    updateReservationInfo,
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
