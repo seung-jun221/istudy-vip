@@ -286,13 +286,18 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
   };
 
   // 예약 학생과 등록 학생 합치기
+  // tests prop에서 entrance_test 타입의 ID 목록 (중복 방지용)
+  const testsIds = new Set(tests.map(t => t.id));
+
   const allStudents = [
-    // 컨설팅 연계 진단검사
-    ...tests.map(test => ({
-      ...test,
-      source: 'reservation',
-      reservation_type: test.reservation_type || 'consulting_linked',
-    })),
+    // 컨설팅 연계 진단검사 (entrance_test 제외 - 별도로 추가됨)
+    ...tests
+      .filter(test => test.reservation_type !== 'entrance_test')
+      .map(test => ({
+        ...test,
+        source: 'reservation',
+        reservation_type: test.reservation_type || 'consulting_linked',
+      })),
     // 수동 등록 학생
     ...registrations
       .filter(reg => reg.submission_type === 'registration')
@@ -311,23 +316,25 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
         source: 'registration',
         reservation_type: 'manual',
       })),
-    // ⭐ 입학테스트 (독립 예약)
-    ...entranceTests.map(test => ({
-      id: test.id,
-      student_name: test.student_name,
-      parent_phone: test.parent_phone,
-      school: test.school,
-      grade: test.grade,
-      math_level: test.math_level,
-      test_date: test.test_slots?.date,
-      test_time: test.test_slots?.time,
-      location: test.location || test.test_slots?.location,
-      slot_id: test.slot_id,
-      test_slots: test.test_slots,
-      source: 'reservation',
-      reservation_type: 'entrance_test',
-      paper_type: test.paper_type,
-    })),
+    // ⭐ 입학테스트 (독립 예약) - tests에 없는 것만 추가 (중복 방지)
+    ...entranceTests
+      .filter(test => !testsIds.has(test.id))
+      .map(test => ({
+        id: test.id,
+        student_name: test.student_name,
+        parent_phone: test.parent_phone,
+        school: test.school,
+        grade: test.grade,
+        math_level: test.math_level,
+        test_date: test.test_slots?.date,
+        test_time: test.test_slots?.time,
+        location: test.location || test.test_slots?.location,
+        slot_id: test.slot_id,
+        test_slots: test.test_slots,
+        source: 'reservation',
+        reservation_type: 'entrance_test',
+        paper_type: test.paper_type,
+      })),
   ];
 
   // 필터링 (검색어 + 슬롯 필터 + 예약 유형 필터)
