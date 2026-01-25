@@ -173,7 +173,7 @@ export default function CampaignDetail() {
             onPhoneClick={handlePhoneClick}
           />
         )}
-        {activeTab === 'tests' && <TestsTab tests={tests} testSlots={testSlots} campaignId={id} onPhoneClick={handlePhoneClick} />}
+        {activeTab === 'tests' && <TestsTab tests={tests} testSlots={testSlots} campaignId={id} onPhoneClick={handlePhoneClick} onUpdate={fetchCampaignDetail} />}
         {activeTab === 'settings' && (
           <SettingsTab
             campaign={campaign}

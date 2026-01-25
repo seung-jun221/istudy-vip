@@ -11,7 +11,7 @@ import { supabase } from '../../utils/supabase';
 import StudentAddModal from './StudentAddModal';
 import './AdminTabs.css';
 
-export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick }) {
+export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, onUpdate }) {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [resultsMap, setResultsMap] = useState({});
@@ -28,9 +28,13 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
   // 시험지 옵션
   const paperTypeOptions = ['미선택', '초등', '모노', '다이', '트라이'];
 
-  // ⭐ 입학테스트 예약 취소 핸들러
-  const handleCancelEntranceTest = async (testId, slotId) => {
-    if (!window.confirm('정말 이 입학테스트 예약을 취소하시겠습니까?\n\n취소 후 학부모님께 컨설팅 예약 확인 페이지에서 다시 예약하도록 안내해주세요.')) {
+  // ⭐ 진단검사 예약 취소 핸들러 (모든 유형)
+  const handleCancelTest = async (testId, slotId, reservationType) => {
+    const message = reservationType === 'entrance_test'
+      ? '정말 이 입학테스트 예약을 취소하시겠습니까?\n\n취소 후 학부모님께 컨설팅 예약 확인 페이지에서 다시 예약하도록 안내해주세요.'
+      : '정말 이 진단검사 예약을 취소하시겠습니까?\n\n취소 후 학부모님께 컨설팅 예약 확인 페이지에서 다시 예약하도록 안내해주세요.';
+
+    if (!window.confirm(message)) {
       return;
     }
 
@@ -59,11 +63,18 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
         }
       }
 
-      alert('입학테스트 예약이 취소되었습니다.');
+      alert('진단검사 예약이 취소되었습니다.');
+
       // 목록 새로고침
-      await loadEntranceTests();
+      if (reservationType === 'entrance_test') {
+        await loadEntranceTests();
+      }
+      // 부모 컴포넌트에 업데이트 알림
+      if (onUpdate) {
+        onUpdate();
+      }
     } catch (error) {
-      console.error('입학테스트 취소 실패:', error);
+      console.error('진단검사 취소 실패:', error);
       alert('예약 취소에 실패했습니다.');
     }
   };
@@ -702,9 +713,9 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
                       </select>
                     </td>
                     <td>
-                      {test.reservation_type === 'entrance_test' ? (
+                      {test.source === 'reservation' ? (
                         <button
-                          onClick={() => handleCancelEntranceTest(test.id, test.slot_id)}
+                          onClick={() => handleCancelTest(test.id, test.slot_id, test.reservation_type)}
                           style={{
                             padding: '0.5rem 1rem',
                             fontSize: '0.85rem',
