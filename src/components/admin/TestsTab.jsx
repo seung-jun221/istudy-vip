@@ -82,8 +82,14 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
   // Supabase에서 등록 목록 로드 (캠페인별 필터링)
   useEffect(() => {
     loadRegistrations();
-    loadEntranceTests();
   }, [campaignId]);
+
+  // 입학테스트 로드 (지역 기반)
+  useEffect(() => {
+    if (testSlots?.length > 0) {
+      loadEntranceTests();
+    }
+  }, [testSlots]);
 
   const loadRegistrations = async () => {
     try {
@@ -94,18 +100,29 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
     }
   };
 
-  // ⭐ 입학테스트 예약 로드 (독립 예약)
+  // ⭐ 입학테스트 예약 로드 (독립 예약) - 같은 지역만 필터
   const loadEntranceTests = async () => {
     try {
-      const { data, error } = await supabase
+      // 현재 캠페인의 지역 확인 (testSlots에서 가져오기)
+      const currentLocation = testSlots?.[0]?.location;
+
+      let query = supabase
         .from('test_reservations')
         .select('*, test_slots(*)')
         .eq('reservation_type', 'entrance_test')
         .in('status', ['confirmed', '예약'])
         .order('created_at', { ascending: false });
 
+      const { data, error } = await query;
+
       if (error) throw error;
-      setEntranceTests(data || []);
+
+      // 현재 지역과 일치하는 입학테스트만 필터링
+      const filteredData = currentLocation
+        ? (data || []).filter(test => test.test_slots?.location === currentLocation)
+        : (data || []);
+
+      setEntranceTests(filteredData);
     } catch (error) {
       console.error('입학테스트 목록 로드 실패:', error);
     }
@@ -569,7 +586,14 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
                     <td className="highlight-cell">{test.student_name}</td>
                     <td>{test.grade || '-'}</td>
                     <td>{test.school || '-'}</td>
-                    <td>{test.math_level || '-'}</td>
+                    <td style={{
+                      maxWidth: '120px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }} title={test.math_level || ''}>
+                      {test.math_level || '-'}
+                    </td>
                     <td>
                       <span
                         onClick={() => onPhoneClick?.(test.parent_phone)}
