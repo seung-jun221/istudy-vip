@@ -1312,6 +1312,75 @@ export function AdminProvider({ children }) {
     }
   };
 
+  // ========================================
+  // 컨설팅 예약 일정 변경
+  // ========================================
+
+  const changeConsultingSlot = async (reservationId, oldSlotId, newSlotId) => {
+    try {
+      setLoading(true);
+      console.log('📅 컨설팅 일정 변경 시작:', { reservationId, oldSlotId, newSlotId });
+
+      // 1. 새 슬롯의 잔여석 확인
+      const { data: newSlot, error: slotError } = await supabase
+        .from('consulting_slots')
+        .select('*')
+        .eq('id', newSlotId)
+        .single();
+
+      if (slotError) throw slotError;
+
+      if (newSlot.current_bookings >= newSlot.max_capacity) {
+        showToast('선택한 슬롯이 이미 만석입니다.', 'error');
+        return false;
+      }
+
+      // 2. 예약의 slot_id 변경
+      const { error: updateError } = await supabase
+        .from('consulting_reservations')
+        .update({ slot_id: newSlotId })
+        .eq('id', reservationId);
+
+      if (updateError) throw updateError;
+
+      // 3. 기존 슬롯의 current_bookings 감소
+      const { error: oldSlotError } = await supabase
+        .from('consulting_slots')
+        .update({ current_bookings: supabase.rpc ? undefined : newSlot.current_bookings })
+        .eq('id', oldSlotId);
+
+      // RPC가 없으므로 직접 조회 후 업데이트
+      const { data: oldSlotData } = await supabase
+        .from('consulting_slots')
+        .select('current_bookings')
+        .eq('id', oldSlotId)
+        .single();
+
+      if (oldSlotData) {
+        await supabase
+          .from('consulting_slots')
+          .update({ current_bookings: Math.max(0, oldSlotData.current_bookings - 1) })
+          .eq('id', oldSlotId);
+      }
+
+      // 4. 새 슬롯의 current_bookings 증가
+      await supabase
+        .from('consulting_slots')
+        .update({ current_bookings: newSlot.current_bookings + 1 })
+        .eq('id', newSlotId);
+
+      console.log('✅ 컨설팅 일정 변경 완료');
+      showToast('컨설팅 일정이 변경되었습니다.', 'success');
+      return true;
+    } catch (error) {
+      console.error('❌ 컨설팅 일정 변경 실패:', error);
+      showToast('일정 변경에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     isAuthenticated,
     authMode,
@@ -1339,6 +1408,7 @@ export function AdminProvider({ children }) {
     checkAndOpenNextSlots,
     updateReservationStatus,
     updateReservationInfo,
+    changeConsultingSlot,
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;

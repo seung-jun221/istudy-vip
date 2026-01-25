@@ -5,9 +5,12 @@ import ConsultingResultModal from './ConsultingResultModal';
 import './AdminTabs.css';
 
 export default function ConsultingsTab({ consultings, consultingSlots, onUpdate, onPhoneClick }) {
+  const { changeConsultingSlot } = useAdmin();
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedConsulting, setSelectedConsulting] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showSlotChangeModal, setShowSlotChangeModal] = useState(false);
+  const [slotChangeTarget, setSlotChangeTarget] = useState(null);
 
   // 날짜별로 슬롯 그룹화
   const slotsByDate = (consultingSlots || []).reduce((acc, slot) => {
@@ -50,6 +53,54 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
     if (updated) {
       onUpdate();
     }
+  };
+
+  // 일정 변경 모달 열기
+  const handleOpenSlotChange = (consulting) => {
+    setSlotChangeTarget(consulting);
+    setShowSlotChangeModal(true);
+  };
+
+  // 일정 변경 처리
+  const handleSlotChange = async (newSlotId) => {
+    if (!slotChangeTarget) return;
+
+    const success = await changeConsultingSlot(
+      slotChangeTarget.id,
+      slotChangeTarget.slot_id,
+      newSlotId
+    );
+
+    if (success) {
+      setShowSlotChangeModal(false);
+      setSlotChangeTarget(null);
+      onUpdate();
+    }
+  };
+
+  // 변경 가능한 슬롯 목록 (현재 슬롯 제외, 과거 제외, 잔여석 있는 것만)
+  const getAvailableSlots = () => {
+    if (!slotChangeTarget) return [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return (consultingSlots || []).filter((slot) => {
+      // 현재 슬롯 제외
+      if (slot.id === slotChangeTarget.slot_id) return false;
+      // 과거 날짜 제외
+      const slotDate = new Date(slot.date);
+      if (slotDate < today) return false;
+      // 비공개 슬롯 제외
+      if (!slot.is_available) return false;
+      // 만석 슬롯 제외
+      if (slot.current_bookings >= slot.max_capacity) return false;
+      return true;
+    }).sort((a, b) => {
+      // 날짜순, 시간순 정렬
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return a.time.localeCompare(b.time);
+    });
   };
 
   const formatDate = (dateStr) => {
@@ -259,6 +310,13 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
                             {consulting.enrollment_status || '미정'}
                           </span>
                           <button
+                            className="btn-action btn-slot-change"
+                            onClick={() => handleOpenSlotChange(consulting)}
+                            style={{ marginRight: '8px', backgroundColor: '#6366f1' }}
+                          >
+                            일정 변경
+                          </button>
+                          <button
                             className="btn-action"
                             onClick={() => handleWriteResult(consulting)}
                           >
@@ -287,6 +345,64 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
           consulting={selectedConsulting}
           onClose={handleCloseModal}
         />
+      )}
+
+      {/* 일정 변경 모달 */}
+      {showSlotChangeModal && slotChangeTarget && (
+        <div className="modal-overlay" onClick={() => setShowSlotChangeModal(false)}>
+          <div className="modal-content slot-change-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>컨설팅 일정 변경</h3>
+
+            <div className="current-info">
+              <p><strong>학생명:</strong> {slotChangeTarget.student_name}</p>
+              <p><strong>현재 일정:</strong> {(() => {
+                const currentSlot = consultingSlots?.find(s => s.id === slotChangeTarget.slot_id);
+                if (!currentSlot) return '-';
+                const date = new Date(currentSlot.date);
+                const days = ['일', '월', '화', '수', '목', '금', '토'];
+                return `${date.getMonth() + 1}월 ${date.getDate()}일 (${days[date.getDay()]}) ${formatTime(currentSlot.time)}`;
+              })()}</p>
+            </div>
+
+            <div className="slot-list">
+              <p className="slot-list-title">변경할 일정 선택:</p>
+              {getAvailableSlots().length === 0 ? (
+                <p className="no-slots">변경 가능한 슬롯이 없습니다.</p>
+              ) : (
+                <div className="slot-options">
+                  {getAvailableSlots().map((slot) => {
+                    const date = new Date(slot.date);
+                    const days = ['일', '월', '화', '수', '목', '금', '토'];
+                    const remaining = slot.max_capacity - slot.current_bookings;
+                    return (
+                      <button
+                        key={slot.id}
+                        className="slot-option"
+                        onClick={() => handleSlotChange(slot.id)}
+                      >
+                        <span className="slot-datetime">
+                          {date.getMonth() + 1}월 {date.getDate()}일 ({days[date.getDay()]}) {formatTime(slot.time)}
+                        </span>
+                        <span className="slot-remaining">
+                          잔여 {remaining}석
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions">
+              <button
+                className="btn-cancel"
+                onClick={() => setShowSlotChangeModal(false)}
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

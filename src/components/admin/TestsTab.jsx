@@ -28,6 +28,46 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
   // 시험지 옵션
   const paperTypeOptions = ['미선택', '초등', '모노', '다이', '트라이'];
 
+  // ⭐ 입학테스트 예약 취소 핸들러
+  const handleCancelEntranceTest = async (testId, slotId) => {
+    if (!window.confirm('정말 이 입학테스트 예약을 취소하시겠습니까?\n\n취소 후 학부모님께 컨설팅 예약 확인 페이지에서 다시 예약하도록 안내해주세요.')) {
+      return;
+    }
+
+    try {
+      // 1. 예약 상태를 '취소'로 변경
+      const { error: updateError } = await supabase
+        .from('test_reservations')
+        .update({ status: '취소' })
+        .eq('id', testId);
+
+      if (updateError) throw updateError;
+
+      // 2. 슬롯의 current_bookings 감소
+      if (slotId) {
+        const { data: slotData } = await supabase
+          .from('test_slots')
+          .select('current_bookings')
+          .eq('id', slotId)
+          .single();
+
+        if (slotData) {
+          await supabase
+            .from('test_slots')
+            .update({ current_bookings: Math.max(0, slotData.current_bookings - 1) })
+            .eq('id', slotId);
+        }
+      }
+
+      alert('입학테스트 예약이 취소되었습니다.');
+      // 목록 새로고침
+      await loadEntranceTests();
+    } catch (error) {
+      console.error('입학테스트 취소 실패:', error);
+      alert('예약 취소에 실패했습니다.');
+    }
+  };
+
   // tests에서 paper_type 초기화
   useEffect(() => {
     const initialPaperTypes = {};
@@ -509,12 +549,13 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
               <th>성적 관리</th>
               <th>수정</th>
               <th>시험지 지정</th>
+              <th>취소</th>
             </tr>
           </thead>
           <tbody>
             {filteredTests.length === 0 ? (
               <tr>
-                <td colSpan="11" className="empty-cell">
+                <td colSpan="12" className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -635,6 +676,27 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick })
                           <option key={option} value={option}>{option}</option>
                         ))}
                       </select>
+                    </td>
+                    <td>
+                      {test.reservation_type === 'entrance_test' ? (
+                        <button
+                          onClick={() => handleCancelEntranceTest(test.id, test.slot_id)}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            fontSize: '0.85rem',
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                          }}
+                        >
+                          취소
+                        </button>
+                      ) : (
+                        <span style={{ color: '#ccc' }}>-</span>
+                      )}
                     </td>
                   </tr>
                 );
