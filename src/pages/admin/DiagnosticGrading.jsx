@@ -7,6 +7,7 @@ import {
 } from '../../utils/diagnosticService';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import { CT_TEST_CONFIG, calculateCTResults } from '../../data/ctTestConfig';
 import './DiagnosticGrading.css';
 
 export default function DiagnosticGrading() {
@@ -30,13 +31,19 @@ export default function DiagnosticGrading() {
     mathLevel: passedStudentInfo?.mathLevel || '',
   });
 
-  // 문항별 O/X (null: 미선택, true: O, false: X)
+  // 문항별 O/X (null: 미선택, true: O, false: X) - MONO/DI/TRI용
   const [questionResults, setQuestionResults] = useState(Array(25).fill(null));
+
+  // CT 전용: 문항별 득점 (0.5점 단위)
+  const [ctScores, setCtScores] = useState({});
 
   // UI 상태 - 학생 정보가 전달되었으면 시험 선택 단계부터 시작
   const [currentStep, setCurrentStep] = useState(passedStudentInfo ? 'test-select' : 'info'); // 'info' | 'test-select' | 'grading' | 'result'
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+
+  // CT 테스트 여부 확인
+  const isCTTest = selectedTest?.test_type === 'CT';
 
   // 시험 목록 로드
   useEffect(() => {
@@ -79,7 +86,40 @@ export default function DiagnosticGrading() {
 
   const handleSelectTest = (test) => {
     setSelectedTest(test);
+    // 테스트 유형에 따라 상태 초기화
+    if (test.test_type === 'CT') {
+      setCtScores({});
+    } else {
+      setQuestionResults(Array(25).fill(null));
+    }
     setCurrentStep('grading');
+  };
+
+  // CT 전용: 점수 입력 핸들러
+  const handleCtScoreChange = (questionNum, value) => {
+    const question = CT_TEST_CONFIG.questions.find(q => q.num === questionNum);
+    if (!question) return;
+
+    let score = parseFloat(value) || 0;
+
+    // 범위 및 단위 검증
+    if (score < 0) score = 0;
+    if (score > question.maxScore) score = question.maxScore;
+
+    // 0.5점 단위로 반올림
+    score = Math.round(score * 2) / 2;
+
+    setCtScores(prev => ({ ...prev, [questionNum]: score }));
+  };
+
+  // CT 전용: 총점 계산
+  const getCtTotalScore = () => {
+    return Object.values(ctScores).reduce((sum, score) => sum + (score || 0), 0);
+  };
+
+  // CT 전용: 입력 완료 개수
+  const getCtFilledCount = () => {
+    return Object.keys(ctScores).filter(key => ctScores[key] !== undefined && ctScores[key] !== '').length;
   };
 
   const handleQuestionToggle = (index) => {
@@ -105,31 +145,69 @@ export default function DiagnosticGrading() {
   };
 
   const handleSubmit = async () => {
-    // 모든 문항이 채점되었는지 확인
-    const unmarked = questionResults.filter((r) => r === null).length;
-    if (unmarked > 0) {
-      showToast(
-        `${unmarked}개 문항이 아직 채점되지 않았습니다. 모두 채점해주세요.`,
-        'error'
-      );
-      return;
+    // CT 테스트와 일반 테스트 분기 처리
+    if (isCTTest) {
+      // CT: 모든 문항 점수 입력 확인
+      const filledCount = getCtFilledCount();
+      if (filledCount < 10) {
+        showToast(
+          `${10 - filledCount}개 문항의 점수가 입력되지 않았습니다. 모두 입력해주세요.`,
+          'error'
+        );
+        return;
+      }
+    } else {
+      // 일반: 모든 문항이 채점되었는지 확인
+      const unmarked = questionResults.filter((r) => r === null).length;
+      if (unmarked > 0) {
+        showToast(
+          `${unmarked}개 문항이 아직 채점되지 않았습니다. 모두 채점해주세요.`,
+          'error'
+        );
+        return;
+      }
     }
 
     setLoading(true);
 
     try {
-      const request = {
-        student_name: studentInfo.studentName,
-        parent_phone: studentInfo.parentPhone,
-        school: studentInfo.school,
-        grade: studentInfo.grade,
-        math_level: studentInfo.mathLevel,
-        test_type: selectedTest.test_type,
-        question_results: questionResults.map((isCorrect, index) => ({
-          questionNumber: index + 1,
-          isCorrect: isCorrect === true,
-        })),
-      };
+      let request;
+
+      if (isCTTest) {
+        // CT 전용 요청 형식
+        const ctResults = calculateCTResults(ctScores);
+        request = {
+          student_name: studentInfo.studentName,
+          parent_phone: studentInfo.parentPhone,
+          school: studentInfo.school,
+          grade: studentInfo.grade,
+          math_level: studentInfo.mathLevel,
+          test_type: 'CT',
+          scoring_method: 'partial',
+          question_scores: ctScores,
+          total_score: ctResults.totalScore,
+          t_score: ctResults.tScore,
+          percentile: ctResults.percentile,
+          grade9: ctResults.grade9,
+          grade5: ctResults.grade5,
+          area_stats: ctResults.areaStats,
+          difficulty_stats: ctResults.difficultyStats,
+        };
+      } else {
+        // 일반 테스트 요청 형식
+        request = {
+          student_name: studentInfo.studentName,
+          parent_phone: studentInfo.parentPhone,
+          school: studentInfo.school,
+          grade: studentInfo.grade,
+          math_level: studentInfo.mathLevel,
+          test_type: selectedTest.test_type,
+          question_results: questionResults.map((isCorrect, index) => ({
+            questionNumber: index + 1,
+            isCorrect: isCorrect === true,
+          })),
+        };
+      }
 
       const response = await submitManualGrading(request);
 
@@ -157,9 +235,10 @@ export default function DiagnosticGrading() {
   };
 
   const testInfo = {
-    MONO: { name: 'MONO 진단검사', grade: '중1-1', emoji: '📗', color: '#4caf50' },
-    DI: { name: 'DI 진단검사', grade: '중2-1', emoji: '📘', color: '#2196f3' },
-    TRI: { name: 'TRI 진단검사', grade: '중3-1 + 공통수학1', emoji: '📙', color: '#ff9800' },
+    CT: { name: 'CT 개념구조화 테스트', grade: '초5-1 이상', emoji: '📒', color: '#27AE60', questions: 10, totalScore: 100, scoringMethod: 'partial' },
+    MONO: { name: 'MONO 진단검사', grade: '중1-1', emoji: '📗', color: '#4caf50', questions: 25, totalScore: 100, scoringMethod: 'ox' },
+    DI: { name: 'DI 진단검사', grade: '중2-1', emoji: '📘', color: '#2196f3', questions: 25, totalScore: 100, scoringMethod: 'ox' },
+    TRI: { name: 'TRI 진단검사', grade: '중3-1 + 공통수학1', emoji: '📙', color: '#ff9800', questions: 25, totalScore: 100, scoringMethod: 'ox' },
   };
 
   const steps = [
@@ -321,53 +400,125 @@ export default function DiagnosticGrading() {
         {/* Step 3: 채점 */}
         {currentStep === 'grading' && (
           <div className="grading-step">
-            <div className="grading-header-info">
-              <h2 className="step-title">채점: {selectedTest ? testInfo[selectedTest.test_type].name : ''}</h2>
-              <div className="grading-stats">
-                <span>채점 완료: {getMarkedCount()}/25</span>
-                <span>정답: {getCorrectCount()}</span>
-                <span>오답: {getMarkedCount() - getCorrectCount()}</span>
-              </div>
-            </div>
-
-            <div className="quick-actions">
-              <Button variant="secondary" onClick={handleMarkAllCorrect}>
-                전체 정답 표시
-              </Button>
-              <Button variant="secondary" onClick={handleMarkAllWrong}>
-                전체 오답 표시
-              </Button>
-            </div>
-
-            <div className="question-grid">
-              {questionResults.map((result, index) => (
-                <button
-                  key={index}
-                  className={`question-button ${
-                    result === null ? 'unmarked' : result === true ? 'correct' : 'wrong'
-                  }`}
-                  onClick={() => handleQuestionToggle(index)}
-                >
-                  <div className="question-number">{index + 1}</div>
-                  <div className="question-mark">
-                    {result === null ? '?' : result === true ? 'O' : 'X'}
+            {isCTTest ? (
+              /* CT 전용 채점 UI */
+              <>
+                <div className="grading-header-info">
+                  <h2 className="step-title">채점: {testInfo.CT.name}</h2>
+                  <div className="grading-stats">
+                    <span>입력 완료: {getCtFilledCount()}/10</span>
+                    <span>총점: {getCtTotalScore().toFixed(1)}점 / 100점</span>
                   </div>
-                </button>
-              ))}
-            </div>
+                </div>
 
-            <p className="hint-text">
-              💡 문항을 클릭하여 정답(O)/오답(X)을 표시하세요. (미선택 → O → X 순환)
-            </p>
+                <p className="ct-notice">
+                  서술형 문항입니다. 각 문항별 득점을 0.5점 단위로 입력하세요.
+                </p>
 
-            <div className="button-group">
-              <Button variant="secondary" onClick={() => setCurrentStep('test-select')}>
-                ← 시험 다시 선택
-              </Button>
-              <Button onClick={handleSubmit} disabled={getMarkedCount() < 25 || loading}>
-                {loading ? '채점 중...' : `제출하기 (${getMarkedCount()}/25)`}
-              </Button>
-            </div>
+                <div className="ct-scoring-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>문항</th>
+                        <th>영역</th>
+                        <th>내용</th>
+                        <th>배점</th>
+                        <th>득점</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {CT_TEST_CONFIG.questions.map((q) => (
+                        <tr key={q.num} className={ctScores[q.num] !== undefined ? 'filled' : ''}>
+                          <td className="q-num">CT.{String(q.num).padStart(2, '0')}</td>
+                          <td className="q-area">{q.area}</td>
+                          <td className="q-topic">{q.topic}</td>
+                          <td className="q-max">{q.maxScore}점</td>
+                          <td className="q-score">
+                            <input
+                              type="number"
+                              min="0"
+                              max={q.maxScore}
+                              step="0.5"
+                              value={ctScores[q.num] ?? ''}
+                              onChange={(e) => handleCtScoreChange(q.num, e.target.value)}
+                              placeholder="점수"
+                              className="score-input"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan="3"><strong>총점</strong></td>
+                        <td>100점</td>
+                        <td><strong>{getCtTotalScore().toFixed(1)}점</strong></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                <div className="button-group">
+                  <Button variant="secondary" onClick={() => setCurrentStep('test-select')}>
+                    ← 시험 다시 선택
+                  </Button>
+                  <Button onClick={handleSubmit} disabled={getCtFilledCount() < 10 || loading}>
+                    {loading ? '채점 중...' : `제출하기 (${getCtFilledCount()}/10)`}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              /* 일반 테스트 O/X 채점 UI */
+              <>
+                <div className="grading-header-info">
+                  <h2 className="step-title">채점: {selectedTest ? testInfo[selectedTest.test_type].name : ''}</h2>
+                  <div className="grading-stats">
+                    <span>채점 완료: {getMarkedCount()}/25</span>
+                    <span>정답: {getCorrectCount()}</span>
+                    <span>오답: {getMarkedCount() - getCorrectCount()}</span>
+                  </div>
+                </div>
+
+                <div className="quick-actions">
+                  <Button variant="secondary" onClick={handleMarkAllCorrect}>
+                    전체 정답 표시
+                  </Button>
+                  <Button variant="secondary" onClick={handleMarkAllWrong}>
+                    전체 오답 표시
+                  </Button>
+                </div>
+
+                <div className="question-grid">
+                  {questionResults.map((result, index) => (
+                    <button
+                      key={index}
+                      className={`question-button ${
+                        result === null ? 'unmarked' : result === true ? 'correct' : 'wrong'
+                      }`}
+                      onClick={() => handleQuestionToggle(index)}
+                    >
+                      <div className="question-number">{index + 1}</div>
+                      <div className="question-mark">
+                        {result === null ? '?' : result === true ? 'O' : 'X'}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <p className="hint-text">
+                  💡 문항을 클릭하여 정답(O)/오답(X)을 표시하세요. (미선택 → O → X 순환)
+                </p>
+
+                <div className="button-group">
+                  <Button variant="secondary" onClick={() => setCurrentStep('test-select')}>
+                    ← 시험 다시 선택
+                  </Button>
+                  <Button onClick={handleSubmit} disabled={getMarkedCount() < 25 || loading}>
+                    {loading ? '채점 중...' : `제출하기 (${getMarkedCount()}/25)`}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
