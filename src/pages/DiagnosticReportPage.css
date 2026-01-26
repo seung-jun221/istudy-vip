@@ -1306,45 +1306,64 @@
   .difficulty-cards {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 8px;
+    margin-bottom: 12px;
   }
 
   .difficulty-card {
-    padding: 12px;
+    padding: 10px;
     border-radius: 8px;
   }
 
   .difficulty-badge {
-    padding: 4px 12px;
-    font-size: 11px;
-    margin-bottom: 8px;
+    padding: 3px 10px;
+    font-size: 10px;
+    margin-bottom: 6px;
   }
 
   .difficulty-value {
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .difficulty-detail {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .difficulty-bar {
-    height: 6px;
-    margin: 8px 0;
+    height: 5px;
+    margin: 6px 0;
   }
 
   /* 문항별 결과 컴팩트 스타일 */
   .question-grid {
     display: grid !important;
     grid-template-columns: repeat(5, 1fr) !important;
-    gap: 6px;
-    margin-bottom: 15px;
+    gap: 5px;
+    margin-bottom: 10px;
   }
 
   .question-cell {
-    font-size: 9px;
-    border-radius: 6px;
+    font-size: 8px;
+    border-radius: 5px;
+    padding: 8px 4px;
+  }
+
+  /* 섹션 타이틀 컴팩트 */
+  .section-title {
+    margin-bottom: 12px;
+  }
+
+  .section-title-text {
+    font-size: 16px;
+  }
+
+  /* 페이지 콘텐츠 여백 축소 */
+  .page-content {
+    padding: 20px 25px;
+  }
+
+  .page-header {
+    margin-bottom: 15px;
   }
 }
 
