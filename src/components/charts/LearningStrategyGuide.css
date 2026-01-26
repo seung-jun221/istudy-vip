@@ -151,14 +151,14 @@
   border-radius: 4px;
 }
 
-/* 반응형 */
-@media (max-width: 992px) {
+/* 반응형 - 화면용만 */
+@media screen and (max-width: 992px) {
   .strategy-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .strategy-grid {
     grid-template-columns: 1fr;
   }
@@ -194,6 +194,8 @@
   }
 
   .strategy-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 0.5rem;
   }
 

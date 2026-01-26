@@ -186,8 +186,8 @@
   border-top: 1px solid var(--beige);
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
+/* 반응형 - 화면용만 */
+@media screen and (max-width: 768px) {
   .competitiveness-grid {
     grid-template-columns: 1fr;
   }
@@ -216,15 +216,16 @@
 
 /* 인쇄 스타일 */
 @media print {
-  .competitiveness-grid {
+  .school-competitiveness .competitiveness-grid {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 15px !important;
+    gap: 12px !important;
   }
 
-  .competitiveness-card {
+  .school-competitiveness .competitiveness-card {
     break-inside: avoid;
     page-break-inside: avoid;
+    padding: 12px 14px;
   }
 
   .competitiveness-card:hover {
