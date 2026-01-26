@@ -144,7 +144,7 @@ export default function ReservationPage() {
               color: '#92400e',
               margin: 0,
             }}>
-              🎉 1회~9회차 설명회 전석 마감!!
+              1회~11회 설명회 예약 마감
             </p>
             <p style={{
               fontSize: '12px',
