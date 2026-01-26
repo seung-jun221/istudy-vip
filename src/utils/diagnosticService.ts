@@ -48,8 +48,8 @@ export async function getActiveDiagnosticTests(): Promise<DiagnosticTest[]> {
     throw new Error('진단검사 목록을 불러올 수 없습니다.');
   }
 
-  // MONO, DI, TRI 순서로 정렬
-  const testOrder = { MONO: 1, DI: 2, TRI: 3 };
+  // CT, MONO, DI, TRI 순서로 정렬
+  const testOrder: Record<string, number> = { CT: 0, MONO: 1, DI: 2, TRI: 3 };
   const sorted = (data || []).sort((a, b) => {
     return (testOrder[a.test_type as TestType] || 99) - (testOrder[b.test_type as TestType] || 99);
   });

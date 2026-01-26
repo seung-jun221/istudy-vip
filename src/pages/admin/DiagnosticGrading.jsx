@@ -235,7 +235,7 @@ export default function DiagnosticGrading() {
   };
 
   const testInfo = {
-    CT: { name: 'CT 개념구조화 테스트', grade: '초5-1 이상', emoji: '📒', color: '#27AE60', questions: 10, totalScore: 100, scoringMethod: 'partial' },
+    CT: { name: 'CT 개념구조화 테스트', grade: '초5-1 이상', emoji: '📒', color: '#C49A3F', questions: 10, totalScore: 100, scoringMethod: 'partial' },
     MONO: { name: 'MONO 진단검사', grade: '중1-1', emoji: '📗', color: '#4caf50', questions: 25, totalScore: 100, scoringMethod: 'ox' },
     DI: { name: 'DI 진단검사', grade: '중2-1', emoji: '📘', color: '#2196f3', questions: 25, totalScore: 100, scoringMethod: 'ox' },
     TRI: { name: 'TRI 진단검사', grade: '중3-1 + 공통수학1', emoji: '📙', color: '#ff9800', questions: 25, totalScore: 100, scoringMethod: 'ox' },
