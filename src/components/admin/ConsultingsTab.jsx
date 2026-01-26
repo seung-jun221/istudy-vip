@@ -40,7 +40,7 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
       const submissionIds = submissions.map(s => s.id);
       const { data: results, error: resError } = await supabase
         .from('diagnostic_results')
-        .select('id, submission_id, total_score, test_type, created_at')
+        .select('id, submission_id, total_score, created_at')
         .in('submission_id', submissionIds);
 
       if (resError) throw resError;
