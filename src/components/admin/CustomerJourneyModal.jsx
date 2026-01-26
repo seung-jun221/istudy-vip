@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
 import './AdminTabs.css';
 
-export default function CustomerJourneyModal({ phone, onClose }) {
+export default function CustomerJourneyModal({ phone, campaignId, onClose, onMemoSaved }) {
   const [loading, setLoading] = useState(true);
   const [journey, setJourney] = useState({
     profile: null,
@@ -12,6 +12,7 @@ export default function CustomerJourneyModal({ phone, onClose }) {
     results: [],
   });
   const [memo, setMemo] = useState('');
+  const [memoStatus, setMemoStatus] = useState(''); // 대기중, 처리중, 처리완료, 또는 빈 문자열
   const [memoSaving, setMemoSaving] = useState(false);
   const [memoSaved, setMemoSaved] = useState(false);
 
@@ -60,11 +61,12 @@ export default function CustomerJourneyModal({ phone, onClose }) {
       // 5. 고객 메모 조회
       const { data: memoData } = await supabase
         .from('customer_memos')
-        .select('memo')
+        .select('memo, status')
         .eq('parent_phone', phone)
-        .single();
-      if (memoData?.memo) {
-        setMemo(memoData.memo);
+        .maybeSingle();
+      if (memoData) {
+        setMemo(memoData.memo || '');
+        setMemoStatus(memoData.status || '');
       }
 
       // 프로필 정보 추출 (가장 최근 데이터에서)
@@ -117,15 +119,25 @@ export default function CustomerJourneyModal({ phone, onClose }) {
         .upsert({
           parent_phone: phone,
           memo: memo,
+          status: memoStatus || null,
+          student_name: journey.profile?.student_name || null,
+          campaign_id: campaignId || null,
           updated_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
         }, {
           onConflict: 'parent_phone',
+          ignoreDuplicates: false,
         });
 
       if (error) throw error;
 
       setMemoSaved(true);
       setTimeout(() => setMemoSaved(false), 2000);
+
+      // 부모 컴포넌트에 저장 완료 알림
+      if (onMemoSaved) {
+        onMemoSaved();
+      }
     } catch (error) {
       console.error('메모 저장 실패:', error);
       alert('메모 저장에 실패했습니다.');
@@ -362,26 +374,64 @@ export default function CustomerJourneyModal({ phone, onClose }) {
                   fontFamily: 'inherit',
                 }}
               />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px', gap: '8px', alignItems: 'center' }}>
-                {memoSaved && (
-                  <span style={{ color: '#16a34a', fontSize: '13px' }}>✓ 저장됨</span>
-                )}
-                <button
-                  onClick={saveMemo}
-                  disabled={memoSaving}
-                  style={{
-                    padding: '6px 16px',
-                    background: memoSaving ? '#d1d5db' : '#f59e0b',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    cursor: memoSaving ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {memoSaving ? '저장 중...' : '메모 저장'}
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                {/* 상태 선택 */}
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '13px', color: '#92400e', fontWeight: '500' }}>처리 상태:</span>
+                  {['대기중', '처리중', '처리완료'].map(status => (
+                    <button
+                      key={status}
+                      onClick={() => setMemoStatus(memoStatus === status ? '' : status)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '4px',
+                        border: memoStatus === status ? '2px solid' : '1px solid #e5e7eb',
+                        background: memoStatus === status
+                          ? status === '대기중' ? '#fef3c7'
+                            : status === '처리중' ? '#dbeafe'
+                            : '#dcfce7'
+                          : 'white',
+                        color: memoStatus === status
+                          ? status === '대기중' ? '#d97706'
+                            : status === '처리중' ? '#1d4ed8'
+                            : '#16a34a'
+                          : '#6b7280',
+                        borderColor: memoStatus === status
+                          ? status === '대기중' ? '#d97706'
+                            : status === '처리중' ? '#1d4ed8'
+                            : '#16a34a'
+                          : '#e5e7eb',
+                        fontSize: '12px',
+                        fontWeight: memoStatus === status ? '600' : '400',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+                {/* 저장 버튼 */}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {memoSaved && (
+                    <span style={{ color: '#16a34a', fontSize: '13px' }}>✓ 저장됨</span>
+                  )}
+                  <button
+                    onClick={saveMemo}
+                    disabled={memoSaving}
+                    style={{
+                      padding: '6px 16px',
+                      background: memoSaving ? '#d1d5db' : '#f59e0b',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: memoSaving ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {memoSaving ? '저장 중...' : '메모 저장'}
+                  </button>
+                </div>
               </div>
             </div>
 
