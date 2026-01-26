@@ -75,8 +75,8 @@
   color: #e53935;
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
+/* 반응형 - 화면용만 */
+@media screen and (max-width: 768px) {
   .normal-dist-chart {
     padding: 1rem;
   }
@@ -93,5 +93,37 @@
 
   .stats-label {
     margin-bottom: 0;
+  }
+}
+
+/* 인쇄 스타일 */
+@media print {
+  .normal-dist-chart {
+    padding: 1rem;
+    margin-top: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .normal-dist-chart .chart-title {
+    font-size: 13px;
+    margin-bottom: 0.3rem;
+  }
+
+  .stats-table {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    margin-top: 0.5rem;
+  }
+
+  .stats-item {
+    padding: 0.5rem;
+  }
+
+  .stats-label {
+    font-size: 11px;
+  }
+
+  .stats-value {
+    font-size: 15px;
   }
 }
