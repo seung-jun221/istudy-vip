@@ -348,8 +348,9 @@ export function AdminProvider({ children }) {
             result.consulting_slots = slot;
           }
 
-          // 진단검사 정보 추가
-          const { data: testReservations } = await supabase
+          // 진단검사 정보 추가 (consulting_reservation_id 또는 전화번호로 조회)
+          // 1차: consulting_reservation_id로 조회
+          let { data: testReservations } = await supabase
             .from('test_reservations')
             .select(`
               *,
@@ -362,6 +363,25 @@ export function AdminProvider({ children }) {
             .in('status', ['confirmed', '예약'])
             .order('created_at', { ascending: false })
             .limit(1);
+
+          // 2차: consulting_reservation_id로 못 찾으면 전화번호로 조회
+          // (학부모가 진단검사 취소 후 재예약한 경우)
+          if ((!testReservations || testReservations.length === 0) && consulting.parent_phone) {
+            const { data: testByPhone } = await supabase
+              .from('test_reservations')
+              .select(`
+                *,
+                test_slots (
+                  date,
+                  time
+                )
+              `)
+              .eq('parent_phone', consulting.parent_phone)
+              .in('status', ['confirmed', '예약'])
+              .order('created_at', { ascending: false })
+              .limit(1);
+            testReservations = testByPhone;
+          }
 
           result.test_reservation = testReservations?.[0] || null;
 
@@ -383,19 +403,23 @@ export function AdminProvider({ children }) {
       }
       console.log('✅ 컨설팅 슬롯 수:', allConsultingSlots?.length || 0);
 
-      // 4. 진단검사 예약 목록 (consulting_reservations를 통해 간접 조회)
+      // 4. 진단검사 예약 목록 (consulting_reservations를 통해 간접 조회 + 전화번호 기반 조회)
       console.log('4️⃣ 진단검사 예약 조회...');
 
-      // 4-1. 해당 캠페인의 컨설팅 예약 ID 목록 조회
+      // 4-1. 해당 캠페인의 컨설팅 예약 ID 및 전화번호 목록 조회
       const consultingIdList = consultingsWithSlots?.map(c => c.id) || [];
+      const consultingPhones = [...new Set(consultingsWithSlots?.map(c => c.parent_phone).filter(Boolean) || [])];
 
       let tests = [];
+      const testIds = new Set(); // 중복 방지용
+
+      // 4-1-1. consulting_reservation_id로 조회
       if (consultingIdList.length > 0) {
         const { data: testsData, error: testsError } = await supabase
           .from('test_reservations')
           .select('*, consulting_reservations(student_name, school, grade, math_level, parent_phone)')
           .in('consulting_reservation_id', consultingIdList)
-          .in('status', ['confirmed', '예약']) // ⭐ 확정된 예약만 포함
+          .in('status', ['confirmed', '예약'])
           .order('id', { ascending: false });
 
         if (testsError) {
@@ -404,14 +428,48 @@ export function AdminProvider({ children }) {
         }
 
         // 컨설팅 정보를 평탄화 (flatten)
-        tests = (testsData || []).map((test) => ({
-          ...test,
-          student_name: test.consulting_reservations?.student_name || test.student_name,
-          school: test.consulting_reservations?.school,
-          grade: test.consulting_reservations?.grade,
-          math_level: test.consulting_reservations?.math_level,
-          parent_phone: test.consulting_reservations?.parent_phone || test.parent_phone,
-        }));
+        (testsData || []).forEach((test) => {
+          testIds.add(test.id);
+          tests.push({
+            ...test,
+            student_name: test.consulting_reservations?.student_name || test.student_name,
+            school: test.consulting_reservations?.school,
+            grade: test.consulting_reservations?.grade,
+            math_level: test.consulting_reservations?.math_level,
+            parent_phone: test.consulting_reservations?.parent_phone || test.parent_phone,
+          });
+        });
+      }
+
+      // 4-1-2. 전화번호로 추가 조회 (취소 후 재예약한 경우 - 입학테스트 경로로 예약해도 포함)
+      if (consultingPhones.length > 0) {
+        const { data: testsByPhone } = await supabase
+          .from('test_reservations')
+          .select('*')
+          .in('parent_phone', consultingPhones)
+          .in('status', ['confirmed', '예약'])
+          .order('id', { ascending: false });
+
+        // 컨설팅 정보 매핑
+        const consultingByPhone = {};
+        consultingsWithSlots?.forEach(c => {
+          consultingByPhone[c.parent_phone] = c;
+        });
+
+        // 중복되지 않는 것만 추가
+        (testsByPhone || []).forEach((test) => {
+          if (!testIds.has(test.id)) {
+            testIds.add(test.id);
+            const consulting = consultingByPhone[test.parent_phone];
+            tests.push({
+              ...test,
+              student_name: consulting?.student_name || test.student_name,
+              school: consulting?.school || test.school,
+              grade: consulting?.grade || test.grade,
+              math_level: consulting?.math_level || test.math_level,
+            });
+          }
+        });
       }
 
       console.log('✅ 진단검사 예약 수:', tests?.length || 0);
