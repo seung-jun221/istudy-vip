@@ -186,8 +186,8 @@
   border-top: 1px solid var(--beige);
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
+/* 반응형 - 화면용만 */
+@media screen and (max-width: 768px) {
   .competitiveness-grid {
     grid-template-columns: 1fr;
   }
@@ -216,6 +216,18 @@
 
 /* 인쇄 스타일 */
 @media print {
+  .school-competitiveness .competitiveness-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .school-competitiveness .competitiveness-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    padding: 12px 14px;
+  }
+
   .competitiveness-card:hover {
     box-shadow: none;
     border-color: var(--border-color);
@@ -230,5 +242,24 @@
     background: var(--gold) !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  .stat-badge {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .stat-badge.percentile {
+    background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%) !important;
+  }
+
+  .stat-badge.grade {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t-score-gradient {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
