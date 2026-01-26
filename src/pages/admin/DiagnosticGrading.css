@@ -468,6 +468,125 @@
   font-weight: 500;
 }
 
+/* ===== CT 전용 채점 테이블 ===== */
+.ct-notice {
+  font-size: 14px;
+  color: #27AE60;
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 12px 20px;
+  background: #E8F5E9;
+  border-radius: 8px;
+  border-left: 4px solid #27AE60;
+  font-weight: 500;
+}
+
+.ct-scoring-table {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.ct-scoring-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ct-scoring-table th,
+.ct-scoring-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ct-scoring-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+.ct-scoring-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.ct-scoring-table tbody tr:hover {
+  background: #f5f5f5;
+}
+
+.ct-scoring-table tbody tr.filled {
+  background: #E8F5E9;
+}
+
+.ct-scoring-table .q-num {
+  font-weight: 600;
+  color: #27AE60;
+  white-space: nowrap;
+  width: 70px;
+}
+
+.ct-scoring-table .q-area {
+  color: #666;
+  white-space: nowrap;
+  width: 100px;
+}
+
+.ct-scoring-table .q-topic {
+  color: #333;
+  min-width: 200px;
+}
+
+.ct-scoring-table .q-max {
+  text-align: center;
+  font-weight: 600;
+  color: #1a73e8;
+  width: 70px;
+}
+
+.ct-scoring-table .q-score {
+  width: 100px;
+}
+
+.ct-scoring-table .score-input {
+  width: 80px;
+  padding: 8px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.ct-scoring-table .score-input:focus {
+  border-color: #27AE60;
+  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+}
+
+.ct-scoring-table .score-input::-webkit-inner-spin-button,
+.ct-scoring-table .score-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.ct-scoring-table .score-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.ct-scoring-table tfoot td {
+  background: #f0f4f8;
+  font-weight: 600;
+  border-top: 2px solid #ddd;
+}
+
+.ct-scoring-table tfoot strong {
+  color: #27AE60;
+  font-size: 16px;
+}
+
 /* ===== 반응형 (태블릿) ===== */
 @media (max-width: 768px) {
   .diagnostic-grading-page {
