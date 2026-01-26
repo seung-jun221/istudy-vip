@@ -4,6 +4,9 @@ import { getFullResultById, getOrGenerateReport } from '../utils/diagnosticServi
 import NormalDistributionChart from '../components/charts/NormalDistributionChart';
 import TScoreBarChart from '../components/charts/TScoreBarChart';
 import SchoolCompetitivenessChart from '../components/charts/SchoolCompetitivenessChart';
+import { CT_TEST_CONFIG, CT_STATISTICS, CT_COMPETITIVENESS } from '../data/ctTestConfig';
+import { CT_AREA_COMMENTS, CT_OVERALL_COMMENTS, CT_STRATEGY_CATEGORIES, getAreaComment, getOverallComment } from '../data/ctComments';
+import CTCompetitivenessChart from '../components/charts/CTCompetitivenessChart';
 import './DiagnosticReportPage.css';
 
 export default function DiagnosticReportPage() {
@@ -53,6 +56,7 @@ export default function DiagnosticReportPage() {
 
   const getTestTypeName = (testType) => {
     const names = {
+      'CT': 'CT 개념구조화 테스트',
       'DI': 'DI 진단검사',
       'MONO': 'MONO 진단검사',
       'TRI': 'TRI 진단검사'
@@ -60,7 +64,27 @@ export default function DiagnosticReportPage() {
     return names[testType] || testType;
   };
 
+  // CT 테스트 여부 확인
+  const isCTTest = (testType) => testType === 'CT';
+
+  // 푸터 텍스트 (CT와 일반 테스트 구분)
+  const getFooterText = (testType) => {
+    return isCTTest(testType) ? 'i.study 개념구조화 테스트' : 'i.study 수리탐구 진단검사';
+  };
+
   const QUESTION_DATA = {
+    CT: {
+      1: { content: '약수를 표로 소인수분해 형태 나타내기 (소인수 2개)', score: 8.0 },
+      2: { content: '약수를 표로 소인수분해 형태 나타내기 (소인수 3개)', score: 10.0 },
+      3: { content: '약수 개수 공식 활용', score: 8.0 },
+      4: { content: '제곱수 나열', score: 6.0 },
+      5: { content: '약수 3개인 최소 세자리수', score: 10.0 },
+      6: { content: '제곱수와 약수 3개 수 구하는 방법 서술', score: 14.0 },
+      7: { content: 'a×b=소수 순서쌍 찾기', score: 10.0 },
+      8: { content: 'a×b×c=소수 순서쌍 찾기', score: 12.0 },
+      9: { content: 'a×b 약수 3개 순서쌍 찾기', score: 10.0 },
+      10: { content: 'a×b×c 약수 3개 순서쌍 찾기', score: 12.0 }
+    },
     MONO: {
       1: { content: '150 이하 자연수 중 약수의 개수가 3개인 수의 개수', score: 3.5 },
       2: { content: 'x^a × y^b × (x+y)의 인수 개수', score: 4.5 },
@@ -166,6 +190,7 @@ export default function DiagnosticReportPage() {
 
   const getTestStats = (testType) => {
     const stats = {
+      'CT': { average: CT_STATISTICS.mean, stdDev: CT_STATISTICS.stdDev },
       'MONO': { average: 45, stdDev: 22 },
       'DI': { average: 47, stdDev: 20 },
       'TRI': { average: 42, stdDev: 24 }
@@ -831,15 +856,22 @@ export default function DiagnosticReportPage() {
   const { submission } = data;
   const wrongAnswers = data.question_results.filter(q => !q.isCorrect);
 
-  // 전략 가이드 데이터 준비
-  const strategyCategories = [
-    'advanceVsDeepen',
-    'csatVsSchool',
-    'artsVsScience',
-    'academyVsTutor',
-    'regularVsIntensive',
-    'regularVsSpecial'
-  ];
+  // 전략 가이드 데이터 준비 (CT는 초등학생용으로 관련 카테고리만 표시)
+  const strategyCategories = isCTTest(submission?.test_type)
+    ? [
+        'advanceVsDeepen',    // 선행 VS 심화
+        'academyVsTutor',     // 학원 VS 과외
+        'regularVsIntensive', // 일반 VS 몰입
+        'regularVsSpecial'    // 일반 VS 특구
+      ]
+    : [
+        'advanceVsDeepen',
+        'csatVsSchool',
+        'artsVsScience',
+        'academyVsTutor',
+        'regularVsIntensive',
+        'regularVsSpecial'
+      ];
 
   const strategies = strategyCategories.map(key => {
     const categoryData = STRATEGY_DATA[key];
@@ -875,8 +907,12 @@ export default function DiagnosticReportPage() {
           <div className="cover-logo">i.STUDY</div>
           <div className="cover-gold-line"></div>
           <div className="cover-title-wrapper">
-            <h1 className="cover-title">수리탐구 진단검사</h1>
-            <p className="cover-subtitle">MATHEMATICAL REASONING DIAGNOSTIC</p>
+            <h1 className="cover-title">
+              {isCTTest(submission?.test_type) ? '개념구조화 테스트' : '수리탐구 진단검사'}
+            </h1>
+            <p className="cover-subtitle">
+              {isCTTest(submission?.test_type) ? 'CONCEPT STRUCTURING TEST' : 'MATHEMATICAL REASONING DIAGNOSTIC'}
+            </p>
           </div>
           <div className="cover-gold-line"></div>
           <div className="cover-test-type">{submission?.test_type}</div>
@@ -1001,7 +1037,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="page-footer">
-              <span>i.study 수리탐구 진단검사</span>
+              <span>{getFooterText(submission?.test_type)}</span>
               <span className="page-number">{++pageNum}</span>
             </div>
           </div>
@@ -1060,7 +1096,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="page-footer">
-              <span>i.study 수리탐구 진단검사</span>
+              <span>{getFooterText(submission?.test_type)}</span>
               <span className="page-number">{++pageNum}</span>
             </div>
           </div>
@@ -1132,7 +1168,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="page-footer">
-              <span>i.study 수리탐구 진단검사</span>
+              <span>{getFooterText(submission?.test_type)}</span>
               <span className="page-number">{++pageNum}</span>
             </div>
           </div>
@@ -1191,7 +1227,7 @@ export default function DiagnosticReportPage() {
               )}
 
               <div className="page-footer">
-                <span>i.study 수리탐구 진단검사</span>
+                <span>{getFooterText(submission?.test_type)}</span>
                 <span className="page-number">{++pageNum}</span>
               </div>
             </div>
@@ -1206,16 +1242,23 @@ export default function DiagnosticReportPage() {
         {/* 간지 2: 경쟁력 분석 */}
         <div className="page divider-page">
           <div className="divider-number">02</div>
-          <h2 className="divider-title">경쟁력 분석</h2>
-          <p className="divider-subtitle">COMPETITIVENESS ANALYSIS</p>
+          <h2 className="divider-title">
+            {isCTTest(submission?.test_type) ? '준비도 분석' : '경쟁력 분석'}
+          </h2>
+          <p className="divider-subtitle">
+            {isCTTest(submission?.test_type) ? 'READINESS ANALYSIS' : 'COMPETITIVENESS ANALYSIS'}
+          </p>
           <div className="divider-gold-line"></div>
           <p className="divider-description">
-            고교 유형별 내신 경쟁력을 분석하고<br/>
-            맞춤형 학습 전략을 제시합니다.
+            {isCTTest(submission?.test_type) ? (
+              <>중등 수학 학습 목표별 준비도를 분석하고<br/>맞춤형 학습 전략을 제시합니다.</>
+            ) : (
+              <>고교 유형별 내신 경쟁력을 분석하고<br/>맞춤형 학습 전략을 제시합니다.</>
+            )}
           </p>
         </div>
 
-        {/* 고교 유형별 내신 경쟁력 분석 페이지 (4개 박스만) */}
+        {/* 경쟁력/준비도 분석 페이지 */}
         <div className="page content-page">
           <div className="page-content">
             <div className="page-header">
@@ -1225,16 +1268,22 @@ export default function DiagnosticReportPage() {
 
             <div className="section-title">
               <span className="section-title-icon">▪</span>
-              <span className="section-title-text">고교 유형별 내신 경쟁력 분석</span>
+              <span className="section-title-text">
+                {isCTTest(submission?.test_type) ? '중등 수학 준비도 분석' : '고교 유형별 내신 경쟁력 분석'}
+              </span>
               <div className="section-title-line"></div>
             </div>
 
             <div className="chart-container">
-              <SchoolCompetitivenessChart score={data.total_score} maxScore={data.max_score} />
+              {isCTTest(submission?.test_type) ? (
+                <CTCompetitivenessChart score={data.total_score} maxScore={data.max_score} />
+              ) : (
+                <SchoolCompetitivenessChart score={data.total_score} maxScore={data.max_score} />
+              )}
             </div>
 
             <div className="page-footer">
-              <span>i.study 수리탐구 진단검사</span>
+              <span>{getFooterText(submission?.test_type)}</span>
               <span className="page-number">{++pageNum}</span>
             </div>
           </div>
@@ -1287,7 +1336,7 @@ export default function DiagnosticReportPage() {
             ))}
 
             <div className="page-footer">
-              <span>i.study 수리탐구 진단검사</span>
+              <span>{getFooterText(submission?.test_type)}</span>
               <span className="page-number">{++pageNum}</span>
             </div>
           </div>
@@ -1328,52 +1377,54 @@ export default function DiagnosticReportPage() {
             ))}
 
             <div className="page-footer">
-              <span>i.study 수리탐구 진단검사</span>
+              <span>{getFooterText(submission?.test_type)}</span>
               <span className="page-number">{++pageNum}</span>
             </div>
           </div>
         </div>
 
-        {/* 학습 전략 가이드 페이지 3 (전략 5-6) */}
-        <div className="page content-page">
-          <div className="page-content">
-            <div className="page-header">
-              <span className="page-header-logo">i.STUDY</span>
-              <span className="page-header-info">{submission?.student_name} | {getTestTypeName(submission?.test_type)}</span>
-            </div>
-
-            <div className="section-title">
-              <span className="section-title-icon">▪</span>
-              <span className="section-title-text">학습 전략 가이드</span>
-              <div className="section-title-line"></div>
-            </div>
-
-            {strategies.slice(4, 6).map((item, index) => (
-              <div key={index} className="strategy-page-card">
-                <ScaleIndicator
-                  leftLabel={item.category.leftLabel}
-                  rightLabel={item.category.rightLabel}
-                  position={item.position}
-                  title={item.category.title}
-                />
-                <h4 className="strategy-page-subtitle">
-                  <span className="strategy-page-icon">{item.category.icon}</span>
-                  {item.strategy.subtitle}
-                </h4>
-                <div className="strategy-page-content">{item.strategy.content}</div>
-                <div className="strategy-page-keypoint">
-                  <span className="keypoint-label">핵심:</span>
-                  <span className="keypoint-text">{item.strategy.keyPoint}</span>
-                </div>
+        {/* 학습 전략 가이드 페이지 3 (전략 5-6) - CT 제외 */}
+        {strategies.length > 4 && (
+          <div className="page content-page">
+            <div className="page-content">
+              <div className="page-header">
+                <span className="page-header-logo">i.STUDY</span>
+                <span className="page-header-info">{submission?.student_name} | {getTestTypeName(submission?.test_type)}</span>
               </div>
-            ))}
 
-            <div className="page-footer">
-              <span>i.study 수리탐구 진단검사</span>
-              <span className="page-number">{++pageNum}</span>
+              <div className="section-title">
+                <span className="section-title-icon">▪</span>
+                <span className="section-title-text">학습 전략 가이드</span>
+                <div className="section-title-line"></div>
+              </div>
+
+              {strategies.slice(4, 6).map((item, index) => (
+                <div key={index} className="strategy-page-card">
+                  <ScaleIndicator
+                    leftLabel={item.category.leftLabel}
+                    rightLabel={item.category.rightLabel}
+                    position={item.position}
+                    title={item.category.title}
+                  />
+                  <h4 className="strategy-page-subtitle">
+                    <span className="strategy-page-icon">{item.category.icon}</span>
+                    {item.strategy.subtitle}
+                  </h4>
+                  <div className="strategy-page-content">{item.strategy.content}</div>
+                  <div className="strategy-page-keypoint">
+                    <span className="keypoint-label">핵심:</span>
+                    <span className="keypoint-text">{item.strategy.keyPoint}</span>
+                  </div>
+                </div>
+              ))}
+
+              <div className="page-footer">
+                <span>{getFooterText(submission?.test_type)}</span>
+                <span className="page-number">{++pageNum}</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 학습 분석 (동적 코멘트가 있는 경우) */}
         {report?.dynamic_comments?.area_comments && (
@@ -1445,7 +1496,7 @@ export default function DiagnosticReportPage() {
                 </div>
 
                 <div className="page-footer">
-                  <span>i.study 수리탐구 진단검사</span>
+                  <span>{getFooterText(submission?.test_type)}</span>
                   <span className="page-number">{++pageNum}</span>
                 </div>
               </div>
@@ -1460,7 +1511,7 @@ export default function DiagnosticReportPage() {
           <p className="divider-subtitle">THANK YOU</p>
           <div className="divider-gold-line"></div>
           <p className="divider-description">
-            본 결과는 i.study 수리탐구 진단검사 시스템을 통해<br/>
+            본 결과는 {getFooterText(submission?.test_type)} 시스템을 통해<br/>
             자동 생성되었습니다.<br/><br/>
             상세한 학습 분석 및 맞춤형 커리큘럼 상담을 원하시면<br/>
             담당 선생님께 문의해주세요.
