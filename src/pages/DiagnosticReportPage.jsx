@@ -72,6 +72,38 @@ export default function DiagnosticReportPage() {
     return isCTTest(testType) ? 'i.study 개념구조화 테스트' : 'i.study 수리탐구 진단검사';
   };
 
+  // area_results 정규화 (객체 → 배열 변환 지원)
+  const normalizeAreaResults = (areaResults) => {
+    if (!areaResults) return [];
+    if (Array.isArray(areaResults)) return areaResults;
+    // 객체인 경우 배열로 변환
+    return Object.entries(areaResults).map(([areaName, stats]) => ({
+      areaName,
+      totalScore: stats.max || stats.totalScore || 0,
+      earnedScore: stats.earned || stats.earnedScore || 0,
+      correctCount: stats.correctCount || 0,
+      totalCount: stats.totalCount || 0,
+      correctRate: stats.rate || stats.correctRate || 0,
+      tscore: stats.tscore || 50,
+      percentile: stats.percentile || stats.rate || 50,
+    }));
+  };
+
+  // difficulty_results 정규화 (객체 → 배열 변환 지원)
+  const normalizeDifficultyResults = (difficultyResults) => {
+    if (!difficultyResults) return [];
+    if (Array.isArray(difficultyResults)) return difficultyResults;
+    // 객체인 경우 배열로 변환
+    return Object.entries(difficultyResults).map(([difficulty, stats]) => ({
+      difficulty: difficulty.toUpperCase(),
+      totalScore: stats.max || stats.totalScore || 0,
+      earnedScore: stats.earned || stats.earnedScore || 0,
+      correctCount: stats.fullScoreCount || stats.correctCount || 0,
+      totalCount: stats.questions?.length || stats.totalCount || 0,
+      correctRate: stats.rate || stats.correctRate || 0,
+    }));
+  };
+
   const QUESTION_DATA = {
     CT: {
       1: { content: '약수를 표로 소인수분해 형태 나타내기 (소인수 2개)', score: 8.0 },
@@ -1068,7 +1100,7 @@ export default function DiagnosticReportPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.area_results.map((area, index) => {
+                {normalizeAreaResults(data.area_results).map((area, index) => {
                   const evaluation = getTScoreEvaluation(area.tscore);
                   const topPercentile = (100 - area.percentile).toFixed(0);
                   return (
@@ -1092,7 +1124,7 @@ export default function DiagnosticReportPage() {
 
             <div className="chart-container">
               <div className="chart-title">자기주도 학습역량 주요 요인 프로파일</div>
-              <TScoreBarChart areaResults={data.area_results} />
+              <TScoreBarChart areaResults={normalizeAreaResults(data.area_results)} />
             </div>
 
             <div className="page-footer">
@@ -1117,7 +1149,7 @@ export default function DiagnosticReportPage() {
             </div>
 
             <div className="difficulty-cards">
-              {data.difficulty_results.map((diff, index) => {
+              {normalizeDifficultyResults(data.difficulty_results).map((diff, index) => {
                 const labels = { LOW: '하난도', MID: '중난도', HIGH: '고난도' };
                 const classNames = { LOW: 'low', MID: 'mid', HIGH: 'high' };
                 return (
