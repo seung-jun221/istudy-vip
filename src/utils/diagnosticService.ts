@@ -236,6 +236,111 @@ export async function submitManualGrading(
   }
 }
 
+/**
+ * CT 테스트 수동 채점 제출 (부분 점수 방식)
+ */
+export async function submitCTManualGrading(
+  request: {
+    student_name: string;
+    parent_phone: string;
+    school: string;
+    grade: string;
+    math_level?: string;
+    test_type: 'CT';
+    scoring_method: 'partial';
+    question_scores: Record<number, number>;
+    total_score: number;
+    t_score: number;
+    percentile: number;
+    grade9: number;
+    grade5: number;
+    area_stats: any;
+    difficulty_stats: any;
+  }
+): Promise<GradingResponse> {
+  try {
+    // 1. 시험 정보 조회
+    const test = await getDiagnosticTestByType('CT');
+    if (!test) {
+      throw new Error('CT 시험 정보를 찾을 수 없습니다.');
+    }
+
+    // 2. 제출 데이터 생성
+    const submissionId = 'CT' + Date.now();
+    const submissionData: Partial<DiagnosticSubmission> = {
+      submission_id: submissionId,
+      student_name: request.student_name,
+      parent_phone: request.parent_phone,
+      school: request.school,
+      grade: request.grade,
+      math_level: request.math_level || null,
+      test_id: test.id,
+      test_type: 'CT',
+      answers: Object.values(request.question_scores).map(String), // 점수를 문자열 배열로 저장
+      submission_type: 'manual',
+    };
+
+    // 3. Supabase에 제출 데이터 삽입
+    const { data: submission, error: submissionError } = await supabase
+      .from('diagnostic_submissions')
+      .insert([submissionData])
+      .select()
+      .single();
+
+    if (submissionError) {
+      console.error('CT 제출 실패:', submissionError);
+      throw new Error('CT 수동 채점 제출에 실패했습니다.');
+    }
+
+    // 4. 결과 데이터 생성 (이미 계산된 값 사용)
+    const resultData = {
+      submission_id: submission.id,
+      total_score: request.total_score,
+      max_score: 100,
+      percentile: request.percentile,
+      grade9: request.grade9,
+      grade5: request.grade5,
+      area_results: request.area_stats,
+      difficulty_results: request.difficulty_stats,
+      question_results: Object.entries(request.question_scores).map(([num, score]) => ({
+        questionNumber: parseInt(num),
+        isCorrect: score > 0,
+        earnedScore: score,
+      })),
+    };
+
+    // 5. 결과 저장
+    const { data: result, error: resultError } = await supabase
+      .from('diagnostic_results')
+      .insert([resultData])
+      .select()
+      .single();
+
+    if (resultError) {
+      console.error('CT 결과 저장 실패:', resultError);
+      throw new Error('CT 결과 저장에 실패했습니다.');
+    }
+
+    // 6. 결과 보고서 생성
+    const report = await generateReport(result.id);
+
+    return {
+      success: true,
+      submission,
+      result,
+      report,
+    };
+  } catch (error) {
+    console.error('submitCTManualGrading 실패:', error);
+    return {
+      success: false,
+      submission: null as any,
+      result: null as any,
+      error: error instanceof Error ? error.message : '알 수 없는 오류',
+    };
+  }
+}
+
 // ========================================
 // 채점 실행 (내부 함수)
 // ========================================

@@ -4,6 +4,7 @@ import { useAdmin } from '../../context/AdminContext';
 import {
   getActiveDiagnosticTests,
   submitManualGrading,
+  submitCTManualGrading,
 } from '../../utils/diagnosticService';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -209,7 +210,9 @@ export default function DiagnosticGrading() {
         };
       }
 
-      const response = await submitManualGrading(request);
+      const response = isCTTest
+        ? await submitCTManualGrading(request)
+        : await submitManualGrading(request);
 
       if (response.success) {
         setResult(response.result);
