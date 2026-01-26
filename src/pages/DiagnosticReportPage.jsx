@@ -889,6 +889,11 @@ export default function DiagnosticReportPage() {
           <div className="cover-date">{formatDate(submission?.submitted_at)}</div>
         </div>
 
+        {/* 표지 뒷장 빈 페이지 (양면 인쇄용) */}
+        <div className="page blank-page print-only">
+          <div className="blank-page-content"></div>
+        </div>
+
         {/* 간지 1: 성적 분석 */}
         <div className="page divider-page">
           <div className="divider-number">01</div>
@@ -1192,6 +1197,11 @@ export default function DiagnosticReportPage() {
             </div>
           </div>
         )}
+
+        {/* 오답문항분석 뒷장 빈 페이지 (양면 인쇄용) */}
+        <div className="page blank-page print-only">
+          <div className="blank-page-content"></div>
+        </div>
 
         {/* 간지 2: 경쟁력 분석 */}
         <div className="page divider-page">
