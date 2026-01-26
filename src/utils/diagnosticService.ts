@@ -994,14 +994,91 @@ export async function deleteRegistration(id: string): Promise<boolean> {
 // ========================================
 
 /**
+ * area_results를 배열 형식으로 정규화 (객체/배열 모두 지원)
+ */
+function normalizeAreaResults(areaResults: unknown): Array<{
+  areaName: string;
+  totalScore: number;
+  earnedScore: number;
+  correctCount: number;
+  totalCount: number;
+  correctRate: number;
+  tscore: number;
+  percentile: number;
+}> {
+  if (!areaResults) return [];
+  if (Array.isArray(areaResults)) return areaResults;
+
+  // 객체 형식인 경우 배열로 변환
+  return Object.entries(areaResults as Record<string, {
+    max?: number;
+    totalScore?: number;
+    earned?: number;
+    earnedScore?: number;
+    correctCount?: number;
+    totalCount?: number;
+    rate?: number;
+    correctRate?: number;
+    tscore?: number;
+    percentile?: number;
+  }>).map(([areaName, stats]) => ({
+    areaName,
+    totalScore: stats.max || stats.totalScore || 0,
+    earnedScore: stats.earned || stats.earnedScore || 0,
+    correctCount: stats.correctCount || 0,
+    totalCount: stats.totalCount || 0,
+    correctRate: stats.rate || stats.correctRate || 0,
+    tscore: stats.tscore || 50,
+    percentile: stats.percentile || stats.rate || 50,
+  }));
+}
+
+/**
+ * difficulty_results를 배열 형식으로 정규화 (객체/배열 모두 지원)
+ */
+function normalizeDifficultyResults(difficultyResults: unknown): Array<{
+  difficulty: string;
+  totalScore: number;
+  earnedScore: number;
+  correctCount: number;
+  totalCount: number;
+  correctRate: number;
+}> {
+  if (!difficultyResults) return [];
+  if (Array.isArray(difficultyResults)) return difficultyResults;
+
+  // 객체 형식인 경우 배열로 변환
+  return Object.entries(difficultyResults as Record<string, {
+    max?: number;
+    totalScore?: number;
+    earned?: number;
+    earnedScore?: number;
+    fullScoreCount?: number;
+    correctCount?: number;
+    questions?: unknown[];
+    totalCount?: number;
+    rate?: number;
+    correctRate?: number;
+  }>).map(([difficulty, stats]) => ({
+    difficulty: difficulty.toUpperCase(),
+    totalScore: stats.max || stats.totalScore || 0,
+    earnedScore: stats.earned || stats.earnedScore || 0,
+    correctCount: stats.fullScoreCount || stats.correctCount || 0,
+    totalCount: stats.questions?.length || stats.totalCount || 0,
+    correctRate: stats.rate || stats.correctRate || 0,
+  }));
+}
+
+/**
  * DiagnosticResult를 GradingResult로 변환
  */
 function convertToGradingResult(
   result: DiagnosticResult,
   submission: DiagnosticSubmission
 ): GradingResult {
-  // 영역별 결과 변환
-  const areaResults: GradingAreaResult[] = result.area_results.map(ar => ({
+  // 영역별 결과 변환 (객체/배열 형식 모두 지원)
+  const normalizedAreaResults = normalizeAreaResults(result.area_results);
+  const areaResults: GradingAreaResult[] = normalizedAreaResults.map(ar => ({
     area: ar.areaName,
     totalScore: ar.totalScore,
     earnedScore: ar.earnedScore,
@@ -1012,8 +1089,9 @@ function convertToGradingResult(
     percentile: ar.percentile,
   }));
 
-  // 난이도별 결과 변환
-  const difficultyResults: GradingDifficultyResult[] = result.difficulty_results.map(dr => ({
+  // 난이도별 결과 변환 (객체/배열 형식 모두 지원)
+  const normalizedDifficultyResults = normalizeDifficultyResults(result.difficulty_results);
+  const difficultyResults: GradingDifficultyResult[] = normalizedDifficultyResults.map(dr => ({
     difficulty: dr.difficulty === 'LOW' || dr.difficulty === 'MID' ? 'LOW' :
                 dr.difficulty === 'HIGH' ? 'MID' : 'HIGH',
     totalScore: dr.totalScore,
