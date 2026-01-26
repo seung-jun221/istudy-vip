@@ -1260,6 +1260,47 @@
   .question-cell:hover {
     transform: none;
   }
+
+  /* 종합 성적 페이지 컴팩트 스타일 */
+  .overall-score-section {
+    margin-bottom: 15px;
+  }
+
+  .score-cards-grid {
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .score-card {
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .score-card-value {
+    font-size: 28px;
+  }
+
+  .score-card.primary .score-card-value {
+    font-size: 32px;
+  }
+
+  .chart-container {
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+  }
+
+  .student-info-section {
+    margin-bottom: 15px;
+  }
+
+  .student-info-grid {
+    gap: 8px;
+  }
+
+  .info-item {
+    padding: 8px 12px;
+  }
 }
 
 /* ========================================
