@@ -1327,6 +1327,21 @@
     min-height: 36px;
     aspect-ratio: auto;
   }
+
+  /* 인쇄 전용 빈 페이지 표시 */
+  .blank-page.print-only {
+    display: block !important;
+    background: white;
+  }
+
+  .blank-page {
+    page-break-after: always;
+  }
+}
+
+/* 화면에서 인쇄 전용 요소 숨김 */
+.print-only {
+  display: none;
 }
 
 /* ========================================
