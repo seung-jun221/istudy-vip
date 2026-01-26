@@ -107,6 +107,16 @@ export default function CustomerJourneyModal({ phone, campaignId, onClose, onMem
         math_level: seminar.math_level,
       };
     }
+    // 진단검사 예약에서 (입학테스트 등)
+    const test = tests?.[0];
+    if (test) {
+      return {
+        student_name: test.student_name,
+        school: test.school,
+        grade: test.grade,
+        math_level: test.math_level,
+      };
+    }
     return null;
   };
 
