@@ -292,7 +292,29 @@ export async function submitCTManualGrading(
       throw new Error('CT 수동 채점 제출에 실패했습니다.');
     }
 
-    // 4. 결과 데이터 생성 (이미 계산된 값 사용)
+    // 4. area_stats를 DB 형식으로 변환 (객체 → 배열)
+    const areaResultsArray = Object.entries(request.area_stats).map(([areaName, stats]: [string, any]) => ({
+      areaName,
+      totalScore: stats.max,
+      earnedScore: stats.earned,
+      correctCount: Math.round(stats.earned / (stats.max / 2)), // 대략적인 정답 수
+      totalCount: 2, // CT는 영역당 평균 2문항
+      correctRate: stats.rate,
+      tscore: 50 + 10 * (stats.rate - 50) / 25, // 득점률 기반 T-Score
+      percentile: stats.rate, // 득점률을 백분위로 사용
+    }));
+
+    // 5. difficulty_stats를 DB 형식으로 변환
+    const difficultyResultsArray = Object.entries(request.difficulty_stats).map(([difficulty, stats]: [string, any]) => ({
+      difficulty: difficulty.toUpperCase(),
+      totalScore: stats.max,
+      earnedScore: stats.earned,
+      correctCount: stats.fullScoreCount || 0,
+      totalCount: stats.questions?.length || 0,
+      correctRate: stats.rate,
+    }));
+
+    // 6. 결과 데이터 생성
     const resultData = {
       submission_id: submission.id,
       total_score: request.total_score,
@@ -300,8 +322,8 @@ export async function submitCTManualGrading(
       percentile: request.percentile,
       grade9: request.grade9,
       grade5: request.grade5,
-      area_results: request.area_stats,
-      difficulty_results: request.difficulty_stats,
+      area_results: areaResultsArray,
+      difficulty_results: difficultyResultsArray,
       question_results: Object.entries(request.question_scores).map(([num, score]) => ({
         questionNumber: parseInt(num),
         isCorrect: score > 0,
@@ -309,7 +331,7 @@ export async function submitCTManualGrading(
       })),
     };
 
-    // 5. 결과 저장
+    // 7. 결과 저장
     const { data: result, error: resultError } = await supabase
       .from('diagnostic_results')
       .insert([resultData])
@@ -321,7 +343,7 @@ export async function submitCTManualGrading(
       throw new Error('CT 결과 저장에 실패했습니다.');
     }
 
-    // 6. 결과 보고서 생성
+    // 8. 결과 보고서 생성
     const report = await generateReport(result.id);
 
     return {
