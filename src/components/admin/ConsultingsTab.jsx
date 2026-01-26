@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { useAdmin } from '../../context/AdminContext';
 import ConsultingResultModal from './ConsultingResultModal';
+import { supabase } from '../../utils/supabase';
 import './AdminTabs.css';
 
 export default function ConsultingsTab({ consultings, consultingSlots, onUpdate, onPhoneClick }) {
@@ -11,6 +12,43 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
   const [showModal, setShowModal] = useState(false);
   const [showSlotChangeModal, setShowSlotChangeModal] = useState(false);
   const [slotChangeTarget, setSlotChangeTarget] = useState(null);
+  const [diagnosticResults, setDiagnosticResults] = useState({}); // 전화번호별 진단결과
+
+  // 진단검사 결과 로드
+  useEffect(() => {
+    loadDiagnosticResults();
+  }, [consultings]);
+
+  const loadDiagnosticResults = async () => {
+    if (!consultings || consultings.length === 0) return;
+
+    // 모든 컨설팅 예약자의 전화번호 추출
+    const phones = [...new Set(consultings.map(c => c.parent_phone).filter(Boolean))];
+    if (phones.length === 0) return;
+
+    try {
+      // diagnostic_results 테이블에서 결과 조회
+      const { data, error } = await supabase
+        .from('diagnostic_results')
+        .select('id, parent_phone, total_score, test_type, created_at')
+        .in('parent_phone', phones);
+
+      if (error) throw error;
+
+      // 전화번호별로 가장 최근 결과 매핑
+      const resultsMap = {};
+      (data || []).forEach(result => {
+        if (!resultsMap[result.parent_phone] ||
+            new Date(result.created_at) > new Date(resultsMap[result.parent_phone].created_at)) {
+          resultsMap[result.parent_phone] = result;
+        }
+      });
+
+      setDiagnosticResults(resultsMap);
+    } catch (error) {
+      console.error('진단검사 결과 로드 실패:', error);
+    }
+  };
 
   // 날짜별로 슬롯 그룹화
   const slotsByDate = (consultingSlots || []).reduce((acc, slot) => {
@@ -279,6 +317,9 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
                       return '진단검사 미예약';
                     };
 
+                    // 해당 학생의 진단검사 결과
+                    const diagnosticResult = diagnosticResults[consulting.parent_phone];
+
                     return (
                       <div key={consulting.id} className="reservation-item">
                         <div className="reservation-info">
@@ -301,6 +342,24 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
                             marginTop: '4px'
                           }}>
                             {formatTestInfo()}
+                            {/* 진단검사 결과 보기 버튼 */}
+                            {diagnosticResult && (
+                              <button
+                                onClick={() => window.open(`/diagnostic-report/${diagnosticResult.id}`, '_blank')}
+                                style={{
+                                  marginLeft: '8px',
+                                  padding: '2px 8px',
+                                  fontSize: '12px',
+                                  background: '#1a73e8',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                결과보기 ({diagnosticResult.total_score?.toFixed(1)}점)
+                              </button>
+                            )}
                           </div>
                         </div>
                         <div className="reservation-actions">
