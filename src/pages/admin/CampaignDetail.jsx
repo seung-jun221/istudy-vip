@@ -6,6 +6,7 @@ import ConsultingsTab from '../../components/admin/ConsultingsTab';
 import CancelledConsultingsTab from '../../components/admin/CancelledConsultingsTab';
 import TestsTab from '../../components/admin/TestsTab';
 import SettingsTab from '../../components/admin/SettingsTab';
+import CustomerManagementTab from '../../components/admin/CustomerManagementTab';
 import CustomerJourneyModal from '../../components/admin/CustomerJourneyModal';
 import './CampaignDetail.css';
 
@@ -148,6 +149,12 @@ export default function CampaignDetail() {
           진단검사 예약 ({stats.tests})
         </button>
         <button
+          className={`tab-btn ${activeTab === 'customers' ? 'active' : ''}`}
+          onClick={() => setActiveTab('customers')}
+        >
+          고객 관리
+        </button>
+        <button
           className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
         >
@@ -174,6 +181,12 @@ export default function CampaignDetail() {
           />
         )}
         {activeTab === 'tests' && <TestsTab tests={tests} testSlots={testSlots} campaignId={id} onPhoneClick={handlePhoneClick} onUpdate={fetchCampaignDetail} />}
+        {activeTab === 'customers' && (
+          <CustomerManagementTab
+            campaignId={id}
+            onPhoneClick={handlePhoneClick}
+          />
+        )}
         {activeTab === 'settings' && (
           <SettingsTab
             campaign={campaign}
