@@ -27,20 +27,39 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
     if (phones.length === 0) return;
 
     try {
-      // diagnostic_results 테이블에서 결과 조회
-      const { data, error } = await supabase
-        .from('diagnostic_results')
-        .select('id, parent_phone, total_score, test_type, created_at')
+      // diagnostic_submissions에서 결과가 있는 제출 조회
+      const { data: submissions, error: subError } = await supabase
+        .from('diagnostic_submissions')
+        .select('id, parent_phone')
         .in('parent_phone', phones);
 
-      if (error) throw error;
+      if (subError) throw subError;
+      if (!submissions || submissions.length === 0) return;
+
+      // 제출 ID 목록으로 diagnostic_results 조회
+      const submissionIds = submissions.map(s => s.id);
+      const { data: results, error: resError } = await supabase
+        .from('diagnostic_results')
+        .select('id, submission_id, total_score, test_type, created_at')
+        .in('submission_id', submissionIds);
+
+      if (resError) throw resError;
+
+      // 제출 ID -> 전화번호 매핑
+      const submissionToPhone = {};
+      submissions.forEach(s => {
+        submissionToPhone[s.id] = s.parent_phone;
+      });
 
       // 전화번호별로 가장 최근 결과 매핑
       const resultsMap = {};
-      (data || []).forEach(result => {
-        if (!resultsMap[result.parent_phone] ||
-            new Date(result.created_at) > new Date(resultsMap[result.parent_phone].created_at)) {
-          resultsMap[result.parent_phone] = result;
+      (results || []).forEach(result => {
+        const phone = submissionToPhone[result.submission_id];
+        if (!phone) return;
+
+        if (!resultsMap[phone] ||
+            new Date(result.created_at) > new Date(resultsMap[phone].created_at)) {
+          resultsMap[phone] = result;
         }
       });
 
