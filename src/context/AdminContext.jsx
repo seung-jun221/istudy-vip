@@ -441,14 +441,13 @@ export function AdminProvider({ children }) {
         });
       }
 
-      // 4-1-2. 전화번호로 추가 조회 (취소 후 재예약한 경우 consulting_reservation_id가 없을 수 있음)
+      // 4-1-2. 전화번호로 추가 조회 (취소 후 재예약한 경우 - 입학테스트 경로로 예약해도 포함)
       if (consultingPhones.length > 0) {
         const { data: testsByPhone } = await supabase
           .from('test_reservations')
           .select('*')
           .in('parent_phone', consultingPhones)
           .in('status', ['confirmed', '예약'])
-          .not('reservation_type', 'eq', 'entrance_test') // 입학테스트는 별도 처리
           .order('id', { ascending: false });
 
         // 컨설팅 정보 매핑
