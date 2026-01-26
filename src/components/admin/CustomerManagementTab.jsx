@@ -4,102 +4,144 @@ import './AdminTabs.css';
 
 export default function CustomerManagementTab({ campaignId, onPhoneClick }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [customers, setCustomers] = useState([]);
+  const [memos, setMemos] = useState([]); // 상태가 있는 메모 목록
+  const [searchResults, setSearchResults] = useState([]); // 검색 결과
   const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all'); // all, 대기중, 처리중, 처리완료
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState(null);
-
-  // 신규 고객 폼 상태
-  const [newCustomer, setNewCustomer] = useState({
-    parent_phone: '',
-    student_name: '',
-    memo: '',
-    status: '대기중',
-  });
 
   useEffect(() => {
-    loadCustomers();
+    loadMemos();
   }, [campaignId]);
 
-  const loadCustomers = async () => {
+  // 상태가 설정된 메모 목록 로드
+  const loadMemos = async () => {
     setLoading(true);
     try {
-      // customer_memos 테이블에서 캠페인에 해당하는 메모 조회
       const { data, error } = await supabase
         .from('customer_memos')
         .select('*')
         .eq('campaign_id', campaignId)
-        .order('created_at', { ascending: false });
+        .not('status', 'is', null)
+        .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      setCustomers(data || []);
+      setMemos(data || []);
     } catch (error) {
-      console.error('고객 목록 로드 실패:', error);
+      console.error('메모 목록 로드 실패:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 검색 필터링
-  const filteredCustomers = customers.filter(customer => {
-    const matchesSearch =
-      customer.parent_phone?.includes(searchTerm) ||
-      customer.student_name?.toLowerCase().includes(searchTerm.toLowerCase());
+  // 연락처/학생명 검색 (모든 예약자 대상)
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
 
-    const matchesStatus =
-      statusFilter === 'all' || customer.status === statusFilter;
+    setSearching(true);
+    try {
+      const results = [];
+      const seenPhones = new Set();
 
-    return matchesSearch && matchesStatus;
+      // 1. 설명회 예약자 검색
+      const { data: seminars } = await supabase
+        .from('reservations')
+        .select('parent_phone, student_name, school, grade, seminar_slots(location)')
+        .or(`parent_phone.ilike.%${searchTerm}%,student_name.ilike.%${searchTerm}%`);
+
+      seminars?.forEach(s => {
+        if (!seenPhones.has(s.parent_phone)) {
+          seenPhones.add(s.parent_phone);
+          results.push({
+            parent_phone: s.parent_phone,
+            student_name: s.student_name,
+            school: s.school,
+            grade: s.grade,
+            source: '설명회',
+            location: s.seminar_slots?.location,
+          });
+        }
+      });
+
+      // 2. 컨설팅 예약자 검색
+      const { data: consultings } = await supabase
+        .from('consulting_reservations')
+        .select('parent_phone, student_name, school, grade, consulting_slots(location)')
+        .or(`parent_phone.ilike.%${searchTerm}%,student_name.ilike.%${searchTerm}%`);
+
+      consultings?.forEach(c => {
+        if (!seenPhones.has(c.parent_phone)) {
+          seenPhones.add(c.parent_phone);
+          results.push({
+            parent_phone: c.parent_phone,
+            student_name: c.student_name,
+            school: c.school,
+            grade: c.grade,
+            source: '컨설팅',
+            location: c.consulting_slots?.location,
+          });
+        }
+      });
+
+      // 3. 진단검사 예약자 검색
+      const { data: tests } = await supabase
+        .from('test_reservations')
+        .select('parent_phone, student_name, school, grade, test_slots(location)')
+        .or(`parent_phone.ilike.%${searchTerm}%,student_name.ilike.%${searchTerm}%`);
+
+      tests?.forEach(t => {
+        if (!seenPhones.has(t.parent_phone)) {
+          seenPhones.add(t.parent_phone);
+          results.push({
+            parent_phone: t.parent_phone,
+            student_name: t.student_name,
+            school: t.school,
+            grade: t.grade,
+            source: '진단검사',
+            location: t.test_slots?.location,
+          });
+        }
+      });
+
+      setSearchResults(results);
+    } catch (error) {
+      console.error('검색 실패:', error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // 검색어 변경 시 디바운스 검색
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm.trim()) {
+        handleSearch();
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // 필터링된 메모 목록
+  const filteredMemos = memos.filter(memo => {
+    return statusFilter === 'all' || memo.status === statusFilter;
   });
 
   // 상태별 카운트
   const statusCounts = {
-    all: customers.length,
-    '대기중': customers.filter(c => c.status === '대기중').length,
-    '처리중': customers.filter(c => c.status === '처리중').length,
-    '처리완료': customers.filter(c => c.status === '처리완료').length,
-  };
-
-  // 신규 고객 등록
-  const handleAddCustomer = async () => {
-    if (!newCustomer.parent_phone) {
-      alert('연락처를 입력해주세요.');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('customer_memos')
-        .insert({
-          parent_phone: newCustomer.parent_phone,
-          student_name: newCustomer.student_name || null,
-          memo: newCustomer.memo || null,
-          status: newCustomer.status,
-          campaign_id: campaignId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-
-      if (error) throw error;
-
-      alert('고객이 등록되었습니다.');
-      setIsAddModalOpen(false);
-      setNewCustomer({
-        parent_phone: '',
-        student_name: '',
-        memo: '',
-        status: '대기중',
-      });
-      loadCustomers();
-    } catch (error) {
-      console.error('고객 등록 실패:', error);
-      alert('고객 등록에 실패했습니다.');
-    }
+    all: memos.length,
+    '대기중': memos.filter(m => m.status === '대기중').length,
+    '처리중': memos.filter(m => m.status === '처리중').length,
+    '처리완료': memos.filter(m => m.status === '처리완료').length,
   };
 
   // 상태 변경
-  const handleStatusChange = async (customerId, newStatus) => {
+  const handleStatusChange = async (memoId, newStatus) => {
     try {
       const { error } = await supabase
         .from('customer_memos')
@@ -107,58 +149,15 @@ export default function CustomerManagementTab({ campaignId, onPhoneClick }) {
           status: newStatus,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', customerId);
+        .eq('id', memoId);
 
       if (error) throw error;
 
-      // 로컬 상태 업데이트
-      setCustomers(prev =>
-        prev.map(c => (c.id === customerId ? { ...c, status: newStatus } : c))
+      setMemos(prev =>
+        prev.map(m => (m.id === memoId ? { ...m, status: newStatus } : m))
       );
     } catch (error) {
       console.error('상태 변경 실패:', error);
-      alert('상태 변경에 실패했습니다.');
-    }
-  };
-
-  // 메모 수정
-  const handleMemoUpdate = async (customerId, newMemo) => {
-    try {
-      const { error } = await supabase
-        .from('customer_memos')
-        .update({
-          memo: newMemo,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', customerId);
-
-      if (error) throw error;
-
-      // 로컬 상태 업데이트
-      setCustomers(prev =>
-        prev.map(c => (c.id === customerId ? { ...c, memo: newMemo } : c))
-      );
-    } catch (error) {
-      console.error('메모 수정 실패:', error);
-    }
-  };
-
-  // 고객 삭제
-  const handleDeleteCustomer = async (customerId) => {
-    if (!window.confirm('이 고객 정보를 삭제하시겠습니까?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('customer_memos')
-        .delete()
-        .eq('id', customerId);
-
-      if (error) throw error;
-
-      setCustomers(prev => prev.filter(c => c.id !== customerId));
-    } catch (error) {
-      console.error('고객 삭제 실패:', error);
-      alert('삭제에 실패했습니다.');
     }
   };
 
@@ -179,6 +178,100 @@ export default function CustomerManagementTab({ campaignId, onPhoneClick }) {
 
   return (
     <div className="tab-container">
+      {/* 고객 검색 섹션 */}
+      <div style={{
+        background: '#f0f9ff',
+        border: '1px solid #bae6fd',
+        padding: '16px',
+        borderRadius: '8px',
+        marginBottom: '20px',
+      }}>
+        <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#0369a1' }}>
+          고객 검색 (전체 예약자 대상)
+        </h3>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="전화번호 또는 학생명으로 검색..."
+            style={{
+              flex: 1,
+              padding: '10px 12px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              fontSize: '14px',
+            }}
+          />
+        </div>
+
+        {/* 검색 결과 */}
+        {searching && (
+          <div style={{ marginTop: '12px', color: '#64748b', fontSize: '13px' }}>
+            검색 중...
+          </div>
+        )}
+        {!searching && searchResults.length > 0 && (
+          <div style={{ marginTop: '12px' }}>
+            <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>
+              검색 결과: {searchResults.length}건
+            </div>
+            <div style={{
+              maxHeight: '200px',
+              overflowY: 'auto',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              background: 'white',
+            }}>
+              {searchResults.map((result, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => onPhoneClick?.(result.parent_phone)}
+                  style={{
+                    padding: '10px 12px',
+                    borderBottom: idx < searchResults.length - 1 ? '1px solid #f1f5f9' : 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                  className="hover-row"
+                >
+                  <div>
+                    <div style={{ fontWeight: '500' }}>
+                      {result.student_name || '-'}
+                      <span style={{ color: '#64748b', fontWeight: '400', marginLeft: '8px' }}>
+                        {result.parent_phone}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                      {result.school} {result.grade}
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: '11px',
+                    padding: '2px 8px',
+                    background: '#f1f5f9',
+                    borderRadius: '4px',
+                    color: '#64748b',
+                  }}>
+                    {result.source}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '8px' }}>
+              클릭하면 고객 여정을 확인하고 메모를 작성할 수 있습니다.
+            </div>
+          </div>
+        )}
+        {!searching && searchTerm && searchResults.length === 0 && (
+          <div style={{ marginTop: '12px', color: '#94a3b8', fontSize: '13px' }}>
+            검색 결과가 없습니다.
+          </div>
+        )}
+      </div>
+
       {/* 상태 필터 탭 */}
       <div style={{
         display: 'flex',
@@ -188,6 +281,9 @@ export default function CustomerManagementTab({ campaignId, onPhoneClick }) {
         background: '#f8fafc',
         borderRadius: '8px',
       }}>
+        <span style={{ fontSize: '14px', fontWeight: '500', color: '#64748b', alignSelf: 'center', marginRight: '8px' }}>
+          메모 목록:
+        </span>
         {[
           { value: 'all', label: '전체' },
           { value: '대기중', label: '대기중' },
@@ -213,30 +309,14 @@ export default function CustomerManagementTab({ campaignId, onPhoneClick }) {
         ))}
       </div>
 
-      {/* 검색 및 추가 버튼 */}
-      <div className="filter-bar">
-        <input
-          type="text"
-          className="search-input"
-          placeholder="전화번호 또는 학생명으로 검색..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <button
-          className="btn-primary"
-          onClick={() => setIsAddModalOpen(true)}
-          style={{ background: '#1a73e8', borderColor: '#1a73e8' }}
-        >
-          신규 고객 등록
-        </button>
-      </div>
-
-      {/* 고객 목록 */}
+      {/* 메모 목록 */}
       {loading ? (
         <div style={{ padding: '40px', textAlign: 'center' }}>로딩 중...</div>
-      ) : filteredCustomers.length === 0 ? (
+      ) : filteredMemos.length === 0 ? (
         <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-          {searchTerm ? '검색 결과가 없습니다.' : '등록된 고객이 없습니다.'}
+          {statusFilter === 'all'
+            ? '상태가 설정된 메모가 없습니다. 위 검색에서 고객을 찾아 메모를 작성해주세요.'
+            : `${statusFilter} 상태의 메모가 없습니다.`}
         </div>
       ) : (
         <div className="table-container">
@@ -247,33 +327,31 @@ export default function CustomerManagementTab({ campaignId, onPhoneClick }) {
                 <th>학생명</th>
                 <th>상태</th>
                 <th>메모</th>
-                <th>등록일</th>
                 <th>수정일</th>
-                <th>관리</th>
               </tr>
             </thead>
             <tbody>
-              {filteredCustomers.map((customer) => {
-                const statusStyle = getStatusStyle(customer.status);
+              {filteredMemos.map((memo) => {
+                const statusStyle = getStatusStyle(memo.status);
                 return (
-                  <tr key={customer.id}>
+                  <tr key={memo.id}>
                     <td>
                       <span
-                        onClick={() => onPhoneClick?.(customer.parent_phone)}
+                        onClick={() => onPhoneClick?.(memo.parent_phone)}
                         style={{
-                          cursor: onPhoneClick ? 'pointer' : 'default',
-                          color: onPhoneClick ? '#1a73e8' : 'inherit',
-                          textDecoration: onPhoneClick ? 'underline' : 'none',
+                          cursor: 'pointer',
+                          color: '#1a73e8',
+                          textDecoration: 'underline',
                         }}
                       >
-                        {customer.parent_phone}
+                        {memo.parent_phone}
                       </span>
                     </td>
-                    <td>{customer.student_name || '-'}</td>
+                    <td>{memo.student_name || '-'}</td>
                     <td>
                       <select
-                        value={customer.status || '대기중'}
-                        onChange={(e) => handleStatusChange(customer.id, e.target.value)}
+                        value={memo.status || '대기중'}
+                        onChange={(e) => handleStatusChange(memo.id, e.target.value)}
                         style={{
                           padding: '4px 8px',
                           borderRadius: '4px',
@@ -290,74 +368,16 @@ export default function CustomerManagementTab({ campaignId, onPhoneClick }) {
                         <option value="처리완료">처리완료</option>
                       </select>
                     </td>
-                    <td>
-                      {editingCustomer === customer.id ? (
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          <input
-                            type="text"
-                            defaultValue={customer.memo || ''}
-                            onBlur={(e) => {
-                              handleMemoUpdate(customer.id, e.target.value);
-                              setEditingCustomer(null);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleMemoUpdate(customer.id, e.target.value);
-                                setEditingCustomer(null);
-                              }
-                              if (e.key === 'Escape') {
-                                setEditingCustomer(null);
-                              }
-                            }}
-                            autoFocus
-                            style={{
-                              flex: 1,
-                              padding: '4px 8px',
-                              border: '1px solid #3b82f6',
-                              borderRadius: '4px',
-                              fontSize: '13px',
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <span
-                          onClick={() => setEditingCustomer(customer.id)}
-                          style={{
-                            cursor: 'pointer',
-                            color: customer.memo ? '#333' : '#94a3b8',
-                            maxWidth: '200px',
-                            display: 'inline-block',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                          title={customer.memo || '클릭하여 메모 입력'}
-                        >
-                          {customer.memo || '메모 입력...'}
-                        </span>
-                      )}
+                    <td style={{
+                      maxWidth: '300px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }} title={memo.memo}>
+                      {memo.memo || '-'}
                     </td>
                     <td style={{ fontSize: '12px', color: '#64748b' }}>
-                      {formatDateTime(customer.created_at)}
-                    </td>
-                    <td style={{ fontSize: '12px', color: '#64748b' }}>
-                      {formatDateTime(customer.updated_at)}
-                    </td>
-                    <td>
-                      <button
-                        onClick={() => handleDeleteCustomer(customer.id)}
-                        style={{
-                          padding: '4px 10px',
-                          fontSize: '12px',
-                          background: '#fee2e2',
-                          color: '#dc2626',
-                          border: '1px solid #fecaca',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        삭제
-                      </button>
+                      {formatDateTime(memo.updated_at)}
                     </td>
                   </tr>
                 );
@@ -369,133 +389,15 @@ export default function CustomerManagementTab({ campaignId, onPhoneClick }) {
 
       {/* 요약 */}
       <div className="summary-bar">
-        총 {filteredCustomers.length}명
+        총 {filteredMemos.length}명
         {statusFilter !== 'all' && ` (${statusFilter})`}
-        {searchTerm && ` (검색 결과)`}
       </div>
 
-      {/* 신규 고객 등록 모달 */}
-      {isAddModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsAddModalOpen(false)}>
-          <div
-            className="modal-content"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '450px' }}
-          >
-            <div className="modal-header">
-              <h2>신규 고객 등록</h2>
-              <button className="modal-close" onClick={() => setIsAddModalOpen(false)}>×</button>
-            </div>
-            <div style={{ padding: '20px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500', fontSize: '14px' }}>
-                  연락처 <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
-                  type="tel"
-                  value={newCustomer.parent_phone}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, parent_phone: e.target.value })}
-                  placeholder="010-0000-0000"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500', fontSize: '14px' }}>
-                  학생명
-                </label>
-                <input
-                  type="text"
-                  value={newCustomer.student_name}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, student_name: e.target.value })}
-                  placeholder="학생 이름"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500', fontSize: '14px' }}>
-                  상태
-                </label>
-                <select
-                  value={newCustomer.status}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, status: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                  }}
-                >
-                  <option value="대기중">대기중</option>
-                  <option value="처리중">처리중</option>
-                  <option value="처리완료">처리완료</option>
-                </select>
-              </div>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500', fontSize: '14px' }}>
-                  메모
-                </label>
-                <textarea
-                  value={newCustomer.memo}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, memo: e.target.value })}
-                  placeholder="문의 내용, 특이사항 등..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    resize: 'vertical',
-                  }}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => setIsAddModalOpen(false)}
-                  style={{
-                    padding: '10px 20px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    background: 'white',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                  }}
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleAddCustomer}
-                  style={{
-                    padding: '10px 20px',
-                    border: 'none',
-                    borderRadius: '6px',
-                    background: '#1a73e8',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                  }}
-                >
-                  등록
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <style>{`
+        .hover-row:hover {
+          background: #f8fafc;
+        }
+      `}</style>
     </div>
   );
 }

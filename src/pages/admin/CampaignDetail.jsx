@@ -19,9 +19,15 @@ export default function CampaignDetail() {
   const [campaignData, setCampaignData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedPhone, setSelectedPhone] = useState(null); // 고객 여정 모달용
+  const [memoRefreshKey, setMemoRefreshKey] = useState(0); // 메모 목록 새로고침용
 
   const handlePhoneClick = (phone) => {
     setSelectedPhone(phone);
+  };
+
+  const handleMemoSaved = () => {
+    // 메모 저장 시 고객 관리 탭 새로고침
+    setMemoRefreshKey(prev => prev + 1);
   };
 
   useEffect(() => {
@@ -183,6 +189,7 @@ export default function CampaignDetail() {
         {activeTab === 'tests' && <TestsTab tests={tests} testSlots={testSlots} campaignId={id} onPhoneClick={handlePhoneClick} onUpdate={fetchCampaignDetail} />}
         {activeTab === 'customers' && (
           <CustomerManagementTab
+            key={memoRefreshKey}
             campaignId={id}
             onPhoneClick={handlePhoneClick}
           />
@@ -202,7 +209,9 @@ export default function CampaignDetail() {
       {selectedPhone && (
         <CustomerJourneyModal
           phone={selectedPhone}
+          campaignId={id}
           onClose={() => setSelectedPhone(null)}
+          onMemoSaved={handleMemoSaved}
         />
       )}
     </div>
