@@ -1039,10 +1039,10 @@
    ======================================== */
 .strategy-page-card {
   background: var(--beige-light);
-  border-radius: 12px;
-  padding: 20px 25px;
-  margin-bottom: 20px;
-  border-left: 4px solid var(--gold);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border-left: 3px solid var(--gold);
 }
 
 .strategy-page-card:last-child {
@@ -1050,49 +1050,49 @@
 }
 
 .strategy-page-subtitle {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--primary-brown);
-  margin: 15px 0 12px 0;
+  margin: 8px 0 6px 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
 }
 
 .strategy-page-icon {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--gold);
 }
 
 .strategy-page-content {
-  font-size: 13px;
-  line-height: 1.8;
+  font-size: 10px;
+  line-height: 1.6;
   color: var(--text-medium);
   white-space: pre-line;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .strategy-page-keypoint {
   display: flex;
-  gap: 8px;
-  padding: 12px 15px;
+  gap: 6px;
+  padding: 8px 12px;
   background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
-  border-radius: 8px;
-  border-left: 3px solid var(--gold);
+  border-radius: 6px;
+  border-left: 2px solid var(--gold);
 }
 
 .strategy-page-keypoint .keypoint-label {
-  font-size: 13px;
+  font-size: 9px;
   font-weight: 700;
   color: #f57c00;
   white-space: nowrap;
 }
 
 .strategy-page-keypoint .keypoint-text {
-  font-size: 13px;
+  font-size: 9px;
   font-weight: 500;
   color: #e65100;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* ========================================
