@@ -471,13 +471,13 @@
 /* ===== CT 전용 채점 테이블 ===== */
 .ct-notice {
   font-size: 14px;
-  color: #27AE60;
+  color: #8B6914;
   text-align: center;
   margin-bottom: 20px;
   padding: 12px 20px;
-  background: #E8F5E9;
+  background: #FDF6E3;
   border-radius: 8px;
-  border-left: 4px solid #27AE60;
+  border-left: 4px solid #C49A3F;
   font-weight: 500;
 }
 
@@ -517,12 +517,12 @@
 }
 
 .ct-scoring-table tbody tr.filled {
-  background: #E8F5E9;
+  background: #FDF6E3;
 }
 
 .ct-scoring-table .q-num {
   font-weight: 600;
-  color: #27AE60;
+  color: #C49A3F;
   white-space: nowrap;
   width: 70px;
 }
@@ -562,8 +562,8 @@
 }
 
 .ct-scoring-table .score-input:focus {
-  border-color: #27AE60;
-  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+  border-color: #C49A3F;
+  box-shadow: 0 0 0 3px rgba(196, 154, 63, 0.1);
 }
 
 .ct-scoring-table .score-input::-webkit-inner-spin-button,
@@ -583,7 +583,7 @@
 }
 
 .ct-scoring-table tfoot strong {
-  color: #27AE60;
+  color: #C49A3F;
   font-size: 16px;
 }
 
