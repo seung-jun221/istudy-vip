@@ -1301,6 +1301,51 @@
   .info-item {
     padding: 8px 12px;
   }
+
+  /* 난이도별 정답률 페이지 컴팩트 스타일 */
+  .difficulty-cards {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .difficulty-card {
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .difficulty-badge {
+    padding: 4px 12px;
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .difficulty-value {
+    font-size: 28px;
+  }
+
+  .difficulty-detail {
+    font-size: 10px;
+  }
+
+  .difficulty-bar {
+    height: 6px;
+    margin: 8px 0;
+  }
+
+  /* 문항별 결과 컴팩트 스타일 */
+  .question-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 6px;
+    margin-bottom: 15px;
+  }
+
+  .question-cell {
+    font-size: 9px;
+    border-radius: 6px;
+  }
 }
 
 /* ========================================
