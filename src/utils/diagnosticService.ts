@@ -310,7 +310,7 @@ export async function submitCTManualGrading(
       totalScore: stats.max,
       earnedScore: stats.earned,
       correctCount: stats.fullScoreCount || 0,
-      totalCount: stats.questions?.length || 0,
+      totalCount: stats.questionCount || stats.questions?.length || 0,
       correctRate: stats.rate,
     }));
 
