@@ -28,6 +28,22 @@ export default function ResultStep() {
     return colors[grade] || '#999';
   };
 
+  // area_results 정규화 함수 (객체/배열 형식 모두 지원)
+  const normalizeAreaResults = (areaResults) => {
+    if (!areaResults) return [];
+    if (Array.isArray(areaResults)) return areaResults;
+    return Object.entries(areaResults).map(([areaName, stats]) => ({
+      areaName,
+      totalScore: stats.max || stats.totalScore || 0,
+      earnedScore: stats.earned || stats.earnedScore || 0,
+      correctCount: stats.correctCount || 0,
+      totalCount: stats.totalCount || 0,
+      correctRate: stats.rate || stats.correctRate || 0,
+      tscore: stats.tscore || 50,
+      percentile: stats.percentile || stats.rate || 50,
+    }));
+  };
+
   return (
     <div className="result-step">
       <div className="result-header">
@@ -73,7 +89,7 @@ export default function ResultStep() {
       <div className="result-section">
         <h3 className="section-title">📈 영역별 성적</h3>
         <div className="area-list">
-          {result.area_results.map((area, index) => (
+          {normalizeAreaResults(result.area_results).map((area, index) => (
             <div key={index} className="area-item">
               <div className="area-header">
                 <div className="area-name">{area.areaName}</div>
