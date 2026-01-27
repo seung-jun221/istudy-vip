@@ -100,7 +100,7 @@ export default function DiagnosticReportPage() {
       totalScore: stats.max || stats.totalScore || 0,
       earnedScore: stats.earned || stats.earnedScore || 0,
       correctCount: stats.fullScoreCount || stats.correctCount || 0,
-      totalCount: stats.questions?.length || stats.totalCount || 0,
+      totalCount: stats.questionCount || stats.questions?.length || stats.totalCount || 0,
       correctRate: stats.rate || stats.correctRate || 0,
     }));
   };
