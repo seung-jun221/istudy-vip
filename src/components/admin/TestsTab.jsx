@@ -8,6 +8,7 @@ import {
   updateDiagnosticRegistration
 } from '../../utils/diagnosticService';
 import { supabase } from '../../utils/supabase';
+import { formatPhone } from '../../utils/format';
 import StudentAddModal from './StudentAddModal';
 import './AdminTabs.css';
 
@@ -617,7 +618,7 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
                         onClick={() => onPhoneClick?.(test.parent_phone)}
                         style={{ cursor: onPhoneClick ? 'pointer' : 'default', color: onPhoneClick ? '#1a73e8' : 'inherit', textDecoration: onPhoneClick ? 'underline' : 'none' }}
                       >
-                        {test.parent_phone}
+                        {formatPhone(test.parent_phone)}
                       </span>
                     </td>
                     <td>
