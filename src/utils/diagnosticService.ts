@@ -1006,8 +1006,34 @@ function normalizeAreaResults(areaResults: unknown): Array<{
   tscore: number;
   percentile: number;
 }> {
-  if (!areaResults) return [];
-  if (Array.isArray(areaResults)) return areaResults;
+  // null, undefined, 빈 값 처리
+  if (!areaResults) {
+    console.warn('normalizeAreaResults: areaResults is empty or null');
+    return [];
+  }
+
+  // 이미 배열인 경우 그대로 반환
+  if (Array.isArray(areaResults)) {
+    return areaResults;
+  }
+
+  // 문자열인 경우 (JSON 문자열로 저장된 경우) 파싱 시도
+  if (typeof areaResults === 'string') {
+    try {
+      const parsed = JSON.parse(areaResults);
+      if (Array.isArray(parsed)) return parsed;
+      areaResults = parsed;
+    } catch (e) {
+      console.error('normalizeAreaResults: Failed to parse string:', e);
+      return [];
+    }
+  }
+
+  // 객체가 아닌 경우
+  if (typeof areaResults !== 'object') {
+    console.warn('normalizeAreaResults: unexpected type:', typeof areaResults);
+    return [];
+  }
 
   // 객체 형식인 경우 배열로 변환
   return Object.entries(areaResults as Record<string, {
@@ -1023,13 +1049,13 @@ function normalizeAreaResults(areaResults: unknown): Array<{
     percentile?: number;
   }>).map(([areaName, stats]) => ({
     areaName,
-    totalScore: stats.max || stats.totalScore || 0,
-    earnedScore: stats.earned || stats.earnedScore || 0,
-    correctCount: stats.correctCount || 0,
-    totalCount: stats.totalCount || 0,
-    correctRate: stats.rate || stats.correctRate || 0,
-    tscore: stats.tscore || 50,
-    percentile: stats.percentile || stats.rate || 50,
+    totalScore: stats?.max || stats?.totalScore || 0,
+    earnedScore: stats?.earned || stats?.earnedScore || 0,
+    correctCount: stats?.correctCount || 0,
+    totalCount: stats?.totalCount || 0,
+    correctRate: stats?.rate || stats?.correctRate || 0,
+    tscore: stats?.tscore || 50,
+    percentile: stats?.percentile || stats?.rate || 50,
   }));
 }
 
@@ -1044,8 +1070,34 @@ function normalizeDifficultyResults(difficultyResults: unknown): Array<{
   totalCount: number;
   correctRate: number;
 }> {
-  if (!difficultyResults) return [];
-  if (Array.isArray(difficultyResults)) return difficultyResults;
+  // null, undefined, 빈 값 처리
+  if (!difficultyResults) {
+    console.warn('normalizeDifficultyResults: difficultyResults is empty or null');
+    return [];
+  }
+
+  // 이미 배열인 경우 그대로 반환
+  if (Array.isArray(difficultyResults)) {
+    return difficultyResults;
+  }
+
+  // 문자열인 경우 (JSON 문자열로 저장된 경우) 파싱 시도
+  if (typeof difficultyResults === 'string') {
+    try {
+      const parsed = JSON.parse(difficultyResults);
+      if (Array.isArray(parsed)) return parsed;
+      difficultyResults = parsed;
+    } catch (e) {
+      console.error('normalizeDifficultyResults: Failed to parse string:', e);
+      return [];
+    }
+  }
+
+  // 객체가 아닌 경우
+  if (typeof difficultyResults !== 'object') {
+    console.warn('normalizeDifficultyResults: unexpected type:', typeof difficultyResults);
+    return [];
+  }
 
   // 객체 형식인 경우 배열로 변환
   return Object.entries(difficultyResults as Record<string, {
@@ -1061,11 +1113,11 @@ function normalizeDifficultyResults(difficultyResults: unknown): Array<{
     correctRate?: number;
   }>).map(([difficulty, stats]) => ({
     difficulty: difficulty.toUpperCase(),
-    totalScore: stats.max || stats.totalScore || 0,
-    earnedScore: stats.earned || stats.earnedScore || 0,
-    correctCount: stats.fullScoreCount || stats.correctCount || 0,
-    totalCount: stats.questions?.length || stats.totalCount || 0,
-    correctRate: stats.rate || stats.correctRate || 0,
+    totalScore: stats?.max || stats?.totalScore || 0,
+    earnedScore: stats?.earned || stats?.earnedScore || 0,
+    correctCount: stats?.fullScoreCount || stats?.correctCount || 0,
+    totalCount: stats?.questions?.length || stats?.totalCount || 0,
+    correctRate: stats?.rate || stats?.correctRate || 0,
   }));
 }
 
