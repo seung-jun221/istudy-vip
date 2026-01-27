@@ -14,13 +14,13 @@ export default function TScoreBarChart({ areaResults }) {
   const maxT = 90;
   const range = maxT - minT;
 
-  // T-Score에 따른 색상 결정 (샘플 기준)
+  // T-Score에 따른 색상 결정 (표와 동일한 색상 체계)
   const getTScoreColor = (tScore) => {
-    if (tScore >= 70) return '#4caf50'; // 최상 - 진한 녹색
-    if (tScore >= 60) return '#8bc34a'; // 우수 - 연녹색
-    if (tScore >= 40) return '#2196f3'; // 보통 - 파랑
-    if (tScore >= 30) return '#ff9800'; // 주의 - 주황
-    return '#f44336'; // 위험 - 빨강
+    if (tScore >= 70) return '#2E7D32'; // 최상 - 녹색
+    if (tScore >= 60) return '#1565C0'; // 우수 - 파랑
+    if (tScore >= 40) return '#EF6C00'; // 보통 - 주황
+    if (tScore >= 30) return '#F9A825'; // 주의 - 노랑
+    return '#C62828'; // 위험 - 빨강
   };
 
   // 막대 너비 계산 (T-Score 10~90 범위를 0~100%로 변환)
