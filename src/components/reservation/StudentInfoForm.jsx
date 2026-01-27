@@ -3,6 +3,7 @@ import Input from '../common/Input';
 import Button from '../common/Button';
 import { useReservation } from '../../context/ReservationContext';
 import { supabase, hashPassword } from '../../utils/supabase';
+import { sendReservationConfirmSms, sendWaitlistConfirmSms } from '../../utils/smsService';
 
 export default function StudentInfoForm({
   phone,
@@ -171,6 +172,32 @@ export default function StudentInfoForm({
       .single();
 
     if (error) throw error;
+
+    // SMS 발송 (비동기로 처리, 실패해도 예약은 완료)
+    try {
+      const isWaitlist = selectedSeminar.isFull;
+      const eventDate = selectedSeminar.date ? new Date(selectedSeminar.date).toLocaleDateString('ko-KR') : '';
+      const eventTime = selectedSeminar.time || '';
+
+      if (isWaitlist) {
+        await sendWaitlistConfirmSms({
+          studentName: formData.studentName,
+          parentPhone: phone,
+          eventDate,
+        });
+      } else {
+        await sendReservationConfirmSms({
+          studentName: formData.studentName,
+          parentPhone: phone,
+          eventDate,
+          eventTime,
+          location: selectedSeminar.location,
+        });
+      }
+    } catch (smsError) {
+      console.error('SMS 발송 실패:', smsError);
+      // SMS 실패해도 예약은 완료 처리
+    }
 
     showToast('예약이 완료되었습니다!', 'success');
     onComplete(data);
