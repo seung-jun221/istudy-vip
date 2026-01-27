@@ -9,7 +9,7 @@
 
 // 뿌리오 API 설정
 const PPURIO_CONFIG = {
-  account: 'istudy0517', // 뿌리오 계정 ID
+  account: 'istudysj', // 뿌리오 계정 ID
   apiKey: '3057babbebf4fbe2a83ae36b17a978d3cfb9bb2a94012f0245348ac3be9418c7',
   senderNumber: '0517151580', // 발신번호 (하이픈 제거)
   baseUrl: 'https://message.ppurio.com',
