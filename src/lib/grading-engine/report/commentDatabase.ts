@@ -663,6 +663,11 @@ export function generateAllAreaComments(
 ): Record<string, string> {
   const comments: Record<string, string> = {};
 
+  // CT 시험은 별도의 코멘트 시스템을 사용하므로 빈 결과 반환
+  if (testType === 'CT') {
+    return comments;
+  }
+
   for (const result of areaResults) {
     // T-Score 우선 사용, 없으면 백분위, 없으면 정답률 사용
     let level: PerformanceLevel;

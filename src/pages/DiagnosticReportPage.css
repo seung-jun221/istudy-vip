@@ -602,6 +602,15 @@
   border-color: var(--error-color);
 }
 
+/* CT 테스트용 4단계 난이도 추가 스타일 */
+.difficulty-card.midlow {
+  border-color: #3498DB; /* 중하난도: 파란색 */
+}
+
+.difficulty-card.midhigh {
+  border-color: #9B59B6; /* 중상난도: 보라색 */
+}
+
 .difficulty-badge {
   display: inline-block;
   padding: 6px 16px;
@@ -622,6 +631,15 @@
 
 .difficulty-badge.high {
   background: var(--error-color);
+}
+
+/* CT 테스트용 4단계 난이도 badge 스타일 */
+.difficulty-badge.midlow {
+  background: #3498DB; /* 중하난도: 파란색 */
+}
+
+.difficulty-badge.midhigh {
+  background: #9B59B6; /* 중상난도: 보라색 */
 }
 
 .difficulty-rate {
@@ -661,6 +679,15 @@
 
 .difficulty-bar-fill.high {
   background: var(--error-color);
+}
+
+/* CT 테스트용 4단계 난이도 bar-fill 스타일 */
+.difficulty-bar-fill.midlow {
+  background: #3498DB; /* 중하난도: 파란색 */
+}
+
+.difficulty-bar-fill.midhigh {
+  background: #9B59B6; /* 중상난도: 보라색 */
 }
 
 /* ========================================
