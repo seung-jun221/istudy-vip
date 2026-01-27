@@ -93,9 +93,10 @@ export default function DiagnosticReportPage() {
   const normalizeDifficultyResults = (difficultyResults) => {
     if (!difficultyResults) return [];
     if (Array.isArray(difficultyResults)) return difficultyResults;
-    // 객체인 경우 배열로 변환
+    // 객체인 경우 배열로 변환 (CT 4단계 난이도 label 포함)
     return Object.entries(difficultyResults).map(([difficulty, stats]) => ({
       difficulty: difficulty.toUpperCase(),
+      label: stats.label || null, // CT용 label 필드 포함
       totalScore: stats.max || stats.totalScore || 0,
       earnedScore: stats.earned || stats.earnedScore || 0,
       correctCount: stats.fullScoreCount || stats.correctCount || 0,
@@ -1150,19 +1151,29 @@ export default function DiagnosticReportPage() {
 
             <div className="difficulty-cards">
               {normalizeDifficultyResults(data.difficulty_results).map((diff, index) => {
-                const labels = { LOW: '하난도', MID: '중난도', HIGH: '고난도' };
-                const classNames = { LOW: 'low', MID: 'mid', HIGH: 'high' };
+                // CT 테스트용 4단계 난이도 + 기존 3단계 난이도 모두 지원
+                const labels = {
+                  LOW: '하난도', MID: '중난도', HIGH: '고난도',
+                  MIDLOW: '중하난도', MIDHIGH: '중상난도'
+                };
+                const classNames = {
+                  LOW: 'low', MID: 'mid', HIGH: 'high',
+                  MIDLOW: 'midlow', MIDHIGH: 'midhigh'
+                };
+                const diffKey = diff.difficulty;
+                const label = labels[diffKey] || diff.label || diffKey;
+                const className = classNames[diffKey] || 'mid';
                 return (
-                  <div key={index} className={`difficulty-card ${classNames[diff.difficulty]}`}>
-                    <div className={`difficulty-badge ${classNames[diff.difficulty]}`}>
-                      {labels[diff.difficulty]}
+                  <div key={index} className={`difficulty-card ${className}`}>
+                    <div className={`difficulty-badge ${className}`}>
+                      {label}
                     </div>
                     <div className="difficulty-rate">{diff.correctRate.toFixed(1)}%</div>
                     <div className="difficulty-stats">
                       {diff.correctCount} / {diff.totalCount}문항 | {diff.earnedScore.toFixed(1)} / {diff.totalScore.toFixed(1)}점
                     </div>
                     <div className="difficulty-bar">
-                      <div className={`difficulty-bar-fill ${classNames[diff.difficulty]}`} style={{ width: `${diff.correctRate}%` }}></div>
+                      <div className={`difficulty-bar-fill ${className}`} style={{ width: `${diff.correctRate}%` }}></div>
                     </div>
                   </div>
                 );
