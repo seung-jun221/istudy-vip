@@ -701,8 +701,14 @@ export async function getFullResultById(
     return { ...result, submission: undefined };
   }
 
+  // 백분위 기반으로 9등급/5등급 재계산 (DB 저장값 대신)
+  const recalculatedGrade9 = GradeCalculator.calculate9GradeFromPercentile(result.percentile);
+  const recalculatedGrade5 = GradeCalculator.calculate5Grade(result.percentile);
+
   return {
     ...result,
+    grade9: recalculatedGrade9,
+    grade5: recalculatedGrade5,
     submission,
   };
 }
