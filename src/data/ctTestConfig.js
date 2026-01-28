@@ -140,7 +140,7 @@ export const calculatePercentile = (tScore) => {
   return ((1 + sign * y) / 2) * 100;
 };
 
-// 9등급 계산
+// 9등급 계산 (점수 기반 - deprecated, 호환성 유지용)
 export const getGrade9 = (rawScore) => {
   const cuts = CT_STATISTICS.gradeCuts;
   for (let grade = 1; grade <= 9; grade++) {
@@ -149,12 +149,41 @@ export const getGrade9 = (rawScore) => {
   return 9;
 };
 
-// 5등급 계산
+// 백분위 기반 9등급 계산 (수능/모의고사 기준)
+// 1등급: 상위 4%, 2등급: 상위 11%, 3등급: 상위 23%, 4등급: 상위 40%
+// 5등급: 상위 60%, 6등급: 상위 77%, 7등급: 상위 89%, 8등급: 상위 96%, 9등급: 100%
+export const getGrade9FromPercentile = (percentile) => {
+  const topPercent = 100 - percentile;
+
+  if (topPercent <= 4) return 1;
+  if (topPercent <= 11) return 2;
+  if (topPercent <= 23) return 3;
+  if (topPercent <= 40) return 4;
+  if (topPercent <= 60) return 5;
+  if (topPercent <= 77) return 6;
+  if (topPercent <= 89) return 7;
+  if (topPercent <= 96) return 8;
+  return 9;
+};
+
+// 5등급 계산 (점수 기반 - deprecated, 호환성 유지용)
 export const getGrade5 = (rawScore) => {
   const cuts = CT_STATISTICS.gradeCuts5;
   for (let grade = 1; grade <= 5; grade++) {
     if (rawScore >= cuts[grade]) return grade;
   }
+  return 5;
+};
+
+// 백분위 기반 5등급 계산 (2028 대입제도 개편안)
+// 1등급: 상위 10%, 2등급: 상위 34%, 3등급: 상위 66%, 4등급: 상위 90%, 5등급: 100%
+export const getGrade5FromPercentile = (percentile) => {
+  const topPercent = 100 - percentile;
+
+  if (topPercent <= 10) return 1;
+  if (topPercent <= 34) return 2;
+  if (topPercent <= 66) return 3;
+  if (topPercent <= 90) return 4;
   return 5;
 };
 
@@ -233,11 +262,11 @@ export const calculateCTResults = (studentScores) => {
   // 총점 계산
   const totalScore = Object.values(studentScores).reduce((sum, score) => sum + (score || 0), 0);
 
-  // T-Score, 백분위, 등급 계산
+  // T-Score, 백분위, 등급 계산 (백분위 기반으로 통일)
   const tScore = calculateTScore(totalScore);
   const percentile = calculatePercentile(tScore);
-  const grade9 = getGrade9(totalScore);
-  const grade5 = getGrade5(totalScore);
+  const grade9 = getGrade9FromPercentile(percentile); // 백분위 기반 9등급
+  const grade5 = getGrade5FromPercentile(percentile); // 백분위 기반 5등급
 
   // 영역별 통계
   const areaStats = calculateAreaStats(studentScores);

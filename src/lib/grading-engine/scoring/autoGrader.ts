@@ -48,9 +48,9 @@ export class AutoGrader {
     // 4. 난이도별 집계
     const difficultyResults: DifficultyResult[] = this.calculateDifficultyResults(questionResults, submission.testType);
 
-    // 5. 등급 계산
+    // 5. 등급 계산 (백분위 기반으로 통일)
     const percentile = GradeCalculator.calculatePercentile(submission.testType, totalEarnedScore);
-    const grade9 = GradeCalculator.calculate9Grade(submission.testType, totalEarnedScore);
+    const grade9 = GradeCalculator.calculate9GradeFromPercentile(percentile); // 백분위 기반 9등급
     const grade5 = GradeCalculator.calculate5Grade(percentile); // 2028 대입제도 개편안
     const expectedHighSchoolGrade = GradeCalculator.calculateExpectedHighSchoolGrade(submission.testType, grade9);
 
