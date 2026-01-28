@@ -19,7 +19,7 @@ import type {
   CreateRegistrationRequest,
   UpdateRegistrationRequest,
 } from '../types/diagnostic';
-import { AutoGrader, generateReportData } from '../lib/grading-engine';
+import { AutoGrader, generateReportData, GradeCalculator } from '../lib/grading-engine';
 import type {
   StudentSubmission,
   StudentAnswer,
@@ -1196,9 +1196,10 @@ function convertToGradingResult(
       totalScore: result.max_score,
       earnedScore: result.total_score,
       percentile: result.percentile,
-      grade9: result.grade9,
-      grade5: result.grade5,
-      expectedHighSchoolGrade: `${result.grade9}등급`,
+      // 백분위 기반으로 9등급/5등급 재계산 (DB 저장값 대신)
+      grade9: GradeCalculator.calculate9GradeFromPercentile(result.percentile),
+      grade5: GradeCalculator.calculate5Grade(result.percentile),
+      expectedHighSchoolGrade: `${GradeCalculator.calculate9GradeFromPercentile(result.percentile)}등급`,
     },
     areaResults,
     difficultyResults,
