@@ -97,6 +97,34 @@ export class GradeCalculator {
   }
 
   /**
+   * 백분위 → 9등급 계산 (수능/모의고사 기준)
+   * 1등급: 상위 4% (0-4%)
+   * 2등급: 상위 4-11%
+   * 3등급: 상위 11-23%
+   * 4등급: 상위 23-40%
+   * 5등급: 상위 40-60%
+   * 6등급: 상위 60-77%
+   * 7등급: 상위 77-89%
+   * 8등급: 상위 89-96%
+   * 9등급: 상위 96-100%
+   */
+  static calculate9GradeFromPercentile(percentile: number): number {
+    // percentile은 누적 백분위 (0-100), 즉 하위 몇 %인지
+    // 상위 몇 %인지 계산
+    const topPercent = 100 - percentile;
+
+    if (topPercent <= 4) return 1;   // 상위 4%
+    if (topPercent <= 11) return 2;  // 상위 11%
+    if (topPercent <= 23) return 3;  // 상위 23%
+    if (topPercent <= 40) return 4;  // 상위 40%
+    if (topPercent <= 60) return 5;  // 상위 60%
+    if (topPercent <= 77) return 6;  // 상위 77%
+    if (topPercent <= 89) return 7;  // 상위 89%
+    if (topPercent <= 96) return 8;  // 상위 96%
+    return 9;                         // 상위 100%
+  }
+
+  /**
    * 백분위 → 5등급 계산 (2028 대입제도 개편안)
    * 1등급: 상위 10% (0-10%)
    * 2등급: 상위 11~34% (누적 34%)
