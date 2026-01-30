@@ -64,7 +64,7 @@
 .date-button {
   padding: 16px 20px;
   background: white;
-  border: 2px solid #ddd;
+  border: 1px solid #ddd;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 500;
@@ -238,7 +238,7 @@
   padding: 14px 24px;
   background: white;
   color: #333;
-  border: 2px solid #ddd;
+  border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
