@@ -1,0 +1,1158 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '../../utils/supabase';
+import { formatPhone } from '../../utils/format';
+import './AdminTabs.css';
+
+export default function StudentManagementTab({ campaignId, onUpdate }) {
+  // 검색
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searching, setSearching] = useState(false);
+
+  // 조회 결과
+  const [journeyData, setJourneyData] = useState(null); // { phone, seminars, consultings, tests, results, memo }
+  const [loading, setLoading] = useState(false);
+
+  // 메모
+  const [memo, setMemo] = useState('');
+  const [memoStatus, setMemoStatus] = useState('');
+  const [memoSaving, setMemoSaving] = useState(false);
+  const [memoSaved, setMemoSaved] = useState(false);
+
+  // 학생 정보 수정
+  const [editingStudent, setEditingStudent] = useState(null); // { name, school, grade, mathLevel }
+  const [editForm, setEditForm] = useState({});
+  const [editSaving, setEditSaving] = useState(false);
+
+  // 삭제 확인
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // 일정변경
+  const [scheduleChangeTarget, setScheduleChangeTarget] = useState(null);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [selectedNewSlotId, setSelectedNewSlotId] = useState('');
+  const [changingSchedule, setChangingSchedule] = useState(false);
+
+  // ============================================================
+  // 검색 및 데이터 로드
+  // ============================================================
+
+  const handleSearch = async () => {
+    const term = searchTerm.trim();
+    if (!term) return;
+
+    setSearching(true);
+    setJourneyData(null);
+
+    try {
+      // 전화번호 형식이면 정규화
+      const isPhone = /^[0-9\-]+$/.test(term);
+      const searchPhone = isPhone ? formatPhone(term) : null;
+
+      // 전화번호 찾기 (이름 검색이면 먼저 전화번호 특정)
+      let phone = searchPhone;
+
+      if (!phone) {
+        // 이름으로 검색 → 전화번호 찾기
+        const phones = new Set();
+
+        const { data: s1 } = await supabase
+          .from('reservations')
+          .select('parent_phone')
+          .ilike('student_name', `%${term}%`);
+        s1?.forEach(r => phones.add(r.parent_phone));
+
+        const { data: s2 } = await supabase
+          .from('consulting_reservations')
+          .select('parent_phone')
+          .ilike('student_name', `%${term}%`);
+        s2?.forEach(r => phones.add(r.parent_phone));
+
+        const { data: s3 } = await supabase
+          .from('test_reservations')
+          .select('parent_phone')
+          .ilike('student_name', `%${term}%`);
+        s3?.forEach(r => phones.add(r.parent_phone));
+
+        const { data: s4 } = await supabase
+          .from('diagnostic_submissions')
+          .select('parent_phone')
+          .ilike('student_name', `%${term}%`);
+        s4?.forEach(r => phones.add(r.parent_phone));
+
+        if (phones.size === 0) {
+          setJourneyData({ phone: null, notFound: true });
+          return;
+        }
+
+        // 첫 번째 전화번호 사용 (여러 건이면 첫 번째)
+        phone = [...phones][0];
+      }
+
+      await loadJourney(phone);
+    } catch (error) {
+      console.error('검색 실패:', error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const loadJourney = async (phone) => {
+    setLoading(true);
+    try {
+      // 4개 테이블 병렬 조회
+      const [seminarRes, consultingRes, testRes, diagnosticRes, memoRes] = await Promise.all([
+        supabase
+          .from('reservations')
+          .select('*, seminar_slots(*)')
+          .eq('parent_phone', phone)
+          .order('registered_at', { ascending: false }),
+        supabase
+          .from('consulting_reservations')
+          .select('*, consulting_slots(*)')
+          .eq('parent_phone', phone)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('test_reservations')
+          .select('*, test_slots(*)')
+          .eq('parent_phone', phone)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('diagnostic_submissions')
+          .select('*')
+          .eq('parent_phone', phone)
+          .order('submitted_at', { ascending: false }),
+        supabase
+          .from('customer_memos')
+          .select('memo, status')
+          .eq('parent_phone', phone)
+          .maybeSingle(),
+      ]);
+
+      if (memoRes.data) {
+        setMemo(memoRes.data.memo || '');
+        setMemoStatus(memoRes.data.status || '');
+      } else {
+        setMemo('');
+        setMemoStatus('');
+      }
+
+      setJourneyData({
+        phone,
+        seminars: seminarRes.data || [],
+        consultings: consultingRes.data || [],
+        tests: testRes.data || [],
+        results: diagnosticRes.data || [],
+        notFound: false,
+      });
+    } catch (error) {
+      console.error('여정 조회 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ============================================================
+  // 자녀별 그룹핑
+  // ============================================================
+
+  const groupByStudent = () => {
+    if (!journeyData || journeyData.notFound) return [];
+
+    const studentMap = new Map(); // student_name → { info, events }
+
+    const addToStudent = (name, info, event) => {
+      const key = name || '(이름없음)';
+      if (!studentMap.has(key)) {
+        studentMap.set(key, { name: key, info, events: [] });
+      }
+      const student = studentMap.get(key);
+      // 더 최신 정보로 업데이트
+      if (info && (!student.info || new Date(event.rawDate) > new Date(student.info._updatedAt || 0))) {
+        student.info = { ...info, _updatedAt: event.rawDate };
+      }
+      student.events.push(event);
+    };
+
+    // 설명회
+    journeyData.seminars.forEach(s => {
+      addToStudent(s.student_name, {
+        school: s.school,
+        grade: s.grade,
+        math_level: s.math_level,
+      }, {
+        rawDate: s.registered_at,
+        type: 'seminar',
+        icon: '📝',
+        label: '설명회 예약',
+        detail: `${formatDateTime(s.seminar_slots?.date, s.seminar_slots?.time)} ${s.seminar_slots?.location || ''}`,
+        status: s.status,
+        id: s.id,
+        table: 'reservations',
+        slotId: s.seminar_slot_id,
+        canChange: s.status !== '취소',
+        canDelete: s.status !== '취소',
+      });
+    });
+
+    // 컨설팅
+    journeyData.consultings.forEach(c => {
+      addToStudent(c.student_name, {
+        school: c.school,
+        grade: c.grade,
+        math_level: c.math_level,
+      }, {
+        rawDate: c.created_at,
+        type: 'consulting',
+        icon: '📅',
+        label: '컨설팅 예약',
+        detail: `${formatDateTime(c.consulting_slots?.date, c.consulting_slots?.time)} ${c.consulting_slots?.location || ''}`,
+        status: c.status,
+        consultingMemo: c.consultation_memo,
+        enrollmentStatus: c.enrollment_status,
+        id: c.id,
+        table: 'consulting_reservations',
+        slotId: c.slot_id,
+        canChange: !['cancelled', 'auto_cancelled'].includes(c.status),
+        canDelete: !['cancelled', 'auto_cancelled'].includes(c.status),
+      });
+    });
+
+    // 진단검사 예약
+    journeyData.tests.forEach(t => {
+      addToStudent(t.student_name, {
+        school: t.school,
+        grade: t.grade,
+        math_level: t.math_level,
+      }, {
+        rawDate: t.created_at,
+        type: 'test',
+        icon: '📋',
+        label: t.reservation_type === 'entrance_test' ? '입학테스트 예약' : '진단검사 예약',
+        detail: `${formatDateTime(t.test_slots?.date, t.test_slots?.time)} ${t.test_slots?.location || ''}`,
+        status: t.status,
+        id: t.id,
+        table: 'test_reservations',
+        slotId: t.slot_id,
+        canChange: t.status !== '취소' && t.status !== 'cancelled',
+        canDelete: t.status !== '취소' && t.status !== 'cancelled',
+      });
+    });
+
+    // 진단검사 응시
+    journeyData.results.forEach(r => {
+      addToStudent(r.student_name, {
+        school: r.school,
+        grade: r.grade,
+        math_level: r.math_level,
+      }, {
+        rawDate: r.submitted_at || r.created_at,
+        type: 'diagnostic',
+        icon: '🏆',
+        label: `진단검사 ${r.submission_type === 'registration' ? '등록' : '응시'}`,
+        detail: `${r.test_type || ''} ${r.submission_type === 'registration' ? '' : '- 채점완료'}`,
+        status: r.submission_type === 'registration' ? '등록' : '완료',
+        id: r.id,
+        table: 'diagnostic_submissions',
+        canChange: false,
+        canDelete: false,
+      });
+    });
+
+    // 각 학생의 이벤트를 날짜순 정렬 (최신 먼저)
+    const students = [...studentMap.values()];
+    students.forEach(s => {
+      s.events.sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate));
+    });
+
+    return students;
+  };
+
+  // ============================================================
+  // 메모 저장
+  // ============================================================
+
+  const saveMemo = async () => {
+    if (!journeyData?.phone) return;
+    setMemoSaving(true);
+    try {
+      const students = groupByStudent();
+      const { error } = await supabase
+        .from('customer_memos')
+        .upsert({
+          parent_phone: journeyData.phone,
+          memo,
+          status: memoStatus || null,
+          student_name: students[0]?.name || null,
+          campaign_id: campaignId || null,
+          updated_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        }, {
+          onConflict: 'parent_phone',
+          ignoreDuplicates: false,
+        });
+
+      if (error) throw error;
+      setMemoSaved(true);
+      setTimeout(() => setMemoSaved(false), 2000);
+    } catch (error) {
+      console.error('메모 저장 실패:', error);
+      alert('메모 저장에 실패했습니다.');
+    } finally {
+      setMemoSaving(false);
+    }
+  };
+
+  // ============================================================
+  // 학생 정보 수정 + 전 테이블 동기화
+  // ============================================================
+
+  const startEditStudent = (studentName, info) => {
+    setEditingStudent(studentName);
+    setEditForm({
+      student_name: studentName,
+      school: info?.school || '',
+      grade: info?.grade || '',
+      math_level: info?.math_level || '',
+    });
+  };
+
+  const saveStudentInfo = async () => {
+    if (!journeyData?.phone || !editingStudent) return;
+    setEditSaving(true);
+    try {
+      const phone = journeyData.phone;
+      const oldName = editingStudent;
+      const updateData = {};
+      if (editForm.student_name) updateData.student_name = editForm.student_name;
+      if (editForm.school !== undefined) updateData.school = editForm.school;
+      if (editForm.grade !== undefined) updateData.grade = editForm.grade;
+      if (editForm.math_level !== undefined) updateData.math_level = editForm.math_level;
+
+      // 4개 테이블 모두 동기화
+      const updates = await Promise.allSettled([
+        supabase
+          .from('reservations')
+          .update(updateData)
+          .eq('parent_phone', phone)
+          .eq('student_name', oldName),
+        supabase
+          .from('consulting_reservations')
+          .update(updateData)
+          .eq('parent_phone', phone)
+          .eq('student_name', oldName),
+        supabase
+          .from('test_reservations')
+          .update(updateData)
+          .eq('parent_phone', phone)
+          .eq('student_name', oldName),
+        supabase
+          .from('diagnostic_submissions')
+          .update(updateData)
+          .eq('parent_phone', phone)
+          .eq('student_name', oldName),
+      ]);
+
+      const errors = updates.filter(u => u.status === 'fulfilled' && u.value.error);
+      if (errors.length > 0) {
+        console.error('일부 테이블 동기화 실패:', errors);
+      }
+
+      setEditingStudent(null);
+      // 데이터 새로고침
+      await loadJourney(phone);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('학생 정보 수정 실패:', error);
+      alert('학생 정보 수정에 실패했습니다.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  // ============================================================
+  // 예약 삭제 (취소 처리)
+  // ============================================================
+
+  const handleDelete = async () => {
+    if (!deleteTarget || !journeyData?.phone) return;
+    setDeleting(true);
+    try {
+      const { id, table, slotId } = deleteTarget;
+
+      // 상태를 '취소'로 변경
+      const { error } = await supabase
+        .from(table)
+        .update({ status: '취소' })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // 슬롯 카운트 감소
+      if (slotId) {
+        const slotTable = table === 'reservations' ? 'seminar_slots'
+          : table === 'consulting_reservations' ? 'consulting_slots'
+          : 'test_slots';
+
+        const { data: slot } = await supabase
+          .from(slotTable)
+          .select('current_bookings')
+          .eq('id', slotId)
+          .single();
+
+        if (slot) {
+          await supabase
+            .from(slotTable)
+            .update({ current_bookings: Math.max(0, (slot.current_bookings || 1) - 1) })
+            .eq('id', slotId);
+        }
+      }
+
+      setDeleteTarget(null);
+      await loadJourney(journeyData.phone);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('예약 삭제 실패:', error);
+      alert('예약 삭제에 실패했습니다.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // ============================================================
+  // 일정 변경
+  // ============================================================
+
+  const startScheduleChange = async (event) => {
+    setScheduleChangeTarget(event);
+    setSelectedNewSlotId('');
+
+    try {
+      const slotTable = event.table === 'reservations' ? 'seminar_slots'
+        : event.table === 'consulting_reservations' ? 'consulting_slots'
+        : 'test_slots';
+
+      const today = new Date().toISOString().split('T')[0];
+      const { data: slots } = await supabase
+        .from(slotTable)
+        .select('*')
+        .gte('date', today)
+        .eq('status', 'active')
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      setAvailableSlots(slots || []);
+    } catch (error) {
+      console.error('슬롯 로드 실패:', error);
+      setAvailableSlots([]);
+    }
+  };
+
+  const executeScheduleChange = async () => {
+    if (!scheduleChangeTarget || !selectedNewSlotId || !journeyData?.phone) return;
+    setChangingSchedule(true);
+    try {
+      const { id, table, slotId: oldSlotId } = scheduleChangeTarget;
+
+      const slotTable = table === 'reservations' ? 'seminar_slots'
+        : table === 'consulting_reservations' ? 'consulting_slots'
+        : 'test_slots';
+
+      const slotFkField = table === 'reservations' ? 'seminar_slot_id'
+        : table === 'consulting_reservations' ? 'slot_id'
+        : 'slot_id';
+
+      // 새 슬롯 정보 가져오기
+      const { data: newSlot } = await supabase
+        .from(slotTable)
+        .select('*')
+        .eq('id', selectedNewSlotId)
+        .single();
+
+      if (!newSlot) throw new Error('슬롯을 찾을 수 없습니다.');
+
+      if (newSlot.current_bookings >= newSlot.max_capacity) {
+        alert('선택한 시간은 이미 마감되었습니다.');
+        return;
+      }
+
+      // 예약 슬롯 변경
+      const updateData = { [slotFkField]: selectedNewSlotId };
+
+      // test_reservations는 test_date, test_time도 업데이트
+      if (table === 'test_reservations') {
+        updateData.test_date = newSlot.date;
+        updateData.test_time = newSlot.time;
+      }
+
+      const { error: updateError } = await supabase
+        .from(table)
+        .update(updateData)
+        .eq('id', id);
+
+      if (updateError) throw updateError;
+
+      // 기존 슬롯 카운트 감소
+      if (oldSlotId) {
+        const { data: oldSlot } = await supabase
+          .from(slotTable)
+          .select('current_bookings')
+          .eq('id', oldSlotId)
+          .single();
+
+        if (oldSlot) {
+          await supabase
+            .from(slotTable)
+            .update({ current_bookings: Math.max(0, (oldSlot.current_bookings || 1) - 1) })
+            .eq('id', oldSlotId);
+        }
+      }
+
+      // 새 슬롯 카운트 증가
+      await supabase
+        .from(slotTable)
+        .update({ current_bookings: (newSlot.current_bookings || 0) + 1 })
+        .eq('id', selectedNewSlotId);
+
+      setScheduleChangeTarget(null);
+      await loadJourney(journeyData.phone);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('일정 변경 실패:', error);
+      alert('일정 변경에 실패했습니다.');
+    } finally {
+      setChangingSchedule(false);
+    }
+  };
+
+  // ============================================================
+  // 유틸리티
+  // ============================================================
+
+  const formatDateTime = (dateStr, timeStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const dateFormatted = `${date.getMonth() + 1}/${date.getDate()}`;
+    const time = timeStr ? timeStr.slice(0, 5) : '';
+    return time ? `${dateFormatted} ${time}` : dateFormatted;
+  };
+
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const getStatusBadge = (status) => {
+    const styles = {
+      '예약': { bg: '#dbeafe', color: '#1d4ed8' },
+      '참석': { bg: '#dcfce7', color: '#16a34a' },
+      '대기': { bg: '#fef3c7', color: '#d97706' },
+      '취소': { bg: '#fee2e2', color: '#dc2626' },
+      'cancelled': { bg: '#fee2e2', color: '#dc2626' },
+      'auto_cancelled': { bg: '#fef3c7', color: '#d97706' },
+      'confirmed': { bg: '#dcfce7', color: '#16a34a' },
+      'pending': { bg: '#e0e7ff', color: '#4f46e5' },
+      '완료': { bg: '#dcfce7', color: '#16a34a' },
+      '등록': { bg: '#e0e7ff', color: '#4f46e5' },
+      '확정': { bg: '#dcfce7', color: '#16a34a' },
+    };
+    const style = styles[status] || { bg: '#f3f4f6', color: '#6b7280' };
+    const label = status === 'auto_cancelled' ? '자동취소'
+      : status === 'cancelled' ? '취소'
+      : status === 'confirmed' ? '확정'
+      : status;
+    return (
+      <span style={{
+        padding: '2px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        fontWeight: '500',
+        background: style.bg,
+        color: style.color,
+      }}>
+        {label}
+      </span>
+    );
+  };
+
+  const students = groupByStudent();
+
+  // ============================================================
+  // 렌더링
+  // ============================================================
+
+  return (
+    <div className="tab-container">
+      {/* 검색 섹션 */}
+      <div style={{
+        background: '#f0f9ff',
+        border: '1px solid #bae6fd',
+        padding: '16px',
+        borderRadius: '8px',
+        marginBottom: '20px',
+      }}>
+        <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#0369a1' }}>
+          통합 학생 관리
+        </h3>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            placeholder="전화번호 또는 학생명으로 검색..."
+            style={{
+              flex: 1,
+              padding: '10px 12px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              fontSize: '14px',
+            }}
+          />
+          <button
+            onClick={handleSearch}
+            disabled={searching}
+            style={{
+              padding: '10px 20px',
+              background: searching ? '#d1d5db' : '#0369a1',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: searching ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {searching ? '검색 중...' : '검색'}
+          </button>
+        </div>
+      </div>
+
+      {/* 로딩 */}
+      {loading && (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+          데이터 로드 중...
+        </div>
+      )}
+
+      {/* 검색 결과 없음 */}
+      {journeyData?.notFound && (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+          검색 결과가 없습니다.
+        </div>
+      )}
+
+      {/* 검색 결과 */}
+      {journeyData && !journeyData.notFound && !loading && (
+        <div>
+          {/* 전화번호 헤더 */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '16px',
+            padding: '12px 16px',
+            background: '#f8fafc',
+            borderRadius: '8px',
+            borderLeft: '4px solid #0369a1',
+          }}>
+            <span style={{ fontSize: '16px' }}>📱</span>
+            <span style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>
+              {journeyData.phone}
+            </span>
+            <span style={{ fontSize: '13px', color: '#64748b' }}>
+              (자녀 {students.length}명)
+            </span>
+          </div>
+
+          {/* 메모 섹션 (가정 단위) */}
+          <div style={{
+            background: '#fffbeb',
+            border: '1px solid #fcd34d',
+            padding: '16px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+          }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              메모 (가정 단위)
+            </h3>
+            <textarea
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              placeholder="고객에 대한 메모를 입력하세요..."
+              style={{
+                width: '100%',
+                minHeight: '60px',
+                padding: '10px',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                fontSize: '14px',
+                resize: 'vertical',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <span style={{ fontSize: '13px', color: '#92400e', fontWeight: '500' }}>처리 상태:</span>
+                {['대기중', '처리중', '처리완료'].map(status => {
+                  const colors = {
+                    '대기중': { bg: '#fef3c7', color: '#d97706', border: '#d97706' },
+                    '처리중': { bg: '#dbeafe', color: '#1d4ed8', border: '#1d4ed8' },
+                    '처리완료': { bg: '#dcfce7', color: '#16a34a', border: '#16a34a' },
+                  };
+                  const c = colors[status];
+                  const isActive = memoStatus === status;
+                  return (
+                    <button
+                      key={status}
+                      onClick={() => setMemoStatus(isActive ? '' : status)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '4px',
+                        border: isActive ? `2px solid ${c.border}` : '1px solid #e5e7eb',
+                        background: isActive ? c.bg : 'white',
+                        color: isActive ? c.color : '#6b7280',
+                        fontSize: '12px',
+                        fontWeight: isActive ? '600' : '400',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {status}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {memoSaved && <span style={{ color: '#16a34a', fontSize: '13px' }}>저장됨</span>}
+                <button
+                  onClick={saveMemo}
+                  disabled={memoSaving}
+                  style={{
+                    padding: '6px 16px',
+                    background: memoSaving ? '#d1d5db' : '#f59e0b',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    cursor: memoSaving ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {memoSaving ? '저장 중...' : '메모 저장'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 자녀별 카드 */}
+          {students.map((student) => (
+            <div
+              key={student.name}
+              style={{
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                overflow: 'hidden',
+              }}
+            >
+              {/* 학생 헤더 */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 16px',
+                background: '#f1f5f9',
+                borderBottom: '1px solid #e2e8f0',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b' }}>
+                    {student.name}
+                  </span>
+                  <span style={{ fontSize: '13px', color: '#64748b' }}>
+                    {student.info?.school || ''} {student.info?.grade ? `· ${student.info.grade}` : ''} {student.info?.math_level ? `· ${student.info.math_level}` : ''}
+                  </span>
+                </div>
+
+                {editingStudent === student.name ? (
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      onClick={saveStudentInfo}
+                      disabled={editSaving}
+                      style={{
+                        padding: '4px 12px',
+                        background: '#16a34a',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {editSaving ? '저장 중...' : '저장'}
+                    </button>
+                    <button
+                      onClick={() => setEditingStudent(null)}
+                      style={{
+                        padding: '4px 12px',
+                        background: '#e2e8f0',
+                        color: '#475569',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      취소
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => startEditStudent(student.name, student.info)}
+                    style={{
+                      padding: '4px 12px',
+                      background: '#e0e7ff',
+                      color: '#4f46e5',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    정보 수정
+                  </button>
+                )}
+              </div>
+
+              {/* 정보 수정 폼 */}
+              {editingStudent === student.name && (
+                <div style={{
+                  padding: '12px 16px',
+                  background: '#f8fafc',
+                  borderBottom: '1px solid #e2e8f0',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr 1fr',
+                  gap: '8px',
+                }}>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#64748b' }}>이름</label>
+                    <input
+                      value={editForm.student_name || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, student_name: e.target.value }))}
+                      style={{ width: '100%', padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#64748b' }}>학교</label>
+                    <input
+                      value={editForm.school || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, school: e.target.value }))}
+                      style={{ width: '100%', padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#64748b' }}>학년</label>
+                    <select
+                      value={editForm.grade || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, grade: e.target.value }))}
+                      style={{ width: '100%', padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box' }}
+                    >
+                      <option value="">선택</option>
+                      {['초1','초2','초3','초4','초5','초6','중1','중2','중3','고1','고2','고3'].map(g => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', color: '#64748b' }}>수학 선행</label>
+                    <input
+                      value={editForm.math_level || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, math_level: e.target.value }))}
+                      style={{ width: '100%', padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* 타임라인 */}
+              <div style={{ padding: '12px 16px' }}>
+                {student.events.length === 0 ? (
+                  <div style={{ color: '#94a3b8', fontSize: '13px', textAlign: 'center', padding: '12px' }}>
+                    기록 없음
+                  </div>
+                ) : (
+                  <div style={{ position: 'relative' }}>
+                    {/* 타임라인 라인 */}
+                    <div style={{
+                      position: 'absolute',
+                      left: '15px',
+                      top: '8px',
+                      bottom: '8px',
+                      width: '2px',
+                      background: '#e2e8f0',
+                    }} />
+
+                    {student.events.map((event, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          display: 'flex',
+                          gap: '12px',
+                          marginBottom: idx < student.events.length - 1 ? '12px' : '0',
+                          position: 'relative',
+                        }}
+                      >
+                        {/* 아이콘 */}
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: '#fff',
+                          border: '2px solid #e2e8f0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '14px',
+                          zIndex: 1,
+                          flexShrink: 0,
+                        }}>
+                          {event.icon}
+                        </div>
+
+                        {/* 내용 */}
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', flexWrap: 'wrap' }}>
+                            <span style={{ fontWeight: '600', fontSize: '13px' }}>{event.label}</span>
+                            {getStatusBadge(event.status)}
+                            {/* 액션 버튼 */}
+                            {event.canChange && (
+                              <button
+                                onClick={() => startScheduleChange(event)}
+                                style={{
+                                  padding: '2px 8px',
+                                  background: 'white',
+                                  color: '#0369a1',
+                                  border: '1px solid #bae6fd',
+                                  borderRadius: '4px',
+                                  fontSize: '11px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                일정변경
+                              </button>
+                            )}
+                            {event.canDelete && (
+                              <button
+                                onClick={() => setDeleteTarget(event)}
+                                style={{
+                                  padding: '2px 8px',
+                                  background: 'white',
+                                  color: '#dc2626',
+                                  border: '1px solid #fecaca',
+                                  borderRadius: '4px',
+                                  fontSize: '11px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                삭제
+                              </button>
+                            )}
+                          </div>
+                          <div style={{ color: '#64748b', fontSize: '12px' }}>{event.detail}</div>
+                          {/* 컨설팅 메모 */}
+                          {event.consultingMemo && (
+                            <div style={{
+                              marginTop: '4px',
+                              padding: '4px 8px',
+                              background: '#f0fdf4',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              color: '#166534',
+                            }}>
+                              {event.consultingMemo}
+                              {event.enrollmentStatus && (
+                                <span style={{ marginLeft: '8px', fontWeight: '600' }}>
+                                  [등록: {event.enrollmentStatus}]
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          <div style={{ color: '#94a3b8', fontSize: '11px', marginTop: '2px' }}>
+                            {formatTimestamp(event.rawDate)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 초기 상태 안내 */}
+      {!journeyData && !loading && (
+        <div style={{ padding: '60px 20px', textAlign: 'center', color: '#94a3b8' }}>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔍</div>
+          <p style={{ fontSize: '15px', marginBottom: '4px' }}>전화번호 또는 학생명을 검색하세요</p>
+          <p style={{ fontSize: '13px' }}>학생 정보 수정, 예약 일정변경/삭제를 이 탭에서 통합 관리할 수 있습니다.</p>
+        </div>
+      )}
+
+      {/* 삭제 확인 모달 */}
+      {deleteTarget && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setDeleteTarget(null)}
+        >
+          <div
+            style={{
+              background: 'white', borderRadius: '12px', padding: '24px',
+              maxWidth: '360px', width: '100%',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#dc2626' }}>예약 삭제 확인</h3>
+            <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>
+              <strong>{deleteTarget.label}</strong>을(를) 취소하시겠습니까?
+            </p>
+            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>
+              {deleteTarget.detail}
+            </p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setDeleteTarget(null)}
+                style={{
+                  flex: 1, padding: '10px', border: '1px solid #d1d5db',
+                  borderRadius: '6px', background: 'white', cursor: 'pointer',
+                  fontWeight: '500',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                style={{
+                  flex: 1, padding: '10px', border: 'none',
+                  borderRadius: '6px', background: '#dc2626', color: 'white',
+                  cursor: deleting ? 'not-allowed' : 'pointer', fontWeight: '500',
+                }}
+              >
+                {deleting ? '삭제 중...' : '삭제'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 일정변경 모달 */}
+      {scheduleChangeTarget && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setScheduleChangeTarget(null)}
+        >
+          <div
+            style={{
+              background: 'white', borderRadius: '12px', padding: '24px',
+              maxWidth: '440px', width: '100%', maxHeight: '70vh', overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#0369a1' }}>일정 변경</h3>
+            <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '4px' }}>
+              <strong>{scheduleChangeTarget.label}</strong>
+            </p>
+            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+              현재: {scheduleChangeTarget.detail}
+            </p>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                변경할 일정 선택:
+              </label>
+              {availableSlots.length === 0 ? (
+                <p style={{ color: '#94a3b8', fontSize: '13px' }}>변경 가능한 일정이 없습니다.</p>
+              ) : (
+                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+                  {availableSlots.map((slot) => {
+                    const isFull = slot.current_bookings >= slot.max_capacity;
+                    const isSelected = selectedNewSlotId === slot.id;
+                    return (
+                      <div
+                        key={slot.id}
+                        onClick={() => !isFull && setSelectedNewSlotId(slot.id)}
+                        style={{
+                          padding: '10px 12px',
+                          borderBottom: '1px solid #f1f5f9',
+                          cursor: isFull ? 'not-allowed' : 'pointer',
+                          background: isSelected ? '#e0f2fe' : isFull ? '#f9fafb' : 'white',
+                          opacity: isFull ? 0.5 : 1,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div>
+                          <span style={{ fontWeight: '500', fontSize: '14px' }}>
+                            {formatDateTime(slot.date, slot.time)}
+                          </span>
+                          <span style={{ marginLeft: '8px', fontSize: '13px', color: '#64748b' }}>
+                            {slot.location || ''}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '12px', color: isFull ? '#dc2626' : '#64748b' }}>
+                          {isFull ? '마감' : `${slot.current_bookings || 0}/${slot.max_capacity}`}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setScheduleChangeTarget(null)}
+                style={{
+                  flex: 1, padding: '10px', border: '1px solid #d1d5db',
+                  borderRadius: '6px', background: 'white', cursor: 'pointer',
+                  fontWeight: '500',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={executeScheduleChange}
+                disabled={!selectedNewSlotId || changingSchedule}
+                style={{
+                  flex: 1, padding: '10px', border: 'none',
+                  borderRadius: '6px',
+                  background: !selectedNewSlotId || changingSchedule ? '#d1d5db' : '#0369a1',
+                  color: 'white',
+                  cursor: !selectedNewSlotId || changingSchedule ? 'not-allowed' : 'pointer',
+                  fontWeight: '500',
+                }}
+              >
+                {changingSchedule ? '변경 중...' : '일정 변경'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

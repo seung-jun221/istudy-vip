@@ -793,7 +793,6 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
               <th>진단검사 시간</th>
               <th>지점</th>
               <th>성적 관리</th>
-              <th>수정</th>
               <th>시험지 지정</th>
               <th>취소</th>
             </tr>
@@ -801,7 +800,7 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
           <tbody>
             {filteredTests.length === 0 ? (
               <tr>
-                <td colSpan="12" className="empty-cell">
+                <td colSpan="11" className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -890,24 +889,6 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
                           성적입력
                         </button>
                       )}
-                    </td>
-                    <td>
-                      <button
-                        className="btn-small"
-                        onClick={() => handleEditClick(test)}
-                        style={{
-                          padding: '0.5rem 1rem',
-                          fontSize: '0.85rem',
-                          background: '#f59e0b',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontWeight: '600',
-                        }}
-                      >
-                        수정
-                      </button>
                     </td>
                     <td>
                       <select
