@@ -433,9 +433,9 @@ export function AdminProvider({ children }) {
           tests.push({
             ...test,
             student_name: test.consulting_reservations?.student_name || test.student_name,
-            school: test.consulting_reservations?.school,
-            grade: test.consulting_reservations?.grade,
-            math_level: test.consulting_reservations?.math_level,
+            school: test.consulting_reservations?.school || test.school,
+            grade: test.consulting_reservations?.grade || test.grade,
+            math_level: test.consulting_reservations?.math_level || test.math_level,
             parent_phone: test.consulting_reservations?.parent_phone || test.parent_phone,
           });
         });
