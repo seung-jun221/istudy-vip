@@ -3,6 +3,7 @@ import Input from '../common/Input';
 import Button from '../common/Button';
 import { useReservation } from '../../context/ReservationContext';
 import { supabase, hashPassword } from '../../utils/supabase';
+import { formatPhone } from '../../utils/format';
 
 export default function StudentInfoForm({
   phone,
@@ -155,7 +156,7 @@ export default function StudentInfoForm({
       seminar_slot_id: selectedSeminar.id,
       campaign_id: selectedSeminar.campaign_id,
       student_name: formData.studentName,
-      parent_phone: phone,
+      parent_phone: formatPhone(phone),
       school: formData.school,
       grade: formData.grade,
       math_level: formData.mathLevel,

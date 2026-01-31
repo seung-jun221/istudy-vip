@@ -1,6 +1,7 @@
 // src/context/ConsultingContext.jsx - 진단검사 기능 추가
 import { createContext, useContext, useState } from 'react';
 import { supabase, hashPassword } from '../utils/supabase';
+import { formatPhone } from '../utils/format';
 
 const ConsultingContext = createContext();
 
@@ -439,7 +440,7 @@ export function ConsultingProvider({ children }) {
           p_slot_time: selectedTime + ':00',
           p_slot_location: selectedSlot.location, // 실제 슬롯의 location 사용
           p_student_name: reservationData.studentName,
-          p_parent_phone: reservationData.parentPhone,
+          p_parent_phone: formatPhone(reservationData.parentPhone),
           p_school: reservationData.school || 'UNKNOWN',
           p_grade: reservationData.grade || 'UNKNOWN',
           p_math_level: reservationData.mathLevel || '상담 시 확인',
@@ -674,7 +675,7 @@ export function ConsultingProvider({ children }) {
         .insert({
           slot_id: selectedSlot.id,
           consulting_reservation_id: null, // ⭐ 컨설팅 연결 없음
-          parent_phone: testData.parentPhone,
+          parent_phone: formatPhone(testData.parentPhone),
           student_name: testData.studentName,
           school: testData.school,
           grade: testData.grade,

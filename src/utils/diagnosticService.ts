@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabase';
+import { formatPhone } from './format';
 import type {
   DiagnosticTest,
   DiagnosticSubmission,
@@ -108,7 +109,7 @@ export async function submitStudentAnswers(
       submission_id: submissionId,
       reservation_id: request.reservation_id,
       student_name: request.student_name,
-      parent_phone: request.parent_phone,
+      parent_phone: formatPhone(request.parent_phone),
       school: request.school,
       grade: request.grade,
       math_level: request.math_level,
@@ -856,7 +857,7 @@ export async function createDiagnosticRegistration(
     const registrationData: any = {
       submission_id: registrationId,
       student_name: request.student_name,
-      parent_phone: request.parent_phone,
+      parent_phone: formatPhone(request.parent_phone),
       school: request.school || null,
       grade: request.grade,
       math_level: request.math_level || null,
@@ -899,7 +900,7 @@ export async function updateDiagnosticRegistration(
     const updateData: any = {};
 
     if (request.student_name !== undefined) updateData.student_name = request.student_name;
-    if (request.parent_phone !== undefined) updateData.parent_phone = request.parent_phone;
+    if (request.parent_phone !== undefined) updateData.parent_phone = formatPhone(request.parent_phone);
     if (request.school !== undefined) updateData.school = request.school;
     if (request.grade !== undefined) updateData.grade = request.grade;
     if (request.math_level !== undefined) updateData.math_level = request.math_level;
