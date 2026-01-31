@@ -176,14 +176,21 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
     const studentMap = new Map(); // student_name → { info, events }
 
     const addToStudent = (name, info, event) => {
-      const key = name || '(이름없음)';
+      // 이름 정규화: 공백 제거, 빈 이름 처리
+      const key = (name || '(이름없음)').trim();
       if (!studentMap.has(key)) {
         studentMap.set(key, { name: key, info, events: [] });
       }
       const student = studentMap.get(key);
-      // 더 최신 정보로 업데이트
-      if (info && (!student.info || new Date(event.rawDate) > new Date(student.info._updatedAt || 0))) {
-        student.info = { ...info, _updatedAt: event.rawDate };
+      // 더 최신 정보로 업데이트 (취소된 레코드보다 활성 레코드 우선)
+      const isActiveEvent = !['cancelled', 'auto_cancelled', '취소'].includes(event.status);
+      const wasActiveUpdate = student.info?._isActive;
+      if (info && (
+        (!student.info) ||
+        (isActiveEvent && !wasActiveUpdate) ||
+        (isActiveEvent === wasActiveUpdate && new Date(event.rawDate) > new Date(student.info._updatedAt || 0))
+      )) {
+        student.info = { ...info, _updatedAt: event.rawDate, _isActive: isActiveEvent };
       }
       student.events.push(event);
     };
@@ -655,10 +662,26 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
       if (addForm.testSlotId) {
         const slot = addTestSlots.find(s => s.id === addForm.testSlotId);
         if (slot && slot.current_bookings < slot.max_capacity) {
+          // 같은 전화번호의 confirmed 컨설팅 예약 찾기 (자동 연결)
+          let consultingReservationId = null;
+          const { data: existingConsulting } = await supabase
+            .from('consulting_reservations')
+            .select('id')
+            .eq('parent_phone', phone)
+            .eq('student_name', addForm.studentName.trim())
+            .in('status', ['confirmed', 'pending'])
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (existingConsulting && existingConsulting.length > 0) {
+            consultingReservationId = existingConsulting[0].id;
+          }
+
           const { error: testError } = await supabase
             .from('test_reservations')
             .insert({
               slot_id: addForm.testSlotId,
+              consulting_reservation_id: consultingReservationId,
               student_name: addForm.studentName.trim(),
               parent_phone: phone,
               school: addForm.school.trim() || '',

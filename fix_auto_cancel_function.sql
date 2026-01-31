@@ -1,5 +1,8 @@
 -- ========================================
--- auto_cancel_no_test_reservations 함수 수정
+-- auto_cancel_no_test_reservations 함수 수정 (v2)
+--
+-- 핵심 변경: consulting_reservation_id 연결 여부뿐 아니라
+-- 같은 전화번호의 진단검사 예약도 확인하도록 수정
 -- ========================================
 
 -- 기존 함수 삭제
@@ -22,19 +25,27 @@ BEGIN
       cr.id as reservation_id,
       cr.slot_id
     FROM consulting_reservations cr
-    LEFT JOIN test_reservations tr
-      ON cr.id = tr.consulting_reservation_id
-      AND tr.status IN ('confirmed', '예약')  -- ⭐ 수정: '예약' status도 포함
-    WHERE cr.status IN ('confirmed', 'pending')  -- ⭐ 수정: pending도 포함
-      AND tr.id IS NULL  -- 진단검사 예약이 없음
-      AND cr.test_deadline_agreed = true  -- 동의했음
-      AND cr.test_deadline_agreed_at IS NOT NULL  -- 동의 날짜 있음
-      AND DATE(cr.test_deadline_agreed_at) < CURRENT_DATE  -- ⭐ 수정: 동의 날짜 기준
+    WHERE cr.status IN ('confirmed', 'pending')
+      AND cr.test_deadline_agreed = true
+      AND cr.test_deadline_agreed_at IS NOT NULL
+      AND DATE(cr.test_deadline_agreed_at) < CURRENT_DATE
+      -- 연결된 진단검사 예약이 없음 (consulting_reservation_id로 연결)
+      AND NOT EXISTS (
+        SELECT 1 FROM test_reservations tr
+        WHERE tr.consulting_reservation_id = cr.id
+          AND tr.status IN ('confirmed', '예약')
+      )
+      -- 같은 전화번호로도 진단검사 예약이 없음 (미연결 entrance_test 포함)
+      AND NOT EXISTS (
+        SELECT 1 FROM test_reservations tr
+        WHERE tr.parent_phone = cr.parent_phone
+          AND tr.status IN ('confirmed', '예약')
+      )
   LOOP
     -- 컨설팅 예약 취소
     UPDATE consulting_reservations
     SET
-      status = 'cancelled',  -- ⭐ 수정: 'cancelled'로 통일
+      status = 'auto_cancelled',
       cancel_reason = '진단검사 미예약으로 자동 취소 (당일 자정 마감)'
     WHERE id = v_reservation_id;
 
@@ -52,36 +63,33 @@ END;
 $function$;
 
 -- ========================================
-
--- 테스트 실행 (실제로 취소되는지 확인)
-SELECT * FROM auto_cancel_no_test_reservations();
-
--- ========================================
-
--- 취소된 예약 확인
-SELECT
-  id,
-  student_name,
-  parent_phone,
-  status,
-  cancel_reason,
-  test_deadline_agreed_at,
-  created_at
-FROM consulting_reservations
-WHERE status = 'cancelled'
-  AND cancel_reason LIKE '%자동 취소%'
-ORDER BY created_at DESC;
-
--- ========================================
 -- 실행 방법:
--- 1. Supabase SQL Editor에서 이 전체 스크립트 실행
--- 2. 함수가 업데이트됨
--- 3. 테스트 실행 결과 확인
--- 4. 취소된 예약 확인
---
--- 주요 수정사항:
--- - created_at → test_deadline_agreed_at으로 변경
--- - tr.status = 'confirmed' → IN ('confirmed', '예약')
--- - status = 'auto_cancelled' → 'cancelled'
--- - cancelled_at 필드 추가
+-- 1. Supabase SQL Editor에서 위 CREATE OR REPLACE 부분만 실행
+-- 2. 아래 테스트 쿼리로 확인
 -- ========================================
+
+-- 테스트: 현재 취소 대상 확인 (실제 취소 안 함, SELECT만)
+SELECT
+  cr.id,
+  cr.student_name,
+  cr.parent_phone,
+  cr.status,
+  cr.test_deadline_agreed_at,
+  DATE(cr.test_deadline_agreed_at) as deadline_date,
+  CURRENT_DATE as today,
+  EXISTS (
+    SELECT 1 FROM test_reservations tr
+    WHERE tr.consulting_reservation_id = cr.id
+      AND tr.status IN ('confirmed', '예약')
+  ) as has_linked_test,
+  EXISTS (
+    SELECT 1 FROM test_reservations tr
+    WHERE tr.parent_phone = cr.parent_phone
+      AND tr.status IN ('confirmed', '예약')
+  ) as has_phone_test
+FROM consulting_reservations cr
+WHERE cr.status IN ('confirmed', 'pending')
+  AND cr.test_deadline_agreed = true
+  AND cr.test_deadline_agreed_at IS NOT NULL
+  AND DATE(cr.test_deadline_agreed_at) < CURRENT_DATE
+ORDER BY cr.parent_phone;
