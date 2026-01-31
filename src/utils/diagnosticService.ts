@@ -311,11 +311,17 @@ export async function submitCTManualGrading(
       totalScore: stats.max,
       earnedScore: stats.earned,
       correctCount: stats.fullScoreCount || 0,
-      totalCount: stats.questions?.length || 0,
+      totalCount: stats.questionCount || stats.questions?.length || 0,
       correctRate: stats.rate,
     }));
 
-    // 6. 결과 데이터 생성
+    // 6. CT 문항별 배점 정보
+    const CT_QUESTION_MAX_SCORES: Record<number, number> = {
+      1: 8.0, 2: 10.0, 3: 8.0, 4: 6.0, 5: 10.0,
+      6: 14.0, 7: 10.0, 8: 12.0, 9: 10.0, 10: 12.0
+    };
+
+    // 7. 결과 데이터 생성 (만점인 경우에만 정답으로 처리)
     const resultData = {
       submission_id: submission.id,
       total_score: request.total_score,
@@ -325,11 +331,16 @@ export async function submitCTManualGrading(
       grade5: request.grade5,
       area_results: areaResultsArray,
       difficulty_results: difficultyResultsArray,
-      question_results: Object.entries(request.question_scores).map(([num, score]) => ({
-        questionNumber: parseInt(num),
-        isCorrect: score > 0,
-        earnedScore: score,
-      })),
+      question_results: Object.entries(request.question_scores).map(([num, score]) => {
+        const questionNum = parseInt(num);
+        const maxScore = CT_QUESTION_MAX_SCORES[questionNum] || 10;
+        // 만점인 경우에만 정답으로 처리
+        return {
+          questionNumber: questionNum,
+          isCorrect: score === maxScore,
+          earnedScore: score,
+        };
+      }),
     };
 
     // 7. 결과 저장
