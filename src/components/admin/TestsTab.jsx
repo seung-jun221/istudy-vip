@@ -286,13 +286,12 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
   };
 
   // 예약 학생과 등록 학생 합치기
-  // tests prop에서 entrance_test 타입의 ID 목록 (중복 방지용)
+  // tests prop에서 ID 목록 (중복 방지용)
   const testsIds = new Set(tests.map(t => t.id));
 
   const allStudents = [
-    // 컨설팅 연계 진단검사 (entrance_test 제외 - 별도로 추가됨)
+    // 진단검사 예약 (컨설팅 연계 + 입학테스트 모두 포함)
     ...tests
-      .filter(test => test.reservation_type !== 'entrance_test')
       .map(test => ({
         ...test,
         source: 'reservation',
