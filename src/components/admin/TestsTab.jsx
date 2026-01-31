@@ -794,13 +794,12 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
               <th>지점</th>
               <th>성적 관리</th>
               <th>시험지 지정</th>
-              <th>취소</th>
             </tr>
           </thead>
           <tbody>
             {filteredTests.length === 0 ? (
               <tr>
-                <td colSpan="11" className="empty-cell">
+                <td colSpan="10" className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -910,27 +909,6 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
                           <option key={option} value={option}>{option}</option>
                         ))}
                       </select>
-                    </td>
-                    <td>
-                      {test.source === 'reservation' ? (
-                        <button
-                          onClick={() => handleCancelTest(test.id, test.slot_id, test.reservation_type)}
-                          style={{
-                            padding: '0.5rem 1rem',
-                            fontSize: '0.85rem',
-                            background: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontWeight: '600',
-                          }}
-                        >
-                          취소
-                        </button>
-                      ) : (
-                        <span style={{ color: '#ccc' }}>-</span>
-                      )}
                     </td>
                   </tr>
                 );
