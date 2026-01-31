@@ -7,6 +7,7 @@ import CancelledConsultingsTab from '../../components/admin/CancelledConsultings
 import TestsTab from '../../components/admin/TestsTab';
 import SettingsTab from '../../components/admin/SettingsTab';
 import CustomerManagementTab from '../../components/admin/CustomerManagementTab';
+import StudentManagementTab from '../../components/admin/StudentManagementTab';
 import CustomerJourneyModal from '../../components/admin/CustomerJourneyModal';
 import './CampaignDetail.css';
 
@@ -155,6 +156,12 @@ export default function CampaignDetail() {
           진단검사 예약 ({stats.tests})
         </button>
         <button
+          className={`tab-btn ${activeTab === 'students' ? 'active' : ''}`}
+          onClick={() => setActiveTab('students')}
+        >
+          통합 학생 관리
+        </button>
+        <button
           className={`tab-btn ${activeTab === 'customers' ? 'active' : ''}`}
           onClick={() => setActiveTab('customers')}
         >
@@ -187,6 +194,12 @@ export default function CampaignDetail() {
           />
         )}
         {activeTab === 'tests' && <TestsTab tests={tests} testSlots={testSlots} campaignId={id} onPhoneClick={handlePhoneClick} onUpdate={fetchCampaignDetail} />}
+        {activeTab === 'students' && (
+          <StudentManagementTab
+            campaignId={id}
+            onUpdate={fetchCampaignDetail}
+          />
+        )}
         {activeTab === 'customers' && (
           <CustomerManagementTab
             key={memoRefreshKey}
