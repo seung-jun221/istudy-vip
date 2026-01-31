@@ -454,12 +454,20 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
         : 'test_slots';
 
       const today = new Date().toISOString().split('T')[0];
-      const { data: slots } = await supabase
-        .from(slotTable)
-        .select('*')
-        .eq('campaign_id', campaignId)
-        .gte('date', today)
-        .eq('status', 'active')
+
+      // 테이블별 컬럼명이 다름
+      let query = supabase.from(slotTable).select('*').gte('date', today);
+
+      if (slotTable === 'consulting_slots') {
+        query = query.eq('linked_seminar_id', campaignId).eq('is_available', true);
+      } else if (slotTable === 'test_slots') {
+        query = query.eq('status', 'active');
+      } else {
+        // seminar_slots
+        query = query.eq('campaign_id', campaignId);
+      }
+
+      const { data: slots } = await query
         .order('date', { ascending: true })
         .order('time', { ascending: true });
 
@@ -568,15 +576,14 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
         supabase
           .from('consulting_slots')
           .select('*')
-          .eq('campaign_id', campaignId)
+          .eq('linked_seminar_id', campaignId)
           .gte('date', today)
-          .eq('status', 'active')
+          .eq('is_available', true)
           .order('date', { ascending: true })
           .order('time', { ascending: true }),
         supabase
           .from('test_slots')
           .select('*')
-          .eq('campaign_id', campaignId)
           .gte('date', today)
           .eq('status', 'active')
           .order('date', { ascending: true })
