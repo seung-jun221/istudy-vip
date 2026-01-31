@@ -669,13 +669,29 @@ export function ConsultingProvider({ children }) {
         throw new Error('Slot is full');
       }
 
-      // 직접 INSERT (RPC 대신 - consulting_reservation_id가 null이므로)
+      // 같은 전화번호의 confirmed 컨설팅 예약 찾기 (자동 연결)
+      const formattedPhone = formatPhone(testData.parentPhone);
+      let consultingReservationId = null;
+      const { data: existingConsulting } = await supabase
+        .from('consulting_reservations')
+        .select('id')
+        .eq('parent_phone', formattedPhone)
+        .eq('student_name', testData.studentName)
+        .in('status', ['confirmed', 'pending'])
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (existingConsulting && existingConsulting.length > 0) {
+        consultingReservationId = existingConsulting[0].id;
+      }
+
+      // 직접 INSERT
       const { data: reservation, error: insertError } = await supabase
         .from('test_reservations')
         .insert({
           slot_id: selectedSlot.id,
-          consulting_reservation_id: null, // ⭐ 컨설팅 연결 없음
-          parent_phone: formatPhone(testData.parentPhone),
+          consulting_reservation_id: consultingReservationId, // 자동 연결
+          parent_phone: formattedPhone,
           student_name: testData.studentName,
           school: testData.school,
           grade: testData.grade,

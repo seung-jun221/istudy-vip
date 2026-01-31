@@ -655,10 +655,26 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
       if (addForm.testSlotId) {
         const slot = addTestSlots.find(s => s.id === addForm.testSlotId);
         if (slot && slot.current_bookings < slot.max_capacity) {
+          // 같은 전화번호의 confirmed 컨설팅 예약 찾기 (자동 연결)
+          let consultingReservationId = null;
+          const { data: existingConsulting } = await supabase
+            .from('consulting_reservations')
+            .select('id')
+            .eq('parent_phone', phone)
+            .eq('student_name', addForm.studentName.trim())
+            .in('status', ['confirmed', 'pending'])
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (existingConsulting && existingConsulting.length > 0) {
+            consultingReservationId = existingConsulting[0].id;
+          }
+
           const { error: testError } = await supabase
             .from('test_reservations')
             .insert({
               slot_id: addForm.testSlotId,
+              consulting_reservation_id: consultingReservationId,
               student_name: addForm.studentName.trim(),
               parent_phone: phone,
               school: addForm.school.trim() || '',
