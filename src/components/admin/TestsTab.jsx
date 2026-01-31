@@ -228,24 +228,52 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
   // 학생 수정 핸들러
   const handleUpdateStudent = async (updatedData) => {
     try {
-      const updated = await updateDiagnosticRegistration({
-        id: updatedData.id,
-        student_name: updatedData.studentName,
-        parent_phone: updatedData.parentPhone,
-        school: updatedData.school,
-        grade: updatedData.grade,
-        math_level: updatedData.mathLevel,
-        test_date: updatedData.testDate,
-        test_time: updatedData.testTime,
-        location: updatedData.location,
-      });
+      if (editingStudent?.isManuallyAdded) {
+        // 수동등록 학생 → diagnostic_submissions 테이블 수정
+        const updated = await updateDiagnosticRegistration({
+          id: updatedData.id,
+          student_name: updatedData.studentName,
+          parent_phone: updatedData.parentPhone,
+          school: updatedData.school,
+          grade: updatedData.grade,
+          math_level: updatedData.mathLevel,
+          test_date: updatedData.testDate,
+          test_time: updatedData.testTime,
+          location: updatedData.location,
+        });
 
-      if (updated) {
-        // 성공 시 목록 새로고침
-        await loadRegistrations();
+        if (updated) {
+          await loadRegistrations();
+        } else {
+          alert('학생 정보 수정에 실패했습니다.');
+        }
       } else {
-        alert('학생 정보 수정에 실패했습니다.');
+        // 예약 학생 (컨설팅 연계/입학테스트) → test_reservations 테이블 수정
+        const updateData = {};
+        if (updatedData.studentName !== undefined) updateData.student_name = updatedData.studentName;
+        if (updatedData.parentPhone !== undefined) updateData.parent_phone = updatedData.parentPhone;
+        if (updatedData.school !== undefined) updateData.school = updatedData.school;
+        if (updatedData.grade !== undefined) updateData.grade = updatedData.grade;
+        if (updatedData.mathLevel !== undefined) updateData.math_level = updatedData.mathLevel;
+
+        const { error } = await supabase
+          .from('test_reservations')
+          .update(updateData)
+          .eq('id', updatedData.id);
+
+        if (error) {
+          console.error('예약 수정 실패:', error);
+          alert('학생 정보 수정에 실패했습니다.');
+          return;
+        }
+
+        // 성공 시 부모 컴포넌트에 업데이트 알림
+        if (onUpdate) {
+          onUpdate();
+        }
       }
+
+      handleCloseModal();
     } catch (error) {
       console.error('학생 수정 실패:', error);
       alert('학생 정보 수정 중 오류가 발생했습니다.');
