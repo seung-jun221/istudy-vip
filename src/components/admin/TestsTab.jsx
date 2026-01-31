@@ -371,7 +371,23 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
       test.parent_phone?.includes(searchTerm);
 
     // 슬롯 필터링 (null이면 전체)
-    const matchesSlot = !selectedSlotId || test.slot_id === selectedSlotId;
+    let matchesSlot = !selectedSlotId;
+    if (selectedSlotId) {
+      if (test.slot_id === selectedSlotId) {
+        // slot_id가 직접 매칭되는 경우 (예약 학생)
+        matchesSlot = true;
+      } else if (!test.slot_id && test.test_date && test.test_time) {
+        // slot_id가 없는 수동등록 학생은 날짜/시간으로 매칭
+        const selectedSlot = testSlots?.find(s => s.id === selectedSlotId);
+        if (selectedSlot) {
+          const testDate = String(test.test_date);
+          const slotDate = String(selectedSlot.date);
+          const testTime = String(test.test_time).slice(0, 5);
+          const slotTime = String(selectedSlot.time).slice(0, 5);
+          matchesSlot = testDate === slotDate && testTime === slotTime;
+        }
+      }
+    }
 
     // ⭐ 예약 유형 필터링
     const matchesType =
