@@ -607,8 +607,8 @@ export default function ConsultingPage() {
                   </p>
                   <div className="bg-white rounded p-3 mt-2">
                     <p className="text-xs text-gray-600 mb-2">진단검사 가능 일정:</p>
-                    <div className="space-y-1">
-                      {testPreviewDates.slice(0, 5).map((slot, index) => {
+                    <div className="flex flex-wrap gap-1.5">
+                      {testPreviewDates.map((slot, index) => {
                         const dateObj = new Date(slot.date);
                         const month = dateObj.getMonth() + 1;
                         const day = dateObj.getDate();
@@ -617,21 +617,14 @@ export default function ConsultingPage() {
                         const timeStr = slot.time.slice(0, 5);
 
                         return (
-                          <div
+                          <span
                             key={index}
-                            className="flex items-center gap-2 text-sm"
+                            className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium"
                           >
-                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                              {month}/{day}({dayName}) {timeStr}
-                            </span>
-                          </div>
+                            {month}/{day}({dayName}) {timeStr}
+                          </span>
                         );
                       })}
-                      {testPreviewDates.length > 5 && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          외 {testPreviewDates.length - 5}개 일정 더 있음
-                        </p>
-                      )}
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
