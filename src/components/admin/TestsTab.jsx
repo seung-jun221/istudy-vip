@@ -256,7 +256,7 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
         // 예약 학생 (컨설팅 연계/입학테스트) → test_reservations 테이블 수정
         const updateData = {};
         if (updatedData.studentName !== undefined) updateData.student_name = updatedData.studentName;
-        if (updatedData.parentPhone !== undefined) updateData.parent_phone = updatedData.parentPhone;
+        if (updatedData.parentPhone !== undefined) updateData.parent_phone = formatPhone(updatedData.parentPhone);
         if (updatedData.school !== undefined) updateData.school = updatedData.school;
         if (updatedData.grade !== undefined) updateData.grade = updatedData.grade;
         if (updatedData.mathLevel !== undefined) updateData.math_level = updatedData.mathLevel;
