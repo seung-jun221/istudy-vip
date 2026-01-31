@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../utils/supabase';
+import { supabase, hashPassword } from '../../utils/supabase';
 import { formatPhone } from '../../utils/format';
+import { createDiagnosticRegistration } from '../../utils/diagnosticService';
 import './AdminTabs.css';
 
 export default function StudentManagementTab({ campaignId, onUpdate }) {
@@ -32,6 +33,19 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedNewSlotId, setSelectedNewSlotId] = useState('');
   const [changingSchedule, setChangingSchedule] = useState(false);
+
+  // 신규 학생 등록
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addForm, setAddForm] = useState({
+    studentName: '', parentPhone: '', school: '', grade: '', mathLevel: '',
+    testType: 'MONO',
+    consultingSlotId: '',
+    testSlotId: '',
+  });
+  const [addConsultingSlots, setAddConsultingSlots] = useState([]);
+  const [addTestSlots, setAddTestSlots] = useState([]);
+  const [addSaving, setAddSaving] = useState(false);
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
   // ============================================================
   // 검색 및 데이터 로드
@@ -526,6 +540,165 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
   };
 
   // ============================================================
+  // 신규 학생 등록
+  // ============================================================
+
+  const openAddForm = async () => {
+    setAddForm({
+      studentName: '', parentPhone: '', school: '', grade: '', mathLevel: '',
+      testType: 'MONO', consultingSlotId: '', testSlotId: '',
+    });
+    setShowAddForm(true);
+    await loadSlots();
+  };
+
+  const loadSlots = async () => {
+    setSlotsLoading(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const [consultingRes, testRes] = await Promise.all([
+        supabase
+          .from('consulting_slots')
+          .select('*')
+          .eq('campaign_id', campaignId)
+          .gte('date', today)
+          .eq('status', 'active')
+          .order('date', { ascending: true })
+          .order('time', { ascending: true }),
+        supabase
+          .from('test_slots')
+          .select('*')
+          .eq('campaign_id', campaignId)
+          .gte('date', today)
+          .eq('status', 'active')
+          .order('date', { ascending: true })
+          .order('time', { ascending: true }),
+      ]);
+      setAddConsultingSlots(consultingRes.data || []);
+      setAddTestSlots(testRes.data || []);
+    } catch (error) {
+      console.error('슬롯 로드 실패:', error);
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  const handleAddStudent = async () => {
+    // 유효성 검사
+    if (addForm.studentName.trim().length < 2) {
+      alert('학생명을 정확히 입력해주세요. (2자 이상)');
+      return;
+    }
+    const phoneDigits = addForm.parentPhone.replace(/[^0-9]/g, '');
+    if (!/^010\d{8}$/.test(phoneDigits)) {
+      alert('올바른 전화번호를 입력해주세요. (010으로 시작하는 11자리)');
+      return;
+    }
+    if (!addForm.grade) {
+      alert('학년을 선택해주세요.');
+      return;
+    }
+
+    setAddSaving(true);
+    try {
+      const phone = formatPhone(phoneDigits);
+      const defaultPassword = hashPassword(phoneDigits);
+
+      // 1. diagnostic_submissions 등록 (기본 레코드)
+      const registration = await createDiagnosticRegistration({
+        student_name: addForm.studentName.trim(),
+        parent_phone: phone,
+        school: addForm.school.trim() || null,
+        grade: addForm.grade,
+        math_level: addForm.mathLevel.trim() || null,
+        test_type: addForm.testType,
+        campaign_id: campaignId,
+      });
+
+      if (!registration) {
+        throw new Error('학생 등록에 실패했습니다.');
+      }
+
+      // 2. 컨설팅 배정
+      if (addForm.consultingSlotId) {
+        const slot = addConsultingSlots.find(s => s.id === addForm.consultingSlotId);
+        if (slot && slot.current_bookings < slot.max_capacity) {
+          const { error: consultingError } = await supabase
+            .from('consulting_reservations')
+            .insert({
+              slot_id: addForm.consultingSlotId,
+              student_name: addForm.studentName.trim(),
+              parent_phone: phone,
+              school: addForm.school.trim() || '',
+              grade: addForm.grade,
+              math_level: addForm.mathLevel.trim() || '',
+              password: defaultPassword,
+              is_seminar_attendee: false,
+              status: 'confirmed',
+            });
+
+          if (consultingError) {
+            console.error('컨설팅 배정 실패:', consultingError);
+            alert('학생은 등록되었으나 컨설팅 배정에 실패했습니다.');
+          } else {
+            await supabase
+              .from('consulting_slots')
+              .update({ current_bookings: (slot.current_bookings || 0) + 1 })
+              .eq('id', addForm.consultingSlotId);
+          }
+        } else {
+          alert('선택한 컨설팅 시간이 마감되었습니다.');
+        }
+      }
+
+      // 3. 진단검사 배정
+      if (addForm.testSlotId) {
+        const slot = addTestSlots.find(s => s.id === addForm.testSlotId);
+        if (slot && slot.current_bookings < slot.max_capacity) {
+          const { error: testError } = await supabase
+            .from('test_reservations')
+            .insert({
+              slot_id: addForm.testSlotId,
+              student_name: addForm.studentName.trim(),
+              parent_phone: phone,
+              school: addForm.school.trim() || '',
+              grade: addForm.grade,
+              math_level: addForm.mathLevel.trim() || '',
+              password: defaultPassword,
+              status: '예약',
+              reservation_type: 'entrance_test',
+              test_date: slot.date,
+              test_time: slot.time,
+            });
+
+          if (testError) {
+            console.error('진단검사 배정 실패:', testError);
+            alert('학생은 등록되었으나 진단검사 배정에 실패했습니다.');
+          } else {
+            await supabase
+              .from('test_slots')
+              .update({ current_bookings: (slot.current_bookings || 0) + 1 })
+              .eq('id', addForm.testSlotId);
+          }
+        } else {
+          alert('선택한 진단검사 시간이 마감되었습니다.');
+        }
+      }
+
+      setShowAddForm(false);
+      // 등록한 학생 바로 조회
+      setSearchTerm(phone);
+      await loadJourney(phone);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('학생 등록 실패:', error);
+      alert('학생 등록에 실패했습니다.');
+    } finally {
+      setAddSaving(false);
+    }
+  };
+
+  // ============================================================
   // 유틸리티
   // ============================================================
 
@@ -625,6 +798,22 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
             }}
           >
             {searching ? '검색 중...' : '검색'}
+          </button>
+          <button
+            onClick={openAddForm}
+            style={{
+              padding: '10px 20px',
+              background: '#16a34a',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            + 신규 학생 등록
           </button>
         </div>
       </div>
@@ -1048,6 +1237,205 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
                 }}
               >
                 {deleting ? '삭제 중...' : '삭제'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 신규 학생 등록 모달 */}
+      {showAddForm && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowAddForm(false)}
+        >
+          <div
+            style={{
+              background: 'white', borderRadius: '12px', padding: '24px',
+              maxWidth: '520px', width: '100%', maxHeight: '85vh', overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 20px', fontSize: '18px', color: '#0f172a' }}>
+              신규 학생 등록
+            </h3>
+
+            {/* 학생 기본 정보 */}
+            <div style={{
+              background: '#f8fafc', borderRadius: '8px', padding: '16px', marginBottom: '16px',
+              border: '1px solid #e2e8f0',
+            }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '14px', color: '#374151' }}>학생 정보</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px', display: 'block' }}>
+                    학생명 <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <input
+                    value={addForm.studentName}
+                    onChange={(e) => setAddForm(prev => ({ ...prev, studentName: e.target.value }))}
+                    placeholder="홍길동"
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px', display: 'block' }}>
+                    학부모 연락처 <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <input
+                    value={addForm.parentPhone}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      setAddForm(prev => ({ ...prev, parentPhone: value }));
+                    }}
+                    placeholder="01012345678"
+                    maxLength={11}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px', display: 'block' }}>학교</label>
+                  <input
+                    value={addForm.school}
+                    onChange={(e) => setAddForm(prev => ({ ...prev, school: e.target.value }))}
+                    placeholder="○○중학교"
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px', display: 'block' }}>
+                    학년 <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <select
+                    value={addForm.grade}
+                    onChange={(e) => setAddForm(prev => ({ ...prev, grade: e.target.value }))}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                  >
+                    <option value="">선택</option>
+                    {['초1','초2','초3','초4','초5','초6','중1','중2','중3','고1','고2','고3'].map(g => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px', display: 'block' }}>수학 선행정도</label>
+                  <input
+                    value={addForm.mathLevel}
+                    onChange={(e) => setAddForm(prev => ({ ...prev, mathLevel: e.target.value }))}
+                    placeholder="예: 중3 (고1 선행 중)"
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 컨설팅 배정 */}
+            <div style={{
+              background: '#f0fdf4', borderRadius: '8px', padding: '16px', marginBottom: '16px',
+              border: '1px solid #bbf7d0',
+            }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '14px', color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                📅 컨설팅 배정 <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '400' }}>(선택)</span>
+              </h4>
+              {slotsLoading ? (
+                <div style={{ color: '#64748b', fontSize: '13px' }}>슬롯 로드 중...</div>
+              ) : addConsultingSlots.length === 0 ? (
+                <div style={{ color: '#94a3b8', fontSize: '13px' }}>배정 가능한 컨설팅 일정이 없습니다.</div>
+              ) : (
+                <select
+                  value={addForm.consultingSlotId}
+                  onChange={(e) => setAddForm(prev => ({ ...prev, consultingSlotId: e.target.value }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                >
+                  <option value="">배정하지 않음</option>
+                  {addConsultingSlots.map(slot => {
+                    const isFull = slot.current_bookings >= slot.max_capacity;
+                    return (
+                      <option key={slot.id} value={slot.id} disabled={isFull}>
+                        {formatDateTime(slot.date, slot.time)} | {slot.location || '-'} ({slot.current_bookings || 0}/{slot.max_capacity}){isFull ? ' [마감]' : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+              )}
+            </div>
+
+            {/* 진단검사 배정 */}
+            <div style={{
+              background: '#eff6ff', borderRadius: '8px', padding: '16px', marginBottom: '20px',
+              border: '1px solid #bfdbfe',
+            }}>
+              <h4 style={{ margin: '0 0 12px', fontSize: '14px', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                📋 진단검사 배정 <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '400' }}>(선택)</span>
+              </h4>
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px', display: 'block' }}>검사 유형</label>
+                <select
+                  value={addForm.testType}
+                  onChange={(e) => setAddForm(prev => ({ ...prev, testType: e.target.value }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                >
+                  <option value="MONO">중1-1 진단검사</option>
+                  <option value="DI">중2-1 진단검사</option>
+                  <option value="TRI">중3-1 + 공통수학1 진단검사</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px', display: 'block' }}>검사 일정</label>
+                {slotsLoading ? (
+                  <div style={{ color: '#64748b', fontSize: '13px' }}>슬롯 로드 중...</div>
+                ) : addTestSlots.length === 0 ? (
+                  <div style={{ color: '#94a3b8', fontSize: '13px' }}>배정 가능한 진단검사 일정이 없습니다.</div>
+                ) : (
+                  <select
+                    value={addForm.testSlotId}
+                    onChange={(e) => setAddForm(prev => ({ ...prev, testSlotId: e.target.value }))}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                  >
+                    <option value="">일정 배정하지 않음</option>
+                    {addTestSlots.map(slot => {
+                      const isFull = slot.current_bookings >= slot.max_capacity;
+                      return (
+                        <option key={slot.id} value={slot.id} disabled={isFull}>
+                          {formatDateTime(slot.date, slot.time)} | {slot.location || '-'} ({slot.current_bookings || 0}/{slot.max_capacity}){isFull ? ' [마감]' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
+              </div>
+            </div>
+
+            {/* 버튼 */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setShowAddForm(false)}
+                style={{
+                  flex: 1, padding: '12px', border: '1px solid #d1d5db',
+                  borderRadius: '6px', background: 'white', cursor: 'pointer',
+                  fontWeight: '500', fontSize: '14px',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleAddStudent}
+                disabled={addSaving}
+                style={{
+                  flex: 1, padding: '12px', border: 'none',
+                  borderRadius: '6px',
+                  background: addSaving ? '#d1d5db' : '#16a34a',
+                  color: 'white',
+                  cursor: addSaving ? 'not-allowed' : 'pointer',
+                  fontWeight: '600', fontSize: '14px',
+                }}
+              >
+                {addSaving ? '등록 중...' : '학생 등록'}
               </button>
             </div>
           </div>
