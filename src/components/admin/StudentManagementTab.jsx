@@ -457,6 +457,7 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
       const { data: slots } = await supabase
         .from(slotTable)
         .select('*')
+        .eq('campaign_id', campaignId)
         .gte('date', today)
         .eq('status', 'active')
         .order('date', { ascending: true })
