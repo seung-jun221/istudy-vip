@@ -913,15 +913,18 @@ export async function updateDiagnosticRegistration(
       .from('diagnostic_submissions')
       .update(updateData)
       .eq('id', request.id)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('등록 수정 실패:', error);
       throw new Error('학생 정보 수정에 실패했습니다.');
     }
 
-    return data;
+    if (!data || data.length === 0) {
+      throw new Error('수정할 등록 정보를 찾을 수 없습니다. RLS 정책을 확인하세요.');
+    }
+
+    return data[0];
   } catch (error) {
     console.error('updateDiagnosticRegistration 실패:', error);
     return null;

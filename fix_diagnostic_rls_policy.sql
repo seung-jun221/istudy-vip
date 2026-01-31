@@ -23,6 +23,14 @@ CREATE POLICY "Anyone can view submissions by phone" ON diagnostic_submissions
   TO anon, authenticated
   USING (true);
 
+-- 새로운 정책: 등록 정보 수정 허용 (관리자 수동등록 학생 수정용)
+DROP POLICY IF EXISTS "Anyone can update submissions" ON diagnostic_submissions;
+CREATE POLICY "Anyone can update submissions" ON diagnostic_submissions
+  FOR UPDATE
+  TO anon, authenticated
+  USING (true)
+  WITH CHECK (true);
+
 -- ========================================
 -- diagnostic_results 테이블 정책 수정
 -- ========================================
@@ -72,7 +80,7 @@ BEGIN
   RAISE NOTICE '✅ 진단검사 RLS 정책 수정 완료!';
   RAISE NOTICE '========================================';
   RAISE NOTICE '수정된 정책:';
-  RAISE NOTICE '1. diagnostic_submissions - 익명 사용자 INSERT/SELECT 허용';
+  RAISE NOTICE '1. diagnostic_submissions - 익명 사용자 INSERT/SELECT/UPDATE 허용';
   RAISE NOTICE '2. diagnostic_results - 익명 사용자 INSERT/SELECT 허용';
   RAISE NOTICE '3. diagnostic_reports - 익명 사용자 INSERT/SELECT 허용';
   RAISE NOTICE '========================================';
