@@ -61,10 +61,46 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
     try {
       // 전화번호 형식이면 정규화
       const isPhone = /^[0-9\-]+$/.test(term);
-      const searchPhone = isPhone ? formatPhone(term) : null;
+      const cleanedDigits = isPhone ? term.replace(/[^0-9]/g, '') : null;
 
       // 전화번호 찾기 (이름 검색이면 먼저 전화번호 특정)
-      let phone = searchPhone;
+      let phone = null;
+
+      if (isPhone && cleanedDigits.length >= 10) {
+        // 전체 전화번호 → 정규화 후 정확 검색
+        phone = formatPhone(term);
+      } else if (isPhone && cleanedDigits.length >= 3) {
+        // 부분 전화번호 → 부분 일치 검색
+        const phones = new Set();
+        const pattern = `%${cleanedDigits}%`;
+
+        const [r1, r2, r3, r4] = await Promise.all([
+          supabase.from('reservations').select('parent_phone').like('parent_phone', pattern),
+          supabase.from('consulting_reservations').select('parent_phone').like('parent_phone', pattern),
+          supabase.from('test_reservations').select('parent_phone').like('parent_phone', pattern),
+          supabase.from('diagnostic_submissions').select('parent_phone').like('parent_phone', pattern),
+        ]);
+
+        // 하이픈 포함 형태로도 검색 (DB에 010-1234-5678 형식 저장)
+        const formattedPattern = `%${term}%`;
+        const [r5, r6, r7, r8] = await Promise.all([
+          supabase.from('reservations').select('parent_phone').like('parent_phone', formattedPattern),
+          supabase.from('consulting_reservations').select('parent_phone').like('parent_phone', formattedPattern),
+          supabase.from('test_reservations').select('parent_phone').like('parent_phone', formattedPattern),
+          supabase.from('diagnostic_submissions').select('parent_phone').like('parent_phone', formattedPattern),
+        ]);
+
+        [r1, r2, r3, r4, r5, r6, r7, r8].forEach(res => {
+          res.data?.forEach(r => phones.add(r.parent_phone));
+        });
+
+        if (phones.size === 0) {
+          setJourneyData({ phone: null, notFound: true });
+          return;
+        }
+
+        phone = [...phones][0];
+      }
 
       if (!phone) {
         // 이름으로 검색 → 전화번호 찾기
