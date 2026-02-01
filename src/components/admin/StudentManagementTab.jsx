@@ -380,44 +380,43 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
     try {
       const phone = journeyData.phone;
       const oldName = editingStudent;
-      const updateData = {};
-      if (editForm.student_name) updateData.student_name = editForm.student_name;
-      if (editForm.school !== undefined) updateData.school = editForm.school;
-      if (editForm.grade !== undefined) updateData.grade = editForm.grade;
-      if (editForm.math_level !== undefined) updateData.math_level = editForm.math_level;
+      const updateData = {
+        student_name: editForm.student_name || oldName,
+        school: editForm.school ?? '',
+        grade: editForm.grade ?? '',
+        math_level: editForm.math_level ?? '',
+      };
 
-      // 4개 테이블 모두 동기화
-      const updates = await Promise.allSettled([
-        supabase
-          .from('reservations')
-          .update(updateData)
-          .eq('parent_phone', phone)
-          .eq('student_name', oldName),
-        supabase
-          .from('consulting_reservations')
-          .update(updateData)
-          .eq('parent_phone', phone)
-          .eq('student_name', oldName),
-        supabase
-          .from('test_reservations')
-          .update(updateData)
-          .eq('parent_phone', phone)
-          .eq('student_name', oldName),
-        supabase
-          .from('diagnostic_submissions')
-          .update(updateData)
-          .eq('parent_phone', phone)
-          .eq('student_name', oldName),
-      ]);
+      // 4개 테이블 모두 동기화 (.select()로 실제 반영 확인)
+      const tables = ['reservations', 'consulting_reservations', 'test_reservations', 'diagnostic_submissions'];
+      const updates = await Promise.allSettled(
+        tables.map(table =>
+          supabase
+            .from(table)
+            .update(updateData)
+            .eq('parent_phone', phone)
+            .eq('student_name', oldName)
+            .select()
+        )
+      );
 
-      const errors = updates.filter(u => u.status === 'fulfilled' && u.value.error);
+      // 에러 체크
+      const errors = [];
+      updates.forEach((u, i) => {
+        if (u.status === 'rejected') {
+          errors.push(`${tables[i]}: ${u.reason}`);
+        } else if (u.value.error) {
+          errors.push(`${tables[i]}: ${u.value.error.message}`);
+        }
+      });
       if (errors.length > 0) {
-        console.error('일부 테이블 동기화 실패:', errors);
+        console.error('테이블 동기화 실패:', errors);
       }
 
       setEditingStudent(null);
-      // 데이터 새로고침
-      await loadJourney(phone);
+      // 이름이 변경된 경우 새 이름 기준으로 새로고침
+      const newPhone = phone;
+      await loadJourney(newPhone);
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error('학생 정보 수정 실패:', error);
