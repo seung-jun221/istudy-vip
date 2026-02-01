@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
+import { formatTimestampShort } from '../../utils/format';
 import './AdminTabs.css';
 
 export default function CustomerManagementTab({ campaignId, onPhoneClick }) {
@@ -161,11 +162,7 @@ export default function CustomerManagementTab({ campaignId, onPhoneClick }) {
     }
   };
 
-  const formatDateTime = (timestamp) => {
-    if (!timestamp) return '-';
-    const date = new Date(timestamp);
-    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-  };
+  const formatDateTime = formatTimestampShort;
 
   const getStatusStyle = (status) => {
     const styles = {

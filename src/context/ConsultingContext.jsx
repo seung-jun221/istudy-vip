@@ -1,7 +1,7 @@
 // src/context/ConsultingContext.jsx - 진단검사 기능 추가
 import { createContext, useContext, useState } from 'react';
 import { supabase, hashPassword } from '../utils/supabase';
-import { formatPhone } from '../utils/format';
+import { formatPhone, formatDateShort, getDayOfWeekKR } from '../utils/format';
 
 const ConsultingContext = createContext();
 
@@ -798,18 +798,8 @@ export function ConsultingProvider({ children }) {
   // 유틸리티 함수들
   // ========================================
 
-  const formatDateDisplay = (dateStr) => {
-    const date = new Date(dateStr);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    return `${month}/${day}`;
-  };
-
-  const getDayOfWeek = (dateStr) => {
-    const date = new Date(dateStr);
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
-    return days[date.getDay()];
-  };
+  const formatDateDisplay = formatDateShort;
+  const getDayOfWeek = getDayOfWeekKR;
 
   const showToast = (message, type = 'info', duration = 3000) => {
     setToast({ message, type, duration });

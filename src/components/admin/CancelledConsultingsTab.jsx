@@ -1,18 +1,10 @@
 import * as XLSX from 'xlsx';
+import { formatDateKR, formatTimestampShort } from '../../utils/format';
 import './AdminTabs.css';
 
 export default function CancelledConsultingsTab({ cancelledConsultings, consultingSlots, onPhoneClick }) {
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return `${date.getMonth() + 1}월 ${date.getDate()}일`;
-  };
-
-  const formatDateTime = (dateStr) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-  };
+  const formatDate = formatDateKR;
+  const formatDateTime = formatTimestampShort;
 
   const formatTime = (timeStr) => {
     if (!timeStr) return '-';
