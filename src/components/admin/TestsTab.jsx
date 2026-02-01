@@ -5,7 +5,8 @@ import {
   getAllResultsByPhone,
   getAllRegistrations,
   createDiagnosticRegistration,
-  updateDiagnosticRegistration
+  updateDiagnosticRegistration,
+  regradeAllByTestType
 } from '../../utils/diagnosticService';
 import { supabase } from '../../utils/supabase';
 import { formatPhone, formatSlotDateTime, formatDateShort, formatDateForExcel } from '../../utils/format';
@@ -28,6 +29,7 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
   const [syncModalOpen, setSyncModalOpen] = useState(false); // 연동 수정 모달
   const [syncTargets, setSyncTargets] = useState([]); // 연동 수정 대상 목록
   const [syncUpdateData, setSyncUpdateData] = useState(null); // 수정할 데이터
+  const [regrading, setRegrading] = useState(false); // 재채점 진행 중
 
   // 시험지 옵션
   const paperTypeOptions = ['미선택', '초등', '모노', '다이', '트라이'];
@@ -616,6 +618,31 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
   const formatDateTime = formatSlotDateTime;
   const formatTestDate = formatDateShort;
 
+  // 재채점 핸들러
+  const handleRegrade = async () => {
+    const testTypes = ['MONO', 'TRI'];
+    const msg = `MONO, TRI 시험의 모든 채점 결과를 현재 배점표로 재채점합니다.\n계속하시겠습니까?`;
+    if (!window.confirm(msg)) return;
+
+    setRegrading(true);
+    try {
+      const results = [];
+      for (const tt of testTypes) {
+        const res = await regradeAllByTestType(tt);
+        results.push(`${tt}: ${res.success}건 성공${res.failed ? `, ${res.failed}건 실패` : ''}`);
+      }
+      alert(`재채점 완료\n${results.join('\n')}`);
+      // 결과 맵 새로고침
+      if (onUpdate) onUpdate();
+      setResultsMap({});
+    } catch (err) {
+      console.error('재채점 오류:', err);
+      alert('재채점 중 오류가 발생했습니다: ' + (err.message || err));
+    } finally {
+      setRegrading(false);
+    }
+  };
+
   const handleExportExcel = () => {
     // 엑셀 데이터 준비
     const excelData = filteredTests.map((test) => ({
@@ -756,6 +783,14 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
             style={{ background: '#1a73e8', borderColor: '#1a73e8' }}
           >
             학생추가
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleRegrade}
+            disabled={regrading}
+            style={{ background: '#e67e22', borderColor: '#e67e22' }}
+          >
+            {regrading ? '재채점 중...' : '재채점'}
           </button>
           <button className="btn-excel" onClick={handleExportExcel}>
             엑셀 다운로드

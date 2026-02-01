@@ -1280,3 +1280,106 @@ function convertAreaCommentsFormat(
 
   return result;
 }
+
+// ========================================
+// 재채점 (배점표 변경 후 기존 결과 갱신)
+// ========================================
+
+/**
+ * 특정 시험 유형의 모든 채점 결과를 현재 배점표로 재채점
+ * (배점표 수정 후 기존 저장된 결과를 갱신할 때 사용)
+ */
+export async function regradeAllByTestType(
+  testType: TestType
+): Promise<{ success: number; failed: number; total: number }> {
+  // 1. 해당 시험 유형의 채점된 제출 목록 조회
+  const { data: submissions, error } = await supabase
+    .from('diagnostic_submissions')
+    .select('id, submission_id, student_name, grade, test_type')
+    .eq('test_type', testType)
+    .in('submission_type', ['auto', 'manual']);
+
+  if (error || !submissions) {
+    console.error('재채점 대상 조회 실패:', error);
+    throw new Error('재채점 대상 목록을 불러올 수 없습니다.');
+  }
+
+  const correctAnswers = getCorrectAnswers(testType);
+  let success = 0;
+  let failed = 0;
+
+  for (const submission of submissions) {
+    try {
+      // 2. 기존 결과 조회
+      const result = await getResultBySubmissionId(submission.id);
+      if (!result) continue;
+
+      // 3. question_results의 isCorrect 정보로 답안 재구성
+      const answers: StudentAnswer[] = result.question_results.map(
+        (qr: { questionNumber: number; isCorrect: boolean }) => ({
+          questionNumber: qr.questionNumber,
+          answer: qr.isCorrect
+            ? correctAnswers[qr.questionNumber]
+            : 'X',
+        })
+      );
+
+      // 4. AutoGrader로 재채점
+      const studentSubmission: StudentSubmission = {
+        studentId: submission.submission_id,
+        studentName: submission.student_name,
+        grade: submission.grade,
+        testType: testType as any,
+        answers,
+        submittedAt: new Date(),
+      };
+
+      const gradingResult = AutoGrader.grade(studentSubmission, correctAnswers);
+
+      // 5. 결과 업데이트
+      const updateData = {
+        total_score: gradingResult.overallScore.earnedScore,
+        max_score: gradingResult.overallScore.totalScore,
+        percentile: gradingResult.overallScore.percentile,
+        grade9: gradingResult.overallScore.grade9,
+        grade5: gradingResult.overallScore.grade5,
+        area_results: convertAreaResults(gradingResult.areaResults),
+        difficulty_results: convertDifficultyResults(gradingResult.difficultyResults),
+        question_results: convertQuestionResults(
+          gradingResult.questionResults,
+          answers.map((a) => a.answer.toString())
+        ),
+      };
+
+      const { error: updateError } = await supabase
+        .from('diagnostic_results')
+        .update(updateData)
+        .eq('id', result.id);
+
+      if (updateError) {
+        console.error(`재채점 실패 (${result.id}):`, updateError);
+        failed++;
+        continue;
+      }
+
+      // 6. 기존 보고서 삭제 후 재생성
+      await supabase
+        .from('diagnostic_reports')
+        .delete()
+        .eq('result_id', result.id);
+
+      try {
+        await generateReport(result.id);
+      } catch (reportError) {
+        console.warn(`보고서 재생성 실패 (${result.id}):`, reportError);
+      }
+
+      success++;
+    } catch (err) {
+      console.error(`재채점 오류 (submission ${submission.id}):`, err);
+      failed++;
+    }
+  }
+
+  return { success, failed, total: submissions.length };
+}
