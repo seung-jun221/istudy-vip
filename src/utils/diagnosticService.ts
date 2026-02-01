@@ -20,7 +20,7 @@ import type {
   CreateRegistrationRequest,
   UpdateRegistrationRequest,
 } from '../types/diagnostic';
-import { AutoGrader, generateReportData, GradeCalculator } from '../lib/grading-engine';
+import { AutoGrader, generateReportData, GradeCalculator, ScoreTableParser } from '../lib/grading-engine';
 import type {
   StudentSubmission,
   StudentAnswer,
@@ -630,6 +630,39 @@ function convertQuestionResults(
 }
 
 // ========================================
+// 현재 배점표 기준 총점 재계산 헬퍼
+// ========================================
+
+/**
+ * DB에 저장된 question_results의 isCorrect와 현재 배점표를 기반으로 총점을 재계산.
+ * 배점표 변경 후 DB에 저장된 구 점수와 차이가 있으면 현재 배점 기준 점수를 반환.
+ * CT 시험이나 배점표가 없는 경우 기존 total_score를 그대로 반환.
+ */
+function recalculateTotalScore(
+  questionResults: Array<{ questionNumber: number; isCorrect: boolean }>,
+  testType: string
+): number | null {
+  try {
+    if (testType === 'CT') return null;
+    const testPaper = ScoreTableParser.getTestPaper(testType as any);
+    if (!testPaper || !questionResults?.length) return null;
+
+    let total = 0;
+    for (const qr of questionResults) {
+      if (qr.isCorrect) {
+        const question = testPaper.questions.find(
+          (q) => q.questionNumber === qr.questionNumber
+        );
+        total += question ? question.score : 0;
+      }
+    }
+    return Math.round(total * 10) / 10;
+  } catch {
+    return null;
+  }
+}
+
+// ========================================
 // 결과 조회
 // ========================================
 
@@ -713,12 +746,27 @@ export async function getFullResultById(
     return { ...result, submission: undefined };
   }
 
-  // 백분위 기반으로 9등급/5등급 재계산 (DB 저장값 대신)
-  const recalculatedGrade9 = GradeCalculator.calculate9GradeFromPercentile(result.percentile);
-  const recalculatedGrade5 = GradeCalculator.calculate5Grade(result.percentile);
+  // 현재 배점표 기준으로 총점 재계산 (배점 변경 반영)
+  let totalScore = result.total_score;
+  if (submission && result.question_results) {
+    const recalc = recalculateTotalScore(result.question_results, submission.test_type);
+    if (recalc !== null) {
+      totalScore = recalc;
+    }
+  }
+
+  // 재계산된 총점으로 백분위/등급 재계산
+  const testType = submission?.test_type;
+  const percentile = (testType && testType !== 'CT')
+    ? GradeCalculator.calculatePercentile(testType as any, totalScore)
+    : result.percentile;
+  const recalculatedGrade9 = GradeCalculator.calculate9GradeFromPercentile(percentile);
+  const recalculatedGrade5 = GradeCalculator.calculate5Grade(percentile);
 
   return {
     ...result,
+    total_score: totalScore,
+    percentile,
     grade9: recalculatedGrade9,
     grade5: recalculatedGrade5,
     submission,
@@ -786,6 +834,14 @@ export async function getAllResultsByPhone(parentPhone: string): Promise<
     submissions.map(async (submission) => {
       const result = await getResultBySubmissionId(submission.id);
       const report = result ? await getReportByResultId(result.id) : null;
+
+      // 현재 배점표 기준으로 총점 재계산 (배점 변경 반영)
+      if (result && result.question_results) {
+        const recalc = recalculateTotalScore(result.question_results, submission.test_type);
+        if (recalc !== null) {
+          result.total_score = recalc;
+        }
+      }
 
       return {
         ...submission,
