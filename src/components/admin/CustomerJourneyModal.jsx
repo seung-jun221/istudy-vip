@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
+import { formatSlotDateTime, formatTimestampShort } from '../../utils/format';
 import './AdminTabs.css';
 
 export default function CustomerJourneyModal({ phone, campaignId, onClose, onMemoSaved }) {
@@ -156,19 +157,8 @@ export default function CustomerJourneyModal({ phone, campaignId, onClose, onMem
     }
   };
 
-  const formatDateTime = (dateStr, timeStr) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    const dateFormatted = `${date.getMonth() + 1}/${date.getDate()}`;
-    const time = timeStr ? timeStr.slice(0, 5) : '';
-    return time ? `${dateFormatted} ${time}` : dateFormatted;
-  };
-
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp) return '-';
-    const date = new Date(timestamp);
-    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-  };
+  const formatDateTime = formatSlotDateTime;
+  const formatTimestamp = formatTimestampShort;
 
   const getStatusBadge = (status) => {
     const styles = {

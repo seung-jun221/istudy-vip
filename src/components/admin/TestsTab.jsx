@@ -8,7 +8,7 @@ import {
   updateDiagnosticRegistration
 } from '../../utils/diagnosticService';
 import { supabase } from '../../utils/supabase';
-import { formatPhone } from '../../utils/format';
+import { formatPhone, formatSlotDateTime, formatDateShort, formatDateForExcel } from '../../utils/format';
 import StudentAddModal from './StudentAddModal';
 import './AdminTabs.css';
 
@@ -613,24 +613,8 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
     return a.time.localeCompare(b.time);
   });
 
-  const formatDateTime = (dateStr, timeStr) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    const time = timeStr ? timeStr.slice(0, 5) : '';
-    return `${date.getMonth() + 1}/${date.getDate()} ${time}`;
-  };
-
-  const formatTestDate = (dateStr) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return `${date.getMonth() + 1}/${date.getDate()}`;
-  };
-
-  const formatDateForExcel = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-  };
+  const formatDateTime = formatSlotDateTime;
+  const formatTestDate = formatDateShort;
 
   const handleExportExcel = () => {
     // 엑셀 데이터 준비

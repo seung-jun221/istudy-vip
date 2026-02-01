@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { useAdmin } from '../../context/AdminContext';
 import ConsultingResultModal from './ConsultingResultModal';
 import { supabase } from '../../utils/supabase';
+import { formatDateKR, formatDateFullKR, formatDateShort } from '../../utils/format';
 import './AdminTabs.css';
 
 export default function ConsultingsTab({ consultings, consultingSlots, onUpdate, onPhoneClick }) {
@@ -160,18 +161,8 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
     });
   };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return `${date.getMonth() + 1}월 ${date.getDate()}일`;
-  };
-
-  const formatFullDate = (dateStr) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
-    return `${date.getMonth() + 1}월 ${date.getDate()}일 (${days[date.getDay()]})`;
-  };
+  const formatDate = formatDateKR;
+  const formatFullDate = formatDateFullKR;
 
   const formatTime = (timeStr) => {
     if (!timeStr) return '-';
@@ -188,8 +179,7 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
       let testInfo = '미예약';
       if (consulting.test_reservation?.test_slots) {
         const testSlot = consulting.test_reservation.test_slots;
-        const date = new Date(testSlot.date);
-        const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+        const dateStr = formatDateShort(testSlot.date);
         const timeStr = testSlot.time ? testSlot.time.slice(0, 5) : '';
         testInfo = `${dateStr} ${timeStr}`;
       }
@@ -328,8 +318,7 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
                     const formatTestInfo = () => {
                       if (consulting.test_reservation?.test_slots) {
                         const testSlot = consulting.test_reservation.test_slots;
-                        const date = new Date(testSlot.date);
-                        const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+                        const dateStr = formatDateShort(testSlot.date);
                         const timeStr = testSlot.time ? testSlot.time.slice(0, 5) : '';
                         return `${dateStr} ${timeStr} 진단검사 예약`;
                       }
@@ -436,9 +425,7 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
               <p><strong>현재 일정:</strong> {(() => {
                 const currentSlot = consultingSlots?.find(s => s.id === slotChangeTarget.slot_id);
                 if (!currentSlot) return '-';
-                const date = new Date(currentSlot.date);
-                const days = ['일', '월', '화', '수', '목', '금', '토'];
-                return `${date.getMonth() + 1}월 ${date.getDate()}일 (${days[date.getDay()]}) ${formatTime(currentSlot.time)}`;
+                return `${formatFullDate(currentSlot.date)} ${formatTime(currentSlot.time)}`;
               })()}</p>
             </div>
 
@@ -449,8 +436,6 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
               ) : (
                 <div className="slot-options">
                   {getAvailableSlots().map((slot) => {
-                    const date = new Date(slot.date);
-                    const days = ['일', '월', '화', '수', '목', '금', '토'];
                     const remaining = slot.max_capacity - slot.current_bookings;
                     return (
                       <button
@@ -459,7 +444,7 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
                         onClick={() => handleSlotChange(slot.id)}
                       >
                         <span className="slot-datetime">
-                          {date.getMonth() + 1}월 {date.getDate()}일 ({days[date.getDay()]}) {formatTime(slot.time)}
+                          {formatFullDate(slot.date)} {formatTime(slot.time)}
                         </span>
                         <span className="slot-remaining">
                           잔여 {remaining}석

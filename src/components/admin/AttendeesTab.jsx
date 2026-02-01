@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { useAdmin } from '../../context/AdminContext';
+import { formatTimestampShort, formatDateTimeForExcel, formatSlotDateTime, formatDateShort } from '../../utils/format';
 import './AdminTabs.css';
 
 export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpdate, onPhoneClick }) {
@@ -95,25 +96,8 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
   const displayCapacity = totalDisplayCapacity;
   const reservationRate = maxCapacity > 0 ? Math.round((confirmedCount / maxCapacity) * 100) : 0;
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-  };
-
-  const formatDateForExcel = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-  };
-
-  const formatSlotDateTime = (date, time) => {
-    const d = new Date(date);
-    const month = d.getMonth() + 1;
-    const day = d.getDate();
-    const timeStr = time ? time.slice(0, 5) : '';
-    return `${month}/${day} ${timeStr}`;
-  };
+  const formatDate = formatTimestampShort;
+  const formatDateForExcel = formatDateTimeForExcel;
 
   // 설명회 슬롯 정보 가져오기 (전체 탭에서 사용)
   const getSlotInfoForAttendee = (attendee) => {
@@ -199,8 +183,7 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
     if (!slot) return '슬롯 정보 없음';
 
     const title = slot.title || '';
-    const date = slot.date ? new Date(slot.date) : null;
-    const dateStr = date ? `${date.getMonth() + 1}/${date.getDate()}` : '';
+    const dateStr = slot.date ? formatDateShort(slot.date) : '';
     const time = slot.time ? slot.time.slice(0, 5) : '';
 
     // title이 있으면 title 우선 표시
