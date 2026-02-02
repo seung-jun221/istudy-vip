@@ -509,6 +509,7 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
         test_date: reg.test_date,
         test_time: reg.test_time,
         location: reg.location,
+        created_at: reg.created_at,
         test_slots: null,
         source: 'registration',
         reservation_type: 'manual',
@@ -526,6 +527,7 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
         test_date: test.test_slots?.date,
         test_time: test.test_slots?.time,
         location: test.location || test.test_slots?.location,
+        created_at: test.created_at,
         slot_id: test.slot_id,
         test_slots: test.test_slots,
         source: 'reservation',
@@ -646,6 +648,16 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
   const handleExportExcel = () => {
     // 엑셀 데이터 준비
     const excelData = filteredTests.map((test) => ({
+      예약일시: test.created_at
+        ? new Date(test.created_at).toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          })
+        : '',
       학생명: test.student_name || '',
       학년: test.grade || '',
       학교: test.school || '',
@@ -665,6 +677,7 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
 
     // 컬럼 너비 설정
     worksheet['!cols'] = [
+      { wch: 18 }, // 예약일시
       { wch: 12 }, // 학생명
       { wch: 10 }, // 학년
       { wch: 20 }, // 학교
@@ -803,6 +816,7 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
         <table className="data-table">
           <thead>
             <tr>
+              <th>예약일시</th>
               <th>학생명</th>
               <th>학년</th>
               <th>학교</th>
@@ -818,7 +832,7 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
           <tbody>
             {filteredTests.length === 0 ? (
               <tr>
-                <td colSpan="10" className="empty-cell">
+                <td colSpan="11" className="empty-cell">
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -829,6 +843,18 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
 
                 return (
                   <tr key={test.id}>
+                    <td style={{ fontSize: '0.82rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                      {test.created_at
+                        ? new Date(test.created_at).toLocaleString('ko-KR', {
+                            year: '2-digit',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                          })
+                        : '-'}
+                    </td>
                     <td className="highlight-cell">{test.student_name}</td>
                     <td>{test.grade || '-'}</td>
                     <td>{test.school || '-'}</td>
