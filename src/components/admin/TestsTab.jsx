@@ -567,6 +567,11 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
       test.reservation_type === reservationTypeFilter;
 
     return matchesSearch && matchesSlot && matchesType;
+  }).sort((a, b) => {
+    // 예약일시(created_at) 최신순 정렬
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return dateB - dateA;
   });
 
   // 시험지 지정 변경 핸들러 (DB 저장)
