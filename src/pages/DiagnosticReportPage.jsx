@@ -6,7 +6,6 @@ import TScoreBarChart from '../components/charts/TScoreBarChart';
 import SchoolCompetitivenessChart from '../components/charts/SchoolCompetitivenessChart';
 import { CT_TEST_CONFIG, CT_STATISTICS, CT_COMPETITIVENESS } from '../data/ctTestConfig';
 import { CT_AREA_COMMENTS, CT_OVERALL_COMMENTS, CT_STRATEGY_CATEGORIES, getAreaComment, getOverallComment } from '../data/ctComments';
-import CTCompetitivenessChart from '../components/charts/CTCompetitivenessChart';
 import './DiagnosticReportPage.css';
 
 export default function DiagnosticReportPage() {
@@ -1312,17 +1311,13 @@ export default function DiagnosticReportPage() {
             <div className="section-title">
               <span className="section-title-icon">▪</span>
               <span className="section-title-text">
-                {isCTTest(submission?.test_type) ? '중등 수학 준비도 분석' : '고교 유형별 내신 경쟁력 분석'}
+                고교 유형별 내신 경쟁력 분석
               </span>
               <div className="section-title-line"></div>
             </div>
 
             <div className="chart-container">
-              {isCTTest(submission?.test_type) ? (
-                <CTCompetitivenessChart score={data.total_score} maxScore={data.max_score} />
-              ) : (
-                <SchoolCompetitivenessChart score={data.total_score} maxScore={data.max_score} />
-              )}
+              <SchoolCompetitivenessChart score={data.total_score} maxScore={data.max_score} />
             </div>
 
             <div className="page-footer">
