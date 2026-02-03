@@ -535,10 +535,26 @@ export function ConsultingProvider({ children }) {
       console.log('✅ 로드된 test_slots:', slots);
       console.log('📊 test_slots 개수:', slots?.length || 0);
 
+      // ✅ current_bookings 대신 실제 예약 레코드 수를 카운트 (정확한 잔여석 계산)
+      const slotIds = slots.map(s => s.id);
+      let bookingCounts = {};
+      if (slotIds.length > 0) {
+        const { data: reservations } = await supabase
+          .from('test_reservations')
+          .select('slot_id')
+          .in('slot_id', slotIds)
+          .in('status', ['confirmed', '예약']);
+
+        (reservations || []).forEach(r => {
+          bookingCounts[r.slot_id] = (bookingCounts[r.slot_id] || 0) + 1;
+        });
+      }
+
       const dateMap = new Map();
 
       slots.forEach((slot) => {
-        const availableSlots = slot.max_capacity - slot.current_bookings;
+        const actualBookings = bookingCounts[slot.id] || 0;
+        const availableSlots = slot.max_capacity - actualBookings;
 
         if (!dateMap.has(slot.date)) {
           dateMap.set(slot.date, {
@@ -588,12 +604,30 @@ export function ConsultingProvider({ children }) {
 
       if (error) throw error;
 
-      const formattedSlots = slots.map((slot) => ({
-        ...slot,
-        timeDisplay: slot.time.slice(0, 5),
-        availableSeats: slot.max_capacity - slot.current_bookings,
-        isFull: slot.current_bookings >= slot.max_capacity,
-      }));
+      // ✅ current_bookings 대신 실제 예약 레코드 수를 카운트 (정확한 잔여석 계산)
+      const slotIds = slots.map(s => s.id);
+      let bookingCounts = {};
+      if (slotIds.length > 0) {
+        const { data: reservations } = await supabase
+          .from('test_reservations')
+          .select('slot_id')
+          .in('slot_id', slotIds)
+          .in('status', ['confirmed', '예약']);
+
+        (reservations || []).forEach(r => {
+          bookingCounts[r.slot_id] = (bookingCounts[r.slot_id] || 0) + 1;
+        });
+      }
+
+      const formattedSlots = slots.map((slot) => {
+        const actualBookings = bookingCounts[slot.id] || 0;
+        return {
+          ...slot,
+          timeDisplay: slot.time.slice(0, 5),
+          availableSeats: slot.max_capacity - actualBookings,
+          isFull: actualBookings >= slot.max_capacity,
+        };
+      });
 
       setTestTimeSlots(formattedSlots);
     } catch (error) {
@@ -756,10 +790,26 @@ export function ConsultingProvider({ children }) {
 
       console.log('✅ 로드된 test_slots:', slots);
 
+      // ✅ current_bookings 대신 실제 예약 레코드 수를 카운트 (정확한 잔여석 계산)
+      const slotIds = slots.map(s => s.id);
+      let bookingCounts = {};
+      if (slotIds.length > 0) {
+        const { data: reservations } = await supabase
+          .from('test_reservations')
+          .select('slot_id')
+          .in('slot_id', slotIds)
+          .in('status', ['confirmed', '예약']);
+
+        (reservations || []).forEach(r => {
+          bookingCounts[r.slot_id] = (bookingCounts[r.slot_id] || 0) + 1;
+        });
+      }
+
       const dateMap = new Map();
 
       slots.forEach((slot) => {
-        const availableSlots = slot.max_capacity - slot.current_bookings;
+        const actualBookings = bookingCounts[slot.id] || 0;
+        const availableSlots = slot.max_capacity - actualBookings;
 
         if (!dateMap.has(slot.date)) {
           dateMap.set(slot.date, {
