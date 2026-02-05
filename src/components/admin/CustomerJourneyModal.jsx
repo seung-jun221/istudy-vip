@@ -447,7 +447,7 @@ export default function CustomerJourneyModal({ phone, campaignId, onClose, onMem
                 <div style={{ fontSize: '12px', color: '#3b82f6' }}>설명회</div>
               </div>
               <div style={{ background: '#dcfce7', padding: '8px 16px', borderRadius: '8px', flex: 1, textAlign: 'center', minWidth: '80px' }}>
-                <div style={{ fontSize: '20px', fontWeight: '700', color: '#16a34a' }}>{journey.consultings.filter(c => !['cancelled', 'auto_cancelled'].includes(c.status)).length}</div>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: '#16a34a' }}>{journey.consultings.filter(c => !['cancelled', 'auto_cancelled', '취소'].includes(c.status)).length}</div>
                 <div style={{ fontSize: '12px', color: '#22c55e' }}>컨설팅</div>
               </div>
               <div style={{ background: '#fef3c7', padding: '8px 16px', borderRadius: '8px', flex: 1, textAlign: 'center', minWidth: '80px' }}>

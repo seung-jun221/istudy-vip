@@ -138,7 +138,7 @@ export function AdminProvider({ children }) {
                 .from('consulting_reservations')
                 .select('*', { count: 'exact', head: true })
                 .in('slot_id', consultingSlotIds)
-                .not('status', 'in', '(cancelled,auto_cancelled)')
+                .not('status', 'in', '(cancelled,auto_cancelled,취소)')
             : { count: 0 };
 
           // 진단검사 예약 수
@@ -147,7 +147,7 @@ export function AdminProvider({ children }) {
                 .from('consulting_reservations')
                 .select('id')
                 .in('slot_id', consultingSlotIds)
-                .not('status', 'in', '(cancelled,auto_cancelled)')
+                .not('status', 'in', '(cancelled,auto_cancelled,취소)')
             : { data: [] };
 
           const consultingIdList = consultingIds?.map(c => c.id) || [];
@@ -167,7 +167,7 @@ export function AdminProvider({ children }) {
                 .select('*', { count: 'exact', head: true })
                 .in('slot_id', consultingSlotIds)
                 .eq('enrollment_status', '확정')
-                .not('status', 'in', '(cancelled,auto_cancelled)')
+                .not('status', 'in', '(cancelled,auto_cancelled,취소)')
             : { count: 0 };
 
           // 첫 번째 슬롯의 날짜/시간을 대표값으로 사용 (정렬용)
@@ -283,7 +283,7 @@ export function AdminProvider({ children }) {
           .from('consulting_reservations')
           .select('*')
           .in('slot_id', consultingSlotIds)
-          .not('status', 'in', '(cancelled,auto_cancelled)')
+          .not('status', 'in', '(cancelled,auto_cancelled,취소)')
           .order('id', { ascending: false });
 
         if (consultingsError) {
@@ -304,7 +304,7 @@ export function AdminProvider({ children }) {
           .from('consulting_reservations')
           .select('*')
           .in('slot_id', consultingSlotIds)
-          .in('status', ['cancelled', 'auto_cancelled'])
+          .in('status', ['cancelled', 'auto_cancelled', '취소'])
           .order('cancelled_at', { ascending: false });
 
         if (cancelledError) {

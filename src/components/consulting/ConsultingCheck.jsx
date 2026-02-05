@@ -48,6 +48,7 @@ export default function ConsultingCheck({ onBack, onResult, onEntranceTestResult
         .eq('parent_phone', phone)
         .neq('status', 'cancelled')
         .neq('status', 'auto_cancelled')
+        .neq('status', '취소')
         .order('created_at', { ascending: false });
 
       if (consultingError) throw consultingError;
