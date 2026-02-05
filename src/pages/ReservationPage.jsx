@@ -252,7 +252,7 @@ export default function ReservationPage() {
                 alignItems: 'center',
               }}>
                 <span style={{ fontSize: '12px', color: '#8b95a5' }}>일반 예약 오픈</span>
-                <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff' }}>2/12(수) 18:00</span>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff' }}>2/13(목) 09:00</span>
               </div>
             </div>
           </div>
