@@ -244,7 +244,7 @@ export default function ReservationPage() {
                 marginBottom: '8px',
               }}>
                 <span style={{ fontSize: '12px', color: '#8b95a5' }}>기존 참석자 우선예약</span>
-                <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff' }}>2/12(수) 09:00</span>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff' }}>2/12(목) 09:00</span>
               </div>
               <div style={{
                 display: 'flex',
@@ -252,7 +252,7 @@ export default function ReservationPage() {
                 alignItems: 'center',
               }}>
                 <span style={{ fontSize: '12px', color: '#8b95a5' }}>일반 예약 오픈</span>
-                <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff' }}>2/13(목) 09:00</span>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff' }}>2/13(금) 09:00</span>
               </div>
             </div>
           </div>
