@@ -144,7 +144,7 @@ export default function ReservationPage() {
               color: '#92400e',
               margin: 0,
             }}>
-              1회~11회 설명회 예약 마감
+              1회~13회 설명회 예약 마감
             </p>
             <p style={{
               fontSize: '12px',
@@ -153,6 +153,80 @@ export default function ReservationPage() {
             }}>
               성원에 감사합니다.
             </p>
+          </div>
+
+          {/* 특별 설명회 광고 */}
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '16px',
+            color: 'white',
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '-20px',
+              right: '-20px',
+              width: '100px',
+              height: '100px',
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '50%',
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: '-30px',
+              left: '-30px',
+              width: '80px',
+              height: '80px',
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: '50%',
+            }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{
+                display: 'inline-block',
+                background: 'rgba(255,255,255,0.2)',
+                padding: '4px 10px',
+                borderRadius: '20px',
+                fontSize: '11px',
+                fontWeight: '600',
+                marginBottom: '10px',
+              }}>
+                SPECIAL EVENT
+              </div>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '700',
+                margin: '0 0 8px 0',
+              }}>
+                사직점 개원 특별 설명회
+              </h3>
+              <p style={{
+                fontSize: '14px',
+                margin: '0 0 4px 0',
+                opacity: 0.95,
+              }}>
+                2월 26일(목) 오전 11시 | 거제종합사회복지관
+              </p>
+              <p style={{
+                fontSize: '13px',
+                margin: '0 0 12px 0',
+                opacity: 0.85,
+              }}>
+                200석 규모 대형 설명회
+              </p>
+              <div style={{
+                background: 'rgba(255,255,255,0.15)',
+                borderRadius: '6px',
+                padding: '10px 12px',
+                fontSize: '12px',
+                lineHeight: 1.5,
+              }}>
+                <strong>기존 참석자 우선예약</strong> 2/12(수) 오전 9시<br />
+                <strong>일반 예약 오픈</strong> 2/12(수) 오후 6시
+              </div>
+            </div>
           </div>
 
           <p className="select-guide">참석하실 설명회를 선택해주세요</p>
