@@ -157,74 +157,102 @@ export default function ReservationPage() {
 
           {/* 특별 설명회 광고 */}
           <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: '#1a2332',
             borderRadius: '12px',
-            padding: '20px',
+            padding: '24px 20px',
             marginBottom: '16px',
             color: 'white',
-            position: 'relative',
-            overflow: 'hidden',
+            border: '1px solid #2d3a4d',
           }}>
             <div style={{
-              position: 'absolute',
-              top: '-20px',
-              right: '-20px',
-              width: '100px',
-              height: '100px',
-              background: 'rgba(255,255,255,0.1)',
-              borderRadius: '50%',
-            }} />
-            <div style={{
-              position: 'absolute',
-              bottom: '-30px',
-              left: '-30px',
-              width: '80px',
-              height: '80px',
-              background: 'rgba(255,255,255,0.05)',
-              borderRadius: '50%',
-            }} />
-            <div style={{ position: 'relative', zIndex: 1 }}>
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '16px',
+            }}>
               <div style={{
-                display: 'inline-block',
-                background: 'rgba(255,255,255,0.2)',
-                padding: '4px 10px',
-                borderRadius: '20px',
+                width: '4px',
+                height: '20px',
+                background: '#c9a962',
+                borderRadius: '2px',
+              }} />
+              <span style={{
                 fontSize: '11px',
                 fontWeight: '600',
-                marginBottom: '10px',
+                color: '#c9a962',
+                letterSpacing: '1.5px',
               }}>
                 SPECIAL EVENT
-              </div>
-              <h3 style={{
-                fontSize: '18px',
-                fontWeight: '700',
-                margin: '0 0 8px 0',
-              }}>
-                사직점 개원 특별 설명회
-              </h3>
-              <p style={{
-                fontSize: '14px',
-                margin: '0 0 4px 0',
-                opacity: 0.95,
-              }}>
-                2월 26일(목) 오전 11시 | 거제종합사회복지관
-              </p>
-              <p style={{
-                fontSize: '13px',
-                margin: '0 0 12px 0',
-                opacity: 0.85,
-              }}>
-                200석 규모 대형 설명회
-              </p>
+              </span>
+            </div>
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: '700',
+              margin: '0 0 16px 0',
+              color: '#ffffff',
+              letterSpacing: '-0.3px',
+            }}>
+              사직점 개원 특별 설명회
+            </h3>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              marginBottom: '16px',
+            }}>
               <div style={{
-                background: 'rgba(255,255,255,0.15)',
-                borderRadius: '6px',
-                padding: '10px 12px',
-                fontSize: '12px',
-                lineHeight: 1.5,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                color: '#a0aec0',
               }}>
-                <strong>기존 참석자 우선예약</strong> 2/12(수) 오전 9시<br />
-                <strong>일반 예약 오픈</strong> 2/12(수) 오후 6시
+                <span style={{ color: '#c9a962' }}>|</span>
+                2월 26일(목) 오전 11시
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                color: '#a0aec0',
+              }}>
+                <span style={{ color: '#c9a962' }}>|</span>
+                거제종합사회복지관
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                color: '#a0aec0',
+              }}>
+                <span style={{ color: '#c9a962' }}>|</span>
+                200석 규모
+              </div>
+            </div>
+            <div style={{
+              background: '#242d3d',
+              borderRadius: '8px',
+              padding: '14px 16px',
+              borderLeft: '3px solid #c9a962',
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '8px',
+              }}>
+                <span style={{ fontSize: '12px', color: '#8b95a5' }}>기존 참석자 우선예약</span>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff' }}>2/12(수) 09:00</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}>
+                <span style={{ fontSize: '12px', color: '#8b95a5' }}>일반 예약 오픈</span>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff' }}>2/12(수) 18:00</span>
               </div>
             </div>
           </div>
