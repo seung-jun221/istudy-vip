@@ -283,6 +283,38 @@ h2 {
   border: 1px solid #bdbdbd;
 }
 
+/* 우선예약 오픈 전 */
+.availability-badge.not-opened {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+  font-size: 11px;
+}
+
+/* 우선예약 기간 뱃지 */
+.priority-badge {
+  display: block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ffd700, #ffb800);
+  color: #5d4000;
+  text-align: center;
+}
+
+/* 오픈 전 설명회 스타일 */
+.seminar-option.not-opened {
+  background: #f5f5f5;
+  border: 2px dashed #90caf9;
+}
+
+.seminar-option.not-opened:hover {
+  background: #f5f5f5;
+  border-color: #90caf9;
+}
+
 /* ===== 대기 예약 모달 ===== */
 .waitlist-modal-overlay {
   position: fixed;
