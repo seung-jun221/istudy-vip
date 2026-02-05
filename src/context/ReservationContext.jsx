@@ -11,6 +11,43 @@ export function useReservation() {
   return context;
 }
 
+// 우선예약 상태 계산 함수
+function getPriorityReservationStatus(slot) {
+  // 우선예약 설정이 없으면 일반 상태
+  if (!slot.priority_open_at && !slot.public_open_at) {
+    return { type: 'normal', canReserve: true, isPriorityPeriod: false };
+  }
+
+  const now = new Date();
+  const priorityOpenAt = slot.priority_open_at ? new Date(slot.priority_open_at) : null;
+  const publicOpenAt = slot.public_open_at ? new Date(slot.public_open_at) : null;
+
+  // 우선예약 오픈 전
+  if (priorityOpenAt && now < priorityOpenAt) {
+    return {
+      type: 'not_opened',
+      canReserve: false,
+      isPriorityPeriod: false,
+      openAt: priorityOpenAt,
+      message: `${priorityOpenAt.toLocaleDateString('ko-KR')} ${priorityOpenAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 오픈 예정`,
+    };
+  }
+
+  // 우선예약 기간 (기존 참석자만)
+  if (publicOpenAt && now < publicOpenAt) {
+    return {
+      type: 'priority_only',
+      canReserve: true,
+      isPriorityPeriod: true,
+      publicOpenAt: publicOpenAt,
+      message: `기존 참석자 우선예약 중 (${publicOpenAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}부터 일반 오픈)`,
+    };
+  }
+
+  // 일반 오픈
+  return { type: 'public', canReserve: true, isPriorityPeriod: false };
+}
+
 export function ReservationProvider({ children }) {
   const [seminars, setSeminars] = useState([]);
   const [selectedSeminar, setSelectedSeminar] = useState(null);
@@ -92,6 +129,9 @@ export function ReservationProvider({ children }) {
             status = 'warning';   // 마감 임박 (노출정원 기준)
           }
 
+          // 우선예약 상태 계산
+          const priorityStatus = getPriorityReservationStatus(slot);
+
           return {
             ...slot,
             reserved,
@@ -101,6 +141,8 @@ export function ReservationProvider({ children }) {
             isWaitlist: actualAvailable <= 0, // 대기자 예약 상태
             isClosed: slot.isClosed,          // 관리자 마감 처리
             status,                           // 'available' | 'warning' | 'waitlist' | 'closed'
+            // 우선예약 관련 정보
+            priorityStatus,                   // 우선예약 상태 객체
           };
         })
       );
@@ -121,6 +163,29 @@ export function ReservationProvider({ children }) {
     setToast(null);
   };
 
+  // 기존 참석자 여부 확인 (우선예약 기간에 사용)
+  const checkExistingAttendee = async (phone, campaignId) => {
+    try {
+      const { data, error } = await supabase
+        .from('reservations')
+        .select('id, status, student_name')
+        .eq('campaign_id', campaignId)
+        .eq('parent_phone', phone)
+        .eq('status', '참석')
+        .limit(1);
+
+      if (error) throw error;
+
+      return {
+        isAttendee: data && data.length > 0,
+        reservation: data?.[0] || null,
+      };
+    } catch (error) {
+      console.error('기존 참석자 확인 실패:', error);
+      return { isAttendee: false, reservation: null };
+    }
+  };
+
   const value = {
     seminars,
     selectedSeminar,
@@ -131,6 +196,7 @@ export function ReservationProvider({ children }) {
     showToast,
     hideToast,
     loadSeminars,
+    checkExistingAttendee,  // 기존 참석자 확인 함수
   };
 
   return (

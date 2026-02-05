@@ -14,6 +14,11 @@ export default function SeminarSelector() {
       return;
     }
 
+    // 우선예약 오픈 전인 경우 선택 불가
+    if (seminar.priorityStatus?.type === 'not_opened') {
+      return;
+    }
+
     // 대기 예약인 경우 모달 먼저 표시
     if (seminar.status === 'waitlist') {
       setPendingSeminar(seminar);
@@ -81,8 +86,12 @@ export default function SeminarSelector() {
             onClick={() => handleSelectSeminar(seminar)}
             className={`seminar-option ${
               selectedSeminar?.id === seminar.id ? 'selected' : ''
-            } ${seminar.status === 'warning' ? 'warning' : ''} ${seminar.status === 'waitlist' ? 'waitlist' : ''} ${seminar.status === 'closed' ? 'closed' : ''}`}
-            style={seminar.status === 'closed' ? { cursor: 'not-allowed', opacity: 0.7 } : {}}
+            } ${seminar.status === 'warning' ? 'warning' : ''} ${seminar.status === 'waitlist' ? 'waitlist' : ''} ${seminar.status === 'closed' ? 'closed' : ''} ${seminar.priorityStatus?.type === 'not_opened' ? 'not-opened' : ''}`}
+            style={
+              seminar.status === 'closed' || seminar.priorityStatus?.type === 'not_opened'
+                ? { cursor: 'not-allowed', opacity: 0.7 }
+                : {}
+            }
           >
             <h4>{seminar.title}</h4>
             <p>
@@ -90,25 +99,40 @@ export default function SeminarSelector() {
             </p>
             <p>{seminar.location}</p>
 
-            <span
-              className={`availability-badge ${
-                seminar.status === 'closed'
-                  ? 'closed'
-                  : seminar.status === 'waitlist'
-                  ? 'waitlist'
-                  : seminar.status === 'warning'
-                  ? 'limited'
-                  : 'available'
-              }`}
-            >
-              {seminar.status === 'closed'
-                ? '예약 마감'
-                : seminar.status === 'waitlist'
-                ? '마감 (대기접수)'
-                : seminar.status === 'warning'
-                ? '마감임박'
-                : '예약가능'}
-            </span>
+            {/* 우선예약 오픈 전 */}
+            {seminar.priorityStatus?.type === 'not_opened' ? (
+              <span className="availability-badge not-opened">
+                {seminar.priorityStatus.message}
+              </span>
+            ) : (
+              <>
+                <span
+                  className={`availability-badge ${
+                    seminar.status === 'closed'
+                      ? 'closed'
+                      : seminar.status === 'waitlist'
+                      ? 'waitlist'
+                      : seminar.status === 'warning'
+                      ? 'limited'
+                      : 'available'
+                  }`}
+                >
+                  {seminar.status === 'closed'
+                    ? '예약 마감'
+                    : seminar.status === 'waitlist'
+                    ? '마감 (대기접수)'
+                    : seminar.status === 'warning'
+                    ? '마감임박'
+                    : '예약가능'}
+                </span>
+                {/* 우선예약 기간 안내 */}
+                {seminar.priorityStatus?.type === 'priority_only' && (
+                  <span className="priority-badge">
+                    기존 참석자 우선예약
+                  </span>
+                )}
+              </>
+            )}
           </div>
         ))}
       </div>

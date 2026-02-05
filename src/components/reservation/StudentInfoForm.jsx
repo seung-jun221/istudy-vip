@@ -12,7 +12,7 @@ export default function StudentInfoForm({
   onBack,
   onComplete,
 }) {
-  const { selectedSeminar, showToast, setLoading } = useReservation();
+  const { selectedSeminar, showToast, setLoading, checkExistingAttendee } = useReservation();
 
   const [formData, setFormData] = useState({
     studentName: previousInfo?.student_name || '',
@@ -242,6 +242,24 @@ export default function StudentInfoForm({
     setLoading(true);
 
     try {
+      // 우선예약 기간 체크
+      if (selectedSeminar.priorityStatus?.type === 'priority_only') {
+        const { isAttendee } = await checkExistingAttendee(
+          formatPhone(phone),
+          selectedSeminar.campaign_id
+        );
+
+        if (!isAttendee) {
+          showToast(
+            '현재 기존 참석자 우선예약 기간입니다. 이전 설명회에 참석하신 분만 예약 가능합니다.',
+            'error',
+            5000
+          );
+          setLoading(false);
+          return;
+        }
+      }
+
       // 중복 예약 체크
       const duplicate = await checkDuplicateReservation();
 
@@ -264,6 +282,36 @@ export default function StudentInfoForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* 우선예약 기간 안내 */}
+      {selectedSeminar?.priorityStatus?.type === 'priority_only' && (
+        <div style={{
+          background: 'linear-gradient(135deg, #fff9e6, #fff3cc)',
+          border: '2px solid #ffd700',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '16px',
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '8px',
+          }}>
+            <span style={{ fontSize: '20px' }}>⭐</span>
+            <strong style={{ color: '#5d4000', fontSize: '15px' }}>
+              기존 참석자 우선예약 기간
+            </strong>
+          </div>
+          <p style={{ fontSize: '13px', color: '#6b5900', margin: 0, lineHeight: 1.5 }}>
+            현재 이전 설명회에 참석하신 분만 예약 가능합니다.<br />
+            <span style={{ color: '#8b7000' }}>
+              일반 예약: {selectedSeminar.priorityStatus.publicOpenAt?.toLocaleDateString('ko-KR')}{' '}
+              {selectedSeminar.priorityStatus.publicOpenAt?.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 오픈
+            </span>
+          </p>
+        </div>
+      )}
+
       {/* 이전 정보 불러오기 */}
       {!previousInfo && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
