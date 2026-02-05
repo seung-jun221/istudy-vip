@@ -23,9 +23,7 @@ INSERT INTO reservations (
   math_level,
   password,
   privacy_consent,
-  status,
-  registered_at,
-  created_at
+  status
 )
 SELECT
   'R' || EXTRACT(EPOCH FROM NOW())::BIGINT::TEXT,
@@ -38,9 +36,7 @@ SELECT
   '5-2 진행중',
   '6381d0f3',
   'Y',
-  '참석',
-  NOW(),
-  NOW()
+  '참석'
 FROM seminar_slots ss
 WHERE ss.session_number = 9
   AND ss.status = 'active'
