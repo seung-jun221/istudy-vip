@@ -270,8 +270,8 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
         id: c.id,
         table: 'consulting_reservations',
         slotId: c.slot_id,
-        canChange: !['cancelled', 'auto_cancelled'].includes(c.status),
-        canDelete: !['cancelled', 'auto_cancelled'].includes(c.status),
+        canChange: !['cancelled', 'auto_cancelled', '취소'].includes(c.status),
+        canDelete: !['cancelled', 'auto_cancelled', '취소'].includes(c.status),
       });
     });
 
