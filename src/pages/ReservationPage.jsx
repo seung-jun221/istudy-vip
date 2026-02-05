@@ -155,7 +155,8 @@ export default function ReservationPage() {
             </p>
           </div>
 
-          {/* 특별 설명회 광고 */}
+          {/* 특별 설명회 광고 - 2/10 이후 표시 */}
+          {new Date() >= new Date('2026-02-10T00:00:00+09:00') && (
           <div style={{
             background: '#1a2332',
             borderRadius: '12px',
@@ -256,6 +257,7 @@ export default function ReservationPage() {
               </div>
             </div>
           </div>
+          )}
 
           <p className="select-guide">참석하실 설명회를 선택해주세요</p>
 
