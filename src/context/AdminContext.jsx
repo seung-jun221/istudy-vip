@@ -1150,6 +1150,29 @@ export function AdminProvider({ children }) {
     }
   };
 
+  // 진단검사 슬롯 수정
+  const updateTestSlot = async (slotId, slotData) => {
+    try {
+      setLoading(true);
+
+      const { error } = await supabase
+        .from('test_slots')
+        .update(slotData)
+        .eq('id', slotId);
+
+      if (error) throw error;
+
+      showToast('검사 슬롯이 수정되었습니다.', 'success');
+      return true;
+    } catch (error) {
+      console.error('검사 슬롯 수정 실패:', error);
+      showToast('검사 슬롯 수정에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ========================================
   // 설명회 슬롯 관리
   // ========================================
@@ -1483,6 +1506,7 @@ export function AdminProvider({ children }) {
     updateConsultingSlot,
     deleteConsultingSlot,
     createTestSlots,
+    updateTestSlot,
     deleteTestSlot,
     checkAndOpenNextSlots,
     updateReservationStatus,
