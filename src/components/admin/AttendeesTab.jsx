@@ -343,15 +343,15 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
         <table className="data-table">
           <thead>
             <tr>
-              {isAllSelected && <th>설명회 일정</th>}
-              <th>예약일시</th>
-              <th>학생명</th>
-              <th>학년</th>
-              <th>학교</th>
-              <th>선행정도</th>
-              <th>학부모 연락처</th>
-              <th>상태</th>
-              <th>수정</th>
+              {isAllSelected && <th style={{ width: '120px', maxWidth: '120px' }}>설명회 일정</th>}
+              <th style={{ width: '90px' }}>예약일시</th>
+              <th style={{ width: '70px' }}>학생명</th>
+              <th style={{ width: '50px' }}>학년</th>
+              <th style={{ width: '100px' }}>학교</th>
+              <th style={{ width: '80px', maxWidth: '80px' }}>선행정도</th>
+              <th style={{ width: '110px', whiteSpace: 'nowrap' }}>학부모 연락처</th>
+              <th style={{ width: '80px' }}>상태</th>
+              <th style={{ width: '50px' }}>수정</th>
             </tr>
           </thead>
           <tbody>
@@ -365,16 +365,30 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
               filteredAttendees.map((attendee) => (
                 <tr key={attendee.id}>
                   {isAllSelected && (
-                    <td style={{ fontSize: '12px', color: '#666' }}>
+                    <td style={{
+                      fontSize: '12px',
+                      color: '#666',
+                      maxWidth: '120px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }} title={getSlotInfoForAttendee(attendee)}>
                       {getSlotInfoForAttendee(attendee)}
                     </td>
                   )}
-                  <td>{formatDate(attendee.registered_at)}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{formatDate(attendee.registered_at)}</td>
                   <td className="highlight-cell">{attendee.student_name}</td>
                   <td>{attendee.grade || '-'}</td>
                   <td>{attendee.school || '-'}</td>
-                  <td>{attendee.math_level || '-'}</td>
-                  <td>
+                  <td style={{
+                    maxWidth: '80px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }} title={attendee.math_level || ''}>
+                    {attendee.math_level || '-'}
+                  </td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
                     <span
                       onClick={() => onPhoneClick?.(attendee.parent_phone)}
                       style={{ cursor: onPhoneClick ? 'pointer' : 'default', color: onPhoneClick ? '#1a73e8' : 'inherit', textDecoration: onPhoneClick ? 'underline' : 'none' }}
@@ -408,7 +422,7 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
                       <option value="취소">취소</option>
                     </select>
                   </td>
-                  <td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
                     <button
                       onClick={() => handleEditClick(attendee)}
                       style={{
