@@ -160,8 +160,8 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
     for (const test of tests) {
       try {
         const results = await getAllResultsByPhone(test.parent_phone);
-        // result가 있는 첫 번째 submission 찾기
-        const submissionWithResult = results.find(r => r.result);
+        // result가 있고 student_name이 일치하는 submission 찾기
+        const submissionWithResult = results.find(r => r.result && r.student_name === test.student_name);
         if (submissionWithResult && submissionWithResult.result) {
           newResultsMap[test.id] = submissionWithResult.result;
         }
@@ -175,8 +175,8 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
       if (reg.submission_type === 'registration') {
         try {
           const results = await getAllResultsByPhone(reg.parent_phone);
-          // result가 있는 첫 번째 submission 찾기
-          const submissionWithResult = results.find(r => r.result);
+          // result가 있고 student_name이 일치하는 submission 찾기
+          const submissionWithResult = results.find(r => r.result && r.student_name === reg.student_name);
           if (submissionWithResult && submissionWithResult.result) {
             newResultsMap[reg.id] = submissionWithResult.result;
           }
@@ -190,7 +190,8 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
     for (const test of entranceTests) {
       try {
         const results = await getAllResultsByPhone(test.parent_phone);
-        const submissionWithResult = results.find(r => r.result);
+        // result가 있고 student_name이 일치하는 submission 찾기
+        const submissionWithResult = results.find(r => r.result && r.student_name === test.student_name);
         if (submissionWithResult && submissionWithResult.result) {
           newResultsMap[test.id] = submissionWithResult.result;
         }
