@@ -472,6 +472,27 @@ export function AdminProvider({ children }) {
         });
       }
 
+      // 4-1-3. 입학테스트 독립 예약 조회 (컨설팅 없이 바로 진단검사 예약한 경우)
+      const { data: entranceTests } = await supabase
+        .from('test_reservations')
+        .select('*, test_slots(*)')
+        .eq('reservation_type', 'entrance_test')
+        .in('status', ['confirmed', '예약'])
+        .order('created_at', { ascending: false });
+
+      // 해당 캠페인 지역과 일치하는 입학테스트만 추가
+      (entranceTests || []).forEach((test) => {
+        if (!testIds.has(test.id) && test.test_slots?.location === campaign.location) {
+          testIds.add(test.id);
+          tests.push({
+            ...test,
+            test_date: test.test_slots?.date,
+            test_time: test.test_slots?.time,
+            location: test.test_slots?.location,
+          });
+        }
+      });
+
       console.log('✅ 진단검사 예약 수:', tests?.length || 0);
 
       // 4-2. 진단검사 슬롯 정보 추가
