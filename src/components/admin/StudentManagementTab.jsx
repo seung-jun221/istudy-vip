@@ -306,13 +306,13 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
         rawDate: r.submitted_at || r.created_at,
         type: 'diagnostic',
         icon: '🏆',
-        label: `진단검사 ${r.submission_type === 'registration' ? '등록' : '응시'}`,
+        label: r.submission_type === 'registration' ? '입학테스트 등록' : '진단검사 응시',
         detail: `${r.test_type || ''} ${r.submission_type === 'registration' ? '' : '- 채점완료'}`,
         status: r.submission_type === 'registration' ? '등록' : '완료',
         id: r.id,
         table: 'diagnostic_submissions',
         canChange: false,
-        canDelete: false,
+        canDelete: r.submission_type === 'registration', // 등록 타입만 삭제 가능
       });
     });
 
@@ -436,31 +436,41 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
     try {
       const { id, table, slotId } = deleteTarget;
 
-      // 상태를 '취소'로 변경
-      const { error } = await supabase
-        .from(table)
-        .update({ status: '취소' })
-        .eq('id', id);
+      // diagnostic_submissions는 실제로 삭제 (취소 상태 없음)
+      if (table === 'diagnostic_submissions') {
+        const { error } = await supabase
+          .from(table)
+          .delete()
+          .eq('id', id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // 다른 테이블은 상태를 '취소'로 변경
+        const { error } = await supabase
+          .from(table)
+          .update({ status: '취소' })
+          .eq('id', id);
 
-      // 슬롯 카운트 감소
-      if (slotId) {
-        const slotTable = table === 'reservations' ? 'seminar_slots'
-          : table === 'consulting_reservations' ? 'consulting_slots'
-          : 'test_slots';
+        if (error) throw error;
 
-        const { data: slot } = await supabase
-          .from(slotTable)
-          .select('current_bookings')
-          .eq('id', slotId)
-          .single();
+        // 슬롯 카운트 감소
+        if (slotId) {
+          const slotTable = table === 'reservations' ? 'seminar_slots'
+            : table === 'consulting_reservations' ? 'consulting_slots'
+            : 'test_slots';
 
-        if (slot) {
-          await supabase
+          const { data: slot } = await supabase
             .from(slotTable)
-            .update({ current_bookings: Math.max(0, (slot.current_bookings || 1) - 1) })
-            .eq('id', slotId);
+            .select('current_bookings')
+            .eq('id', slotId)
+            .single();
+
+          if (slot) {
+            await supabase
+              .from(slotTable)
+              .update({ current_bookings: Math.max(0, (slot.current_bookings || 1) - 1) })
+              .eq('id', slotId);
+          }
         }
       }
 
