@@ -16,6 +16,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     updateConsultingSlot,
     deleteConsultingSlot,
     createTestSlots,
+    updateTestSlot,
     deleteTestSlot,
     deleteCampaign,
   } = useAdmin();
@@ -90,6 +91,15 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     time: '14:00',
     location: campaign.location || '',
     capacity: 1,
+  });
+
+  // 진단검사 슬롯 편집 상태
+  const [editingTestSlot, setEditingTestSlot] = useState(null);
+  const [testSlotFormData, setTestSlotFormData] = useState({
+    date: '',
+    time: '',
+    location: '',
+    max_capacity: 1,
   });
 
   const handleChange = (e) => {
@@ -250,6 +260,56 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     if (success) {
       onUpdate();
     }
+  };
+
+  // 진단검사 슬롯 수정 시작
+  const startEditingTestSlot = (slot) => {
+    setEditingTestSlot(slot.id);
+    setTestSlotFormData({
+      date: slot.date || '',
+      time: slot.time || '',
+      location: slot.location || '',
+      max_capacity: slot.max_capacity || 1,
+    });
+  };
+
+  // 진단검사 슬롯 저장
+  const saveTestSlot = async (slotId) => {
+    const { date, time, location, max_capacity } = testSlotFormData;
+
+    if (!date || !time || !location) {
+      alert('날짜, 시간, 장소는 필수 항목입니다.');
+      return;
+    }
+
+    const success = await updateTestSlot(slotId, {
+      date,
+      time,
+      location,
+      max_capacity: parseInt(max_capacity),
+    });
+
+    if (success) {
+      setEditingTestSlot(null);
+      setTestSlotFormData({
+        date: '',
+        time: '',
+        location: '',
+        max_capacity: 1,
+      });
+      onUpdate();
+    }
+  };
+
+  // 진단검사 슬롯 수정 취소
+  const cancelEditingTestSlot = () => {
+    setEditingTestSlot(null);
+    setTestSlotFormData({
+      date: '',
+      time: '',
+      location: '',
+      max_capacity: 1,
+    });
   };
 
   // 설명회 슬롯 추가
@@ -1124,17 +1184,106 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
             <div className="empty-slots">등록된 슬롯이 없습니다.</div>
           ) : (
             <div className="slots-table">
-              {testSlots.map((slot) => (
-                <div key={slot.id} className="slot-row">
-                  <div className="slot-info">
-                    <span className="slot-date">{formatDate(slot.date)}</span>
-                    <span className="slot-time">{formatTime(slot.time)}</span>
-                    <span className="slot-location">{slot.location}</span>
-                    <span className="slot-capacity">정원 {slot.max_capacity}명</span>
-                  </div>
-                  <button className="btn-delete" onClick={() => handleDeleteTestSlot(slot.id)}>
-                    삭제
-                  </button>
+              {testSlots
+                .sort((a, b) => {
+                  const dateCompare = new Date(a.date) - new Date(b.date);
+                  if (dateCompare !== 0) return dateCompare;
+                  return (a.time || '').localeCompare(b.time || '');
+                })
+                .map((slot) => (
+                <div key={slot.id} className="slot-row" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                  {editingTestSlot === slot.id ? (
+                    /* 편집 모드 */
+                    <div style={{ padding: '16px', background: '#f8f9fa', borderRadius: '4px' }}>
+                      <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600 }}>검사 슬롯 정보 수정</h5>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label className="form-label" style={{ fontSize: '13px' }}>날짜</label>
+                          <input
+                            type="date"
+                            className="form-input"
+                            value={testSlotFormData.date}
+                            onChange={(e) => setTestSlotFormData({ ...testSlotFormData, date: e.target.value })}
+                            style={{ fontSize: '14px' }}
+                          />
+                        </div>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label className="form-label" style={{ fontSize: '13px' }}>시간</label>
+                          <input
+                            type="time"
+                            className="form-input"
+                            value={testSlotFormData.time}
+                            onChange={(e) => setTestSlotFormData({ ...testSlotFormData, time: e.target.value })}
+                            style={{ fontSize: '14px' }}
+                          />
+                        </div>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label className="form-label" style={{ fontSize: '13px' }}>장소</label>
+                          <input
+                            type="text"
+                            className="form-input"
+                            value={testSlotFormData.location}
+                            onChange={(e) => setTestSlotFormData({ ...testSlotFormData, location: e.target.value })}
+                            placeholder="예: 분당점 3층"
+                            style={{ fontSize: '14px' }}
+                          />
+                        </div>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label className="form-label" style={{ fontSize: '13px' }}>정원</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={testSlotFormData.max_capacity}
+                            onChange={(e) => setTestSlotFormData({ ...testSlotFormData, max_capacity: parseInt(e.target.value) })}
+                            min="1"
+                            style={{ fontSize: '14px' }}
+                          />
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'flex-end' }}>
+                        <button
+                          className="btn btn-secondary"
+                          onClick={cancelEditingTestSlot}
+                          style={{ padding: '6px 16px', fontSize: '13px' }}
+                        >
+                          취소
+                        </button>
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => saveTestSlot(slot.id)}
+                          style={{ padding: '6px 16px', fontSize: '13px' }}
+                        >
+                          저장
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* 일반 모드 */
+                    <>
+                      <div className="slot-info">
+                        <span className="slot-date">{formatDate(slot.date)}</span>
+                        <span className="slot-time">{formatTime(slot.time)}</span>
+                        <span className="slot-location">{slot.location}</span>
+                        <span className="slot-capacity">정원 {slot.max_capacity}명</span>
+                      </div>
+                      <div className="slot-actions" style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => startEditingTestSlot(slot)}
+                          style={{ padding: '6px 12px', fontSize: '13px', minWidth: '60px' }}
+                        >
+                          수정
+                        </button>
+                        <button
+                          className="btn-delete"
+                          onClick={() => handleDeleteTestSlot(slot.id)}
+                          style={{ fontSize: '13px', padding: '6px 12px' }}
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
