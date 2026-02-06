@@ -177,6 +177,7 @@ export default function ConsultingResult({
         .from('consulting_reservations')
         .update({
           status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
         })
         .eq('id', reservation.id)
         .select();
