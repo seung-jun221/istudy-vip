@@ -82,8 +82,16 @@ export default function ConsultingsTab({ consultings, consultingSlots, onUpdate,
   // 날짜 목록 (오름차순)
   const dates = Object.keys(slotsByDate).sort();
 
-  // 선택된 날짜가 없으면 첫 번째 날짜 선택
-  const currentDate = selectedDate || dates[0];
+  // 오늘 또는 미래의 가장 빠른 날짜 찾기
+  const getDefaultDate = () => {
+    if (dates.length === 0) return null;
+    const today = new Date().toISOString().split('T')[0];
+    const futureDate = dates.find(date => date >= today);
+    return futureDate || dates[dates.length - 1]; // 미래 날짜 없으면 가장 최근 과거
+  };
+
+  // 선택된 날짜가 없으면 오늘/미래 가장 빠른 날짜 선택
+  const currentDate = selectedDate || getDefaultDate();
 
   // 현재 날짜의 슬롯들
   const currentSlots = slotsByDate[currentDate] || [];
