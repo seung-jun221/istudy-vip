@@ -329,6 +329,7 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
         >
           <option value="all">전체 상태</option>
           <option value="예약">예약</option>
+          <option value="대기">대기</option>
           <option value="참석">참석</option>
           <option value="불참">불참</option>
           <option value="취소">취소</option>
