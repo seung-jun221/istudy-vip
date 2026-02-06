@@ -737,6 +737,7 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
               consulting_reservation_id: consultingReservationId,
               student_name: addForm.studentName.trim(),
               parent_phone: phone,
+              location: slot.location || '',
               school: addForm.school.trim() || '',
               grade: addForm.grade,
               math_level: addForm.mathLevel.trim() || '',
