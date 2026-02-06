@@ -34,6 +34,12 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
   const [selectedNewSlotId, setSelectedNewSlotId] = useState('');
   const [changingSchedule, setChangingSchedule] = useState(false);
 
+  // 시험 배정 (입학테스트 등록 → 입학테스트 예약 전환)
+  const [testAssignTarget, setTestAssignTarget] = useState(null);
+  const [testAssignSlots, setTestAssignSlots] = useState([]);
+  const [selectedTestSlotId, setSelectedTestSlotId] = useState('');
+  const [assigningTest, setAssigningTest] = useState(false);
+
   // 신규 학생 등록
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState({
@@ -313,6 +319,13 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
         table: 'diagnostic_submissions',
         canChange: false,
         canDelete: r.submission_type === 'registration', // 등록 타입만 삭제 가능
+        canAssignTest: r.submission_type === 'registration', // 등록 타입은 시험 배정 가능
+        studentName: r.student_name,
+        parentPhone: r.parent_phone,
+        school: r.school,
+        grade: r.grade,
+        mathLevel: r.math_level,
+        testType: r.test_type,
       });
     });
 
@@ -597,6 +610,82 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
       alert('일정 변경에 실패했습니다.');
     } finally {
       setChangingSchedule(false);
+    }
+  };
+
+  // ============================================================
+  // 시험 배정 (입학테스트 등록 → 입학테스트 예약)
+  // ============================================================
+
+  const startTestAssign = async (event) => {
+    setTestAssignTarget(event);
+    setSelectedTestSlotId('');
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: slots } = await supabase
+        .from('test_slots')
+        .select('*')
+        .gte('date', today)
+        .eq('status', 'active')
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      setTestAssignSlots(slots || []);
+    } catch (error) {
+      console.error('슬롯 로드 실패:', error);
+      setTestAssignSlots([]);
+    }
+  };
+
+  const executeTestAssign = async () => {
+    if (!testAssignTarget || !selectedTestSlotId || !journeyData?.phone) return;
+    setAssigningTest(true);
+    try {
+      const slot = testAssignSlots.find(s => s.id === selectedTestSlotId);
+      if (!slot) throw new Error('슬롯을 찾을 수 없습니다.');
+
+      if (slot.current_bookings >= slot.max_capacity) {
+        alert('선택한 시간은 이미 마감되었습니다.');
+        return;
+      }
+
+      const defaultPassword = hashPassword(journeyData.phone.replace(/-/g, ''));
+
+      // test_reservations 생성
+      const { error: testError } = await supabase
+        .from('test_reservations')
+        .insert({
+          slot_id: selectedTestSlotId,
+          student_name: testAssignTarget.studentName,
+          parent_phone: journeyData.phone,
+          location: slot.location || '',
+          school: testAssignTarget.school || '',
+          grade: testAssignTarget.grade || '',
+          math_level: testAssignTarget.mathLevel || '',
+          password: defaultPassword,
+          status: '예약',
+          reservation_type: 'entrance_test',
+          test_date: slot.date,
+          test_time: slot.time,
+        });
+
+      if (testError) throw testError;
+
+      // 슬롯 카운트 증가
+      await supabase
+        .from('test_slots')
+        .update({ current_bookings: (slot.current_bookings || 0) + 1 })
+        .eq('id', selectedTestSlotId);
+
+      setTestAssignTarget(null);
+      await loadJourney(journeyData.phone);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('시험 배정 실패:', error);
+      alert('시험 배정에 실패했습니다.');
+    } finally {
+      setAssigningTest(false);
     }
   };
 
@@ -1198,6 +1287,22 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
                                 일정변경
                               </button>
                             )}
+                            {event.canAssignTest && (
+                              <button
+                                onClick={() => startTestAssign(event)}
+                                style={{
+                                  padding: '2px 8px',
+                                  background: 'white',
+                                  color: '#7c3aed',
+                                  border: '1px solid #c4b5fd',
+                                  borderRadius: '4px',
+                                  fontSize: '11px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                시험배정
+                              </button>
+                            )}
                             {event.canDelete && (
                               <button
                                 onClick={() => setDeleteTarget(event)}
@@ -1602,6 +1707,106 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
                 }}
               >
                 {changingSchedule ? '변경 중...' : '일정 변경'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 시험 배정 모달 */}
+      {testAssignTarget && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setTestAssignTarget(null)}
+        >
+          <div
+            style={{
+              background: 'white', borderRadius: '12px', padding: '24px',
+              maxWidth: '440px', width: '100%', maxHeight: '70vh', overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#7c3aed' }}>시험 일정 배정</h3>
+            <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '4px' }}>
+              <strong>{testAssignTarget.studentName}</strong>님에게 시험 일정을 배정합니다.
+            </p>
+            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+              검사 유형: {testAssignTarget.testType || 'MONO'}
+            </p>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                배정할 시험 일정 선택:
+              </label>
+              {testAssignSlots.length === 0 ? (
+                <p style={{ color: '#94a3b8', fontSize: '13px' }}>배정 가능한 시험 일정이 없습니다.</p>
+              ) : (
+                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+                  {testAssignSlots.map((slot) => {
+                    const isFull = slot.current_bookings >= slot.max_capacity;
+                    const isSelected = selectedTestSlotId === slot.id;
+                    return (
+                      <div
+                        key={slot.id}
+                        onClick={() => !isFull && setSelectedTestSlotId(slot.id)}
+                        style={{
+                          padding: '10px 12px',
+                          borderBottom: '1px solid #f1f5f9',
+                          cursor: isFull ? 'not-allowed' : 'pointer',
+                          background: isSelected ? '#ede9fe' : isFull ? '#f9fafb' : 'white',
+                          opacity: isFull ? 0.5 : 1,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div>
+                          <span style={{ fontWeight: '500', fontSize: '14px' }}>
+                            {formatDateTime(slot.date, slot.time)}
+                          </span>
+                          <span style={{ marginLeft: '8px', fontSize: '13px', color: '#64748b' }}>
+                            {slot.location || ''}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '12px', color: isFull ? '#dc2626' : '#64748b' }}>
+                          {isFull ? '마감' : `${slot.current_bookings || 0}/${slot.max_capacity}`}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setTestAssignTarget(null)}
+                style={{
+                  flex: 1, padding: '10px', border: '1px solid #d1d5db',
+                  borderRadius: '6px', background: 'white', cursor: 'pointer',
+                  fontWeight: '500',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={executeTestAssign}
+                disabled={!selectedTestSlotId || assigningTest}
+                style={{
+                  flex: 1, padding: '10px', border: 'none',
+                  borderRadius: '6px',
+                  background: !selectedTestSlotId || assigningTest ? '#d1d5db' : '#7c3aed',
+                  color: 'white',
+                  cursor: !selectedTestSlotId || assigningTest ? 'not-allowed' : 'pointer',
+                  fontWeight: '500',
+                }}
+              >
+                {assigningTest ? '배정 중...' : '시험 배정'}
               </button>
             </div>
           </div>
