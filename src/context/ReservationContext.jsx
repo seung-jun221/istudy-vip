@@ -164,14 +164,16 @@ export function ReservationProvider({ children }) {
   };
 
   // 기존 참석자 여부 확인 (우선예약 기간에 사용)
-  const checkExistingAttendee = async (phone, campaignId) => {
+  // ⭐ 모든 캠페인의 설명회 참석 여부를 확인 (현재 캠페인 제외)
+  const checkExistingAttendee = async (phone, currentCampaignId) => {
     try {
+      // 다른 캠페인에서 참석한 기록이 있는지 확인
       const { data, error } = await supabase
         .from('reservations')
-        .select('id, status, student_name')
-        .eq('campaign_id', campaignId)
+        .select('id, status, student_name, campaign_id')
         .eq('parent_phone', phone)
         .eq('status', '참석')
+        .neq('campaign_id', currentCampaignId)  // 현재 캠페인은 제외
         .limit(1);
 
       if (error) throw error;
