@@ -77,7 +77,7 @@ export function ConsultingProvider({ children }) {
         .from('consulting_reservations')
         .select('slot_id')
         .eq('linked_seminar_id', campaignId) // ⭐ 원본 그대로 사용 (_campaign 포함)
-        .neq('status', 'cancelled');
+        .not('status', 'in', '(cancelled,auto_cancelled,취소)');
 
       if (reservationsError) throw reservationsError;
 

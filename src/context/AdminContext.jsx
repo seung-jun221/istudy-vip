@@ -1304,7 +1304,7 @@ export function AdminProvider({ children }) {
         .from('consulting_reservations')
         .select('slot_id')
         .in('slot_id', slotIdList)
-        .neq('status', 'cancelled');
+        .not('status', 'in', '(cancelled,auto_cancelled,취소)');
 
       if (reservationsError) throw reservationsError;
 
@@ -1423,7 +1423,7 @@ export function AdminProvider({ children }) {
       setLoading(true);
       console.log('📅 컨설팅 일정 변경 시작:', { reservationId, oldSlotId, newSlotId });
 
-      // 1. 새 슬롯의 잔여석 확인
+      // 1. 새 슬롯 정보 조회
       const { data: newSlot, error: slotError } = await supabase
         .from('consulting_slots')
         .select('*')
@@ -1432,12 +1432,21 @@ export function AdminProvider({ children }) {
 
       if (slotError) throw slotError;
 
-      if (newSlot.current_bookings >= newSlot.max_capacity) {
+      // 2. 새 슬롯의 실제 예약 수 확인 (취소 상태 제외)
+      const { count: actualBookings, error: countError } = await supabase
+        .from('consulting_reservations')
+        .select('*', { count: 'exact', head: true })
+        .eq('slot_id', newSlotId)
+        .not('status', 'in', '(cancelled,auto_cancelled,취소)');
+
+      if (countError) throw countError;
+
+      if (actualBookings >= newSlot.max_capacity) {
         showToast('선택한 슬롯이 이미 만석입니다.', 'error');
         return false;
       }
 
-      // 2. 예약의 slot_id 변경
+      // 3. 예약의 slot_id 변경
       const { error: updateError } = await supabase
         .from('consulting_reservations')
         .update({ slot_id: newSlotId })
@@ -1445,30 +1454,28 @@ export function AdminProvider({ children }) {
 
       if (updateError) throw updateError;
 
-      // 3. 기존 슬롯의 current_bookings 감소
-      const { error: oldSlotError } = await supabase
-        .from('consulting_slots')
-        .update({ current_bookings: supabase.rpc ? undefined : newSlot.current_bookings })
-        .eq('id', oldSlotId);
+      // 4. 기존 슬롯의 current_bookings 재계산 (실제 예약 수 기반)
+      const { count: oldSlotActualBookings } = await supabase
+        .from('consulting_reservations')
+        .select('*', { count: 'exact', head: true })
+        .eq('slot_id', oldSlotId)
+        .not('status', 'in', '(cancelled,auto_cancelled,취소)');
 
-      // RPC가 없으므로 직접 조회 후 업데이트
-      const { data: oldSlotData } = await supabase
-        .from('consulting_slots')
-        .select('current_bookings')
-        .eq('id', oldSlotId)
-        .single();
-
-      if (oldSlotData) {
-        await supabase
-          .from('consulting_slots')
-          .update({ current_bookings: Math.max(0, oldSlotData.current_bookings - 1) })
-          .eq('id', oldSlotId);
-      }
-
-      // 4. 새 슬롯의 current_bookings 증가
       await supabase
         .from('consulting_slots')
-        .update({ current_bookings: newSlot.current_bookings + 1 })
+        .update({ current_bookings: oldSlotActualBookings || 0 })
+        .eq('id', oldSlotId);
+
+      // 5. 새 슬롯의 current_bookings 재계산 (실제 예약 수 기반)
+      const { count: newSlotActualBookings } = await supabase
+        .from('consulting_reservations')
+        .select('*', { count: 'exact', head: true })
+        .eq('slot_id', newSlotId)
+        .not('status', 'in', '(cancelled,auto_cancelled,취소)');
+
+      await supabase
+        .from('consulting_slots')
+        .update({ current_bookings: newSlotActualBookings || 0 })
         .eq('id', newSlotId);
 
       console.log('✅ 컨설팅 일정 변경 완료');
