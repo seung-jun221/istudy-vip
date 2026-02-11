@@ -285,6 +285,9 @@ h2 {
 
 /* 우선예약 오픈 전 */
 .availability-badge.not-opened {
+  position: static;
+  display: inline-block;
+  margin-top: 12px;
   background: #e3f2fd;
   color: #1565c0;
   border: 1px solid #90caf9;
@@ -313,6 +316,10 @@ h2 {
 .seminar-option.not-opened:hover {
   background: #f5f5f5;
   border-color: #90caf9;
+}
+
+.seminar-option.not-opened h4 {
+  padding-right: 0; /* 오픈 전은 뱃지가 아래로 이동하므로 여백 불필요 */
 }
 
 /* ===== 대기 예약 모달 ===== */
