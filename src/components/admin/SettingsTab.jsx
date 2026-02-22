@@ -19,6 +19,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     updateTestSlot,
     deleteTestSlot,
     deleteCampaign,
+    resetAllPasswords,
   } = useAdmin();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1291,9 +1292,28 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
         </div>
       </div>
 
-      {/* 위험 구역 - 캠페인 삭제 */}
+      {/* 위험 구역 */}
       <div className="settings-section danger-zone">
         <h3>위험 구역</h3>
+
+        {/* 비밀번호 일괄 초기화 */}
+        <div className="danger-zone-content">
+          <div className="danger-info">
+            <h4>비밀번호 일괄 초기화</h4>
+            <p>
+              이 캠페인의 모든 설명회 및 컨설팅 예약자의 비밀번호를 000000으로 초기화합니다.
+            </p>
+          </div>
+          <button className="btn-danger" onClick={async () => {
+            if (!window.confirm('모든 예약자의 비밀번호를 000000으로 초기화하시겠습니까?')) return;
+            await resetAllPasswords(campaign.id);
+            if (onUpdate) onUpdate();
+          }}>
+            비밀번호 초기화
+          </button>
+        </div>
+
+        {/* 캠페인 삭제 */}
         <div className="danger-zone-content">
           <div className="danger-info">
             <h4>캠페인 삭제</h4>
