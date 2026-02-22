@@ -28,6 +28,10 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  // 비밀번호 초기화
+  const [resetPasswordTarget, setResetPasswordTarget] = useState(null);
+  const [resettingPassword, setResettingPassword] = useState(false);
+
   // 일정변경
   const [scheduleChangeTarget, setScheduleChangeTarget] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -436,6 +440,45 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
       alert('학생 정보 수정에 실패했습니다.');
     } finally {
       setEditSaving(false);
+    }
+  };
+
+  // ============================================================
+  // 비밀번호 초기화 (개별 학생)
+  // ============================================================
+
+  const resetStudentPassword = async () => {
+    if (!resetPasswordTarget || !journeyData?.phone) return;
+    setResettingPassword(true);
+    try {
+      const phone = journeyData.phone;
+      const studentName = resetPasswordTarget.name;
+      const defaultPassword = hashPassword('000000');
+
+      // 4개 테이블에서 해당 학생의 비밀번호 초기화
+      const tables = ['reservations', 'consulting_reservations', 'test_reservations', 'diagnostic_submissions'];
+      let resetCount = 0;
+
+      for (const table of tables) {
+        const { data, error } = await supabase
+          .from(table)
+          .update({ password: defaultPassword })
+          .eq('parent_phone', phone)
+          .eq('student_name', studentName)
+          .select();
+
+        if (!error && data) {
+          resetCount += data.length;
+        }
+      }
+
+      alert(`${studentName} 학생의 비밀번호가 초기화되었습니다. (${resetCount}건)`);
+      setResetPasswordTarget(null);
+    } catch (error) {
+      console.error('비밀번호 초기화 실패:', error);
+      alert('비밀번호 초기화에 실패했습니다.');
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -1152,21 +1195,38 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => startEditStudent(student.name, student.info)}
-                    style={{
-                      padding: '4px 12px',
-                      background: '#e0e7ff',
-                      color: '#4f46e5',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      fontWeight: '500',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    정보 수정
-                  </button>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      onClick={() => startEditStudent(student.name, student.info)}
+                      style={{
+                        padding: '4px 12px',
+                        background: '#e0e7ff',
+                        color: '#4f46e5',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      정보 수정
+                    </button>
+                    <button
+                      onClick={() => setResetPasswordTarget(student)}
+                      style={{
+                        padding: '4px 12px',
+                        background: '#fef3c7',
+                        color: '#d97706',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      비밀번호 초기화
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -1408,6 +1468,58 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
                 }}
               >
                 {deleting ? '삭제 중...' : '삭제'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 비밀번호 초기화 확인 모달 */}
+      {resetPasswordTarget && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setResetPasswordTarget(null)}
+        >
+          <div
+            style={{
+              background: 'white', borderRadius: '12px', padding: '24px',
+              maxWidth: '360px', width: '100%',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#d97706' }}>비밀번호 초기화</h3>
+            <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>
+              <strong>{resetPasswordTarget.name}</strong> 학생의 비밀번호를 초기화하시겠습니까?
+            </p>
+            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>
+              비밀번호가 <strong>000000</strong>으로 초기화됩니다.
+            </p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setResetPasswordTarget(null)}
+                style={{
+                  flex: 1, padding: '10px', border: '1px solid #d1d5db',
+                  borderRadius: '6px', background: 'white', cursor: 'pointer',
+                  fontWeight: '500',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={resetStudentPassword}
+                disabled={resettingPassword}
+                style={{
+                  flex: 1, padding: '10px', border: 'none',
+                  borderRadius: '6px', background: '#d97706', color: 'white',
+                  cursor: resettingPassword ? 'not-allowed' : 'pointer', fontWeight: '500',
+                }}
+              >
+                {resettingPassword ? '처리 중...' : '초기화'}
               </button>
             </div>
           </div>

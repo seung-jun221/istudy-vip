@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../utils/supabase';
+import { supabase, hashPassword } from '../utils/supabase';
 
 const AdminContext = createContext();
 
@@ -1490,6 +1490,65 @@ export function AdminProvider({ children }) {
     }
   };
 
+  // ========================================
+  // 비밀번호 일괄 초기화
+  // ========================================
+
+  const resetAllPasswords = async (campaignId) => {
+    try {
+      setLoading(true);
+      const defaultPassword = hashPassword('000000');
+      let resetCount = 0;
+
+      // 1. 해당 캠페인의 설명회 슬롯 ID 조회
+      const { data: seminarSlots } = await supabase
+        .from('seminar_slots')
+        .select('id')
+        .eq('campaign_id', campaignId);
+
+      const seminarSlotIds = seminarSlots?.map(s => s.id) || [];
+
+      // 2. 설명회 예약자 비밀번호 초기화
+      if (seminarSlotIds.length > 0) {
+        const { count, error: resError } = await supabase
+          .from('reservations')
+          .update({ password: defaultPassword }, { count: 'exact' })
+          .in('seminar_slot_id', seminarSlotIds);
+
+        if (resError) throw resError;
+        resetCount += count || 0;
+      }
+
+      // 3. 해당 캠페인의 컨설팅 슬롯 ID 조회
+      const { data: consultingSlots } = await supabase
+        .from('consulting_slots')
+        .select('id')
+        .eq('linked_seminar_id', campaignId);
+
+      const consultingSlotIds = consultingSlots?.map(s => s.id) || [];
+
+      // 4. 컨설팅 예약자 비밀번호 초기화
+      if (consultingSlotIds.length > 0) {
+        const { count, error: conError } = await supabase
+          .from('consulting_reservations')
+          .update({ password: defaultPassword }, { count: 'exact' })
+          .in('slot_id', consultingSlotIds);
+
+        if (conError) throw conError;
+        resetCount += count || 0;
+      }
+
+      showToast(`총 ${resetCount}건의 비밀번호가 초기화되었습니다.`, 'success');
+      return true;
+    } catch (error) {
+      console.error('비밀번호 초기화 실패:', error);
+      showToast('비밀번호 초기화에 실패했습니다.', 'error');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     isAuthenticated,
     authMode,
@@ -1519,6 +1578,7 @@ export function AdminProvider({ children }) {
     updateReservationStatus,
     updateReservationInfo,
     changeConsultingSlot,
+    resetAllPasswords,
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
