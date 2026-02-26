@@ -234,6 +234,7 @@ export function ConsultingProvider({ children }) {
 
   // 날짜 로드 (컨설팅 유형별 분리)
   // ⭐ eligibleForCeo: 대표 컨설팅 자격 여부 (설명회 참석 + 시간 경과)
+  // ⭐ 수정: 같은 지점이면 캠페인과 관계없이 동일한 컨설팅 슬롯 공유
   const loadAvailableDates = async (locationOrSeminarId, useSeminarId = false, eligibleForCeo = false) => {
     try {
       setLoading(true);
@@ -242,27 +243,36 @@ export function ConsultingProvider({ children }) {
 
       console.log('📅 날짜 로드 시작:', { locationOrSeminarId, useSeminarId, eligibleForCeo });
 
+      // ⭐ seminarId가 전달된 경우, 해당 캠페인의 location 조회
+      let targetLocation = locationOrSeminarId;
+      if (useSeminarId) {
+        const { data: campaign } = await supabase
+          .from('campaigns')
+          .select('location')
+          .eq('id', locationOrSeminarId)
+          .single();
+
+        if (campaign?.location) {
+          targetLocation = campaign.location;
+          console.log('📍 캠페인 location 조회:', targetLocation);
+        }
+      }
+
       let slotsToUse = [];
       let isCeoFull = false;
 
       // ⭐ 대표 컨설팅 자격이 있는 경우에만 대표 슬롯 확인
       if (eligibleForCeo) {
-        // 1. 대표이사 슬롯 확인
-        let ceoQuery = supabase
+        // 1. 대표이사 슬롯 확인 - location 기준으로 조회 (캠페인 무관)
+        const { data: ceoSlots, error: ceoError } = await supabase
           .from('consulting_slots')
           .select('*')
           .gte('date', today)
           .eq('is_available', true)
           .eq('consultant_type', 'ceo')
+          .eq('location', targetLocation)
           .order('date', { ascending: true });
 
-        if (useSeminarId) {
-          ceoQuery = ceoQuery.eq('linked_seminar_id', locationOrSeminarId);
-        } else {
-          ceoQuery = ceoQuery.eq('location', locationOrSeminarId);
-        }
-
-        const { data: ceoSlots, error: ceoError } = await ceoQuery;
         if (ceoError) throw ceoError;
 
         // 대표 슬롯 중 예약 가능한 슬롯이 있는지 확인
@@ -283,25 +293,19 @@ export function ConsultingProvider({ children }) {
         isCeoFull = true; // 자격이 없으면 대표 컨설팅 비활성화
       }
 
-      // 2. 대표 슬롯 사용 불가 시 원장 슬롯 로드
+      // 2. 대표 슬롯 사용 불가 시 원장 슬롯 로드 - location 기준 (캠페인 무관)
       if (isCeoFull || slotsToUse.length === 0) {
         console.log('🔄 원장 컨설팅 슬롯 로드');
 
-        let directorQuery = supabase
+        const { data: directorSlots, error: directorError } = await supabase
           .from('consulting_slots')
           .select('*')
           .gte('date', today)
           .eq('is_available', true)
           .eq('consultant_type', 'director')
+          .eq('location', targetLocation)
           .order('date', { ascending: true });
 
-        if (useSeminarId) {
-          directorQuery = directorQuery.eq('linked_seminar_id', locationOrSeminarId);
-        } else {
-          directorQuery = directorQuery.eq('location', locationOrSeminarId);
-        }
-
-        const { data: directorSlots, error: directorError } = await directorQuery;
         if (directorError) throw directorError;
 
         slotsToUse = directorSlots || [];
@@ -351,27 +355,21 @@ export function ConsultingProvider({ children }) {
   };
 
   // 선택한 날짜의 시간 슬롯 로드 (컨설팅 유형별)
+  // ⭐ 수정: 같은 지점이면 캠페인과 관계없이 동일한 컨설팅 슬롯 공유
   const loadTimeSlots = async (date, location) => {
     try {
       setLoading(true);
       console.log('⏰ 시간 슬롯 로드 시작:', { date, location, selectedSeminarId, consultantType });
 
-      let query = supabase
+      // ⭐ 항상 location 기준으로 조회 (캠페인 무관하게 같은 지점 슬롯 공유)
+      const { data: slots, error } = await supabase
         .from('consulting_slots')
         .select('*')
         .eq('date', date)
-        .eq('is_available', true) // ⭐ 활성화된 슬롯만
-        .eq('consultant_type', consultantType) // ⭐ 컨설팅 유형 필터
+        .eq('location', location)
+        .eq('is_available', true)
+        .eq('consultant_type', consultantType)
         .order('time');
-
-      // 설명회 예약자는 linked_seminar_id로, 미예약자는 location으로 검색
-      if (selectedSeminarId) {
-        query = query.eq('linked_seminar_id', selectedSeminarId); // ⭐ 원본 그대로 사용 (_campaign 포함)
-      } else {
-        query = query.eq('location', location);
-      }
-
-      const { data: slots, error } = await query;
 
       if (error) throw error;
 
