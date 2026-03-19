@@ -234,7 +234,7 @@ export function ConsultingProvider({ children }) {
 
   // 날짜 로드 (컨설팅 유형별 분리)
   // ⭐ eligibleForCeo: 대표 컨설팅 자격 여부 (설명회 참석 + 시간 경과)
-  // ⭐ 수정: 같은 지점이면 캠페인과 관계없이 동일한 컨설팅 슬롯 공유
+  // ⭐ 캠페인별 분리: 같은 지점이라도 캠페인이 다르면 별도 슬롯 사용
   const loadAvailableDates = async (locationOrSeminarId, useSeminarId = false, eligibleForCeo = false) => {
     try {
       setLoading(true);
@@ -245,7 +245,10 @@ export function ConsultingProvider({ children }) {
 
       // ⭐ seminarId가 전달된 경우, 해당 캠페인의 location 조회
       let targetLocation = locationOrSeminarId;
+      let targetCampaignId = null; // ⭐ 캠페인 ID 추가
+
       if (useSeminarId) {
+        targetCampaignId = locationOrSeminarId; // ⭐ 캠페인 ID 저장
         const { data: campaign } = await supabase
           .from('campaigns')
           .select('location')
@@ -254,7 +257,7 @@ export function ConsultingProvider({ children }) {
 
         if (campaign?.location) {
           targetLocation = campaign.location;
-          console.log('📍 캠페인 location 조회:', targetLocation);
+          console.log('📍 캠페인 location 조회:', targetLocation, '캠페인 ID:', targetCampaignId);
         }
       }
 
@@ -263,15 +266,22 @@ export function ConsultingProvider({ children }) {
 
       // ⭐ 대표 컨설팅 자격이 있는 경우에만 대표 슬롯 확인
       if (eligibleForCeo) {
-        // 1. 대표이사 슬롯 확인 - location 기준으로 조회 (캠페인 무관)
-        const { data: ceoSlots, error: ceoError } = await supabase
+        // 1. 대표이사 슬롯 확인 - ⭐ 캠페인 ID로 필터링 (캠페인별 분리)
+        let query = supabase
           .from('consulting_slots')
           .select('*')
           .gte('date', today)
           .eq('is_available', true)
-          .eq('consultant_type', 'ceo')
-          .eq('location', targetLocation)
-          .order('date', { ascending: true });
+          .eq('consultant_type', 'ceo');
+
+        // ⭐ 캠페인 ID가 있으면 캠페인별 필터링, 없으면 location 기반
+        if (targetCampaignId) {
+          query = query.eq('linked_seminar_id', targetCampaignId);
+        } else {
+          query = query.eq('location', targetLocation);
+        }
+
+        const { data: ceoSlots, error: ceoError } = await query.order('date', { ascending: true });
 
         if (ceoError) throw ceoError;
 
@@ -293,18 +303,25 @@ export function ConsultingProvider({ children }) {
         isCeoFull = true; // 자격이 없으면 대표 컨설팅 비활성화
       }
 
-      // 2. 대표 슬롯 사용 불가 시 원장 슬롯 로드 - location 기준 (캠페인 무관)
+      // 2. 대표 슬롯 사용 불가 시 원장 슬롯 로드 - ⭐ 캠페인 ID로 필터링
       if (isCeoFull || slotsToUse.length === 0) {
         console.log('🔄 원장 컨설팅 슬롯 로드');
 
-        const { data: directorSlots, error: directorError } = await supabase
+        let query = supabase
           .from('consulting_slots')
           .select('*')
           .gte('date', today)
           .eq('is_available', true)
-          .eq('consultant_type', 'director')
-          .eq('location', targetLocation)
-          .order('date', { ascending: true });
+          .eq('consultant_type', 'director');
+
+        // ⭐ 캠페인 ID가 있으면 캠페인별 필터링, 없으면 location 기반
+        if (targetCampaignId) {
+          query = query.eq('linked_seminar_id', targetCampaignId);
+        } else {
+          query = query.eq('location', targetLocation);
+        }
+
+        const { data: directorSlots, error: directorError } = await query.order('date', { ascending: true });
 
         if (directorError) throw directorError;
 
@@ -355,21 +372,29 @@ export function ConsultingProvider({ children }) {
   };
 
   // 선택한 날짜의 시간 슬롯 로드 (컨설팅 유형별)
-  // ⭐ 수정: 같은 지점이면 캠페인과 관계없이 동일한 컨설팅 슬롯 공유
+  // ⭐ 캠페인별 분리: 같은 지점이라도 캠페인이 다르면 별도 슬롯 사용
   const loadTimeSlots = async (date, location) => {
     try {
       setLoading(true);
       console.log('⏰ 시간 슬롯 로드 시작:', { date, location, selectedSeminarId, consultantType });
 
-      // ⭐ 항상 location 기준으로 조회 (캠페인 무관하게 같은 지점 슬롯 공유)
-      const { data: slots, error } = await supabase
+      // ⭐ 캠페인 ID가 있으면 캠페인별 필터링, 없으면 location 기반
+      let query = supabase
         .from('consulting_slots')
         .select('*')
         .eq('date', date)
-        .eq('location', location)
         .eq('is_available', true)
-        .eq('consultant_type', consultantType)
-        .order('time');
+        .eq('consultant_type', consultantType);
+
+      if (selectedSeminarId) {
+        query = query.eq('linked_seminar_id', selectedSeminarId);
+        console.log('📌 캠페인 ID로 필터링:', selectedSeminarId);
+      } else {
+        query = query.eq('location', location);
+        console.log('📌 location으로 필터링:', location);
+      }
+
+      const { data: slots, error } = await query.order('time');
 
       if (error) throw error;
 
@@ -508,6 +533,7 @@ export function ConsultingProvider({ children }) {
   };
 
   // 진단검사 가능 날짜 로드 (컨설팅 날짜 전까지만)
+  // ⭐ 캠페인별 분리: selectedSeminarId(캠페인 ID)로 필터링
   const loadAvailableTestDates = async (location, consultingDate) => {
     try {
       setLoading(true);
@@ -517,16 +543,26 @@ export function ConsultingProvider({ children }) {
         location,
         consultingDate,
         today,
+        selectedSeminarId, // ⭐ 캠페인 ID 로깅
       });
 
-      const { data: slots, error } = await supabase
+      // ⭐ 캠페인 ID가 있으면 캠페인별 필터링, 없으면 location 기반
+      let query = supabase
         .from('test_slots')
         .select('*')
-        .eq('location', location)
         .gte('date', today)
         .lt('date', consultingDate) // 컨설팅 날짜 전까지만
-        .eq('status', 'active')
-        .order('date', { ascending: true });
+        .eq('status', 'active');
+
+      if (selectedSeminarId) {
+        query = query.eq('campaign_id', selectedSeminarId);
+        console.log('📌 캠페인 ID로 test_slots 필터링:', selectedSeminarId);
+      } else {
+        query = query.eq('location', location);
+        console.log('📌 location으로 test_slots 필터링:', location);
+      }
+
+      const { data: slots, error } = await query.order('date', { ascending: true });
 
       if (error) throw error;
 
@@ -588,17 +624,27 @@ export function ConsultingProvider({ children }) {
   };
 
   // 진단검사 시간 슬롯 로드
+  // ⭐ 캠페인별 분리: selectedSeminarId(캠페인 ID)로 필터링
   const loadTestTimeSlots = async (date, location) => {
     try {
       setLoading(true);
 
-      const { data: slots, error } = await supabase
+      // ⭐ 캠페인 ID가 있으면 캠페인별 필터링, 없으면 location 기반
+      let query = supabase
         .from('test_slots')
         .select('*')
         .eq('date', date)
-        .eq('location', location)
-        .eq('status', 'active')
-        .order('time', { ascending: true });
+        .eq('status', 'active');
+
+      if (selectedSeminarId) {
+        query = query.eq('campaign_id', selectedSeminarId);
+        console.log('📌 캠페인 ID로 test_slots 시간 필터링:', selectedSeminarId);
+      } else {
+        query = query.eq('location', location);
+        console.log('📌 location으로 test_slots 시간 필터링:', location);
+      }
+
+      const { data: slots, error } = await query.order('time', { ascending: true });
 
       if (error) throw error;
 
@@ -769,6 +815,7 @@ export function ConsultingProvider({ children }) {
   };
 
   // ⭐ 입학테스트용 날짜 로드 (컨설팅 날짜 제약 없음)
+  // ⭐ 캠페인별 분리: 해당 location의 active 캠페인 슬롯만 조회
   const loadEntranceTestDates = async (location) => {
     try {
       setLoading(true);
@@ -776,13 +823,32 @@ export function ConsultingProvider({ children }) {
 
       console.log('🎯 입학테스트 날짜 로드:', { location, today });
 
-      const { data: slots, error } = await supabase
+      // ⭐ 해당 location의 active 캠페인 찾기
+      const { data: activeCampaign } = await supabase
+        .from('campaigns')
+        .select('id')
+        .eq('location', location)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      let query = supabase
         .from('test_slots')
         .select('*')
-        .eq('location', location)
         .gte('date', today)
-        .eq('status', 'active')
-        .order('date', { ascending: true });
+        .eq('status', 'active');
+
+      // ⭐ active 캠페인이 있으면 캠페인별 필터링, 없으면 location 기반 (폴백)
+      if (activeCampaign?.id) {
+        query = query.eq('campaign_id', activeCampaign.id);
+        console.log('📌 입학테스트: 캠페인 ID로 필터링:', activeCampaign.id);
+      } else {
+        query = query.eq('location', location);
+        console.log('📌 입학테스트: location으로 필터링 (active 캠페인 없음):', location);
+      }
+
+      const { data: slots, error } = await query.order('date', { ascending: true });
 
       if (error) throw error;
 
