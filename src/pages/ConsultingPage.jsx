@@ -420,57 +420,6 @@ export default function ConsultingPage() {
 
             <h2>입학테스트 / 개별컨설팅 예약</h2>
 
-            {/* 사직 직영점 오픈 안내 */}
-            <div style={{
-              background: '#ffffff',
-              border: '2px solid #1e3a5f',
-              padding: '24px 20px',
-              borderRadius: '8px',
-              marginBottom: '16px',
-              textAlign: 'center',
-            }}>
-              <div style={{
-                fontSize: '11px',
-                fontWeight: '500',
-                color: '#1e3a5f',
-                letterSpacing: '2px',
-                marginBottom: '8px',
-                textTransform: 'uppercase',
-              }}>
-                NEW BRANCH
-              </div>
-              <div style={{
-                fontSize: '18px',
-                fontWeight: '700',
-                color: '#1e3a5f',
-                marginBottom: '4px',
-              }}>
-                부산 사직 직영점
-              </div>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#374151',
-                marginBottom: '16px',
-              }}>
-                2026. 03. 02 OPEN
-              </div>
-              <div style={{
-                borderTop: '1px solid #e5e7eb',
-                paddingTop: '12px',
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '24px',
-              }}>
-                <div style={{ fontSize: '13px', color: '#4b5563' }}>
-                  사직역 3번출구 도보 1분
-                </div>
-                <div style={{ fontSize: '13px', color: '#4b5563' }}>
-                  051-715-1580
-                </div>
-              </div>
-            </div>
-
             {/* 대표 컨설팅 예약 (설명회 참석자 전용) */}
             <div style={{
               background: '#f0fdf4',
