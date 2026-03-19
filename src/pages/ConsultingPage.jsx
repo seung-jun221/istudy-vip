@@ -82,11 +82,11 @@ export default function ConsultingPage() {
       if (testMethodResult === 'onsite') {
         const today = new Date().toISOString().split('T')[0];
 
-        // 모든 진단검사 가능 날짜/시간 조회 (컨설팅 날짜 제약 없이)
+        // ⭐ 캠페인별 분리: campaign_id로 진단검사 슬롯 필터링
         const { data: testSlots } = await supabase
           .from('test_slots')
           .select('date, time')
-          .eq('location', attendeeData.location)
+          .eq('campaign_id', attendeeData.linkedSeminarId) // ⭐ 캠페인 ID로 필터
           .eq('status', 'active')
           .gte('date', today)
           .order('date', { ascending: true })
@@ -128,13 +128,30 @@ export default function ConsultingPage() {
       if (testMethodResult === 'onsite') {
         const today = new Date().toISOString().split('T')[0];
 
-        // 모든 진단검사 가능 날짜/시간 조회 (컨설팅 날짜 제약 없이)
-        const { data: testSlots } = await supabase
-          .from('test_slots')
-          .select('date, time')
+        // ⭐ 캠페인별 분리: 해당 location의 active 캠페인 찾기
+        const { data: activeCampaign } = await supabase
+          .from('campaigns')
+          .select('id')
           .eq('location', infoData.location)
           .eq('status', 'active')
-          .gte('date', today)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        let testSlotsQuery = supabase
+          .from('test_slots')
+          .select('date, time')
+          .eq('status', 'active')
+          .gte('date', today);
+
+        // ⭐ active 캠페인이 있으면 캠페인별 필터링, 없으면 location 기반
+        if (activeCampaign?.id) {
+          testSlotsQuery = testSlotsQuery.eq('campaign_id', activeCampaign.id);
+        } else {
+          testSlotsQuery = testSlotsQuery.eq('location', infoData.location);
+        }
+
+        const { data: testSlots } = await testSlotsQuery
           .order('date', { ascending: true })
           .order('time', { ascending: true });
 
