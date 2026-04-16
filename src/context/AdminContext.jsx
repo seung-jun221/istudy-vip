@@ -1217,12 +1217,26 @@ export function AdminProvider({ children }) {
     try {
       setLoading(true);
 
-      const { error } = await supabase
+      // ⭐ .select()로 실제 영향받은 row 확인
+      //    RLS UPDATE 정책 미설정 시 에러 없이 0 row 반환되므로
+      //    이를 실패로 감지하여 관리자에게 안내
+      const { data, error } = await supabase
         .from('test_slots')
         .update(slotData)
-        .eq('id', slotId);
+        .eq('id', slotId)
+        .select();
 
       if (error) throw error;
+
+      if (!data || data.length === 0) {
+        console.error('검사 슬롯 수정: 0 row 업데이트 (RLS UPDATE 정책 누락 가능성)');
+        showToast(
+          "검사 슬롯 수정이 반영되지 않았습니다. DB RLS 정책을 확인해주세요. " +
+            "(add_slot_update_delete_rls_policies.sql 실행 필요)",
+          'error'
+        );
+        return false;
+      }
 
       showToast('검사 슬롯이 수정되었습니다.', 'success');
       return true;
