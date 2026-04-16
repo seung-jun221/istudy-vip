@@ -238,12 +238,22 @@ export default function ConsultingPage() {
       setCompletedReservation(reservation);
     }
 
-    // ⚠️ 임시: 사직점 오픈 기간(3개월) 동안 모든 지점 방문테스트로 고정
-    // TODO: 추후 원인 파악 후 복원 필요
-    const testMethod = 'onsite';
+    // ⭐ 실제 test_method를 조회하여 분기 (현장접수 캠페인 대응)
+    //    'offline'인 경우 진단검사 플로우 자체를 스킵하고 홈으로
+    //    그 외에는 기존 임시 정책(onsite 고정) 유지
+    const testMethod = await loadTestMethod(
+      location,
+      reservation.linked_seminar_id || null
+    );
 
-    // test_method에 따라 분기 (현재 항상 onsite)
-    if (testMethod === 'both') {
+    // test_method에 따라 분기
+    if (testMethod === 'offline') {
+      // 현장접수 캠페인: 온라인 진단검사 플로우 없음 (방어적 처리)
+      //  - 일반적으로는 ConsultingComplete/ConsultingResult에서 이 버튼이 노출되지 않음
+      showToast('진단검사는 설명회장에서 접수하신 종이 신청서로 진행됩니다.', 'info');
+      handleHome();
+      return;
+    } else if (testMethod === 'both') {
       // 방문/가정 선택 화면으로
       await loadAvailableTestDates(location, consultingDate);
       setStep('test-method-select');

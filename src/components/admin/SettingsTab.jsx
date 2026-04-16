@@ -690,18 +690,30 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                 />
                 <span style={{ whiteSpace: 'nowrap' }}>둘 다 가능</span>
               </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <input
+                  type="radio"
+                  name="test_method"
+                  value="offline"
+                  checked={formData.test_method === 'offline'}
+                  onChange={handleChange}
+                />
+                <span style={{ whiteSpace: 'nowrap' }}>현장접수</span>
+              </label>
             </div>
           ) : (
             <div className="form-value">
               {formData.test_method === 'home' && '가정 셀프 테스트만'}
               {formData.test_method === 'onsite' && '방문 진단검사만'}
               {formData.test_method === 'both' && '둘 다 가능'}
+              {formData.test_method === 'offline' && '현장접수'}
             </div>
           )}
           <div className="form-hint">
             • 가정만: 사용자가 시험지 PDF를 다운로드하여 집에서 응시<br />
             • 방문만: 사용자가 날짜/시간을 선택하여 학원에서 응시<br />
-            • 둘 다: 사용자가 방문 또는 가정 중 선택 (방문 슬롯 마감 시 가정으로 폴백)
+            • 둘 다: 사용자가 방문 또는 가정 중 선택 (방문 슬롯 마감 시 가정으로 폴백)<br />
+            • 현장접수: 설명회장에서 종이 신청서로 진단검사를 접수받는 경우. 컨설팅 예약만 진행되며, 온라인 진단검사 플로우(시험지 다운로드/방문 예약)는 표시되지 않습니다.
           </div>
         </div>
 

@@ -51,9 +51,19 @@ export default function ConsultingResult({
 
     try {
       // 1) 지역별 진단검사 방식 확인
-      const method = await loadTestMethod(location);
+      //    ⭐ 현장접수('offline') 캠페인은 linked_seminar_id 기반으로 판정
+      const method = await loadTestMethod(
+        location,
+        reservation?.linked_seminar_id || null
+      );
       console.log('✅ 진단검사 방식:', method);
       setTestMethod(method);
+
+      // 현장접수 캠페인은 진단검사 조회 자체를 스킵
+      if (method === 'offline') {
+        setLoadingTest(false);
+        return;
+      }
 
       // 2) 역삼점: 진단검사 예약 확인
       if (method === 'onsite') {
@@ -419,6 +429,17 @@ export default function ConsultingResult({
       {loadingTest ? (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
           <p className="text-gray-600">진단검사 정보 확인 중...</p>
+        </div>
+      ) : testMethod === 'offline' ? (
+        // 🧾 현장접수 캠페인: 온라인 진단검사 정보 없음
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
+          <h3 className="text-lg font-bold text-emerald-800 mb-3 flex items-center">
+            🧾 진단검사 (현장접수)
+          </h3>
+          <p className="text-sm text-gray-700">
+            진단검사는 설명회 현장에서 접수하신 종이 신청서로 진행됩니다.
+            별도의 온라인 예약이나 시험지 다운로드는 필요하지 않습니다.
+          </p>
         </div>
       ) : testMethod === 'onsite' ? (
         testReservation ? (

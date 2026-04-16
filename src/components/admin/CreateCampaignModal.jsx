@@ -464,11 +464,26 @@ export default function CreateCampaignModal({ onClose }) {
                       🔄 둘 다 가능
                     </span>
                   </label>
+                  <label className="radio-label">
+                    <input
+                      type="radio"
+                      name="testMethod"
+                      value="offline"
+                      checked={testMethod === 'offline'}
+                      onChange={(e) => setTestMethod(e.target.value)}
+                    />
+                    <span
+                      className={`radio-text ${testMethod === 'offline' ? 'active' : ''}`}
+                    >
+                      🧾 현장접수
+                    </span>
+                  </label>
                 </div>
                 <div className="form-hint">
                   • 가정만: 사용자가 시험지 PDF를 다운로드하여 집에서 응시<br />
                   • 방문만: 사용자가 날짜/시간을 선택하여 학원에서 응시<br />
-                  • 둘 다: 사용자가 방문 또는 가정 중 선택 (방문 슬롯 마감 시 가정으로 폴백)
+                  • 둘 다: 사용자가 방문 또는 가정 중 선택 (방문 슬롯 마감 시 가정으로 폴백)<br />
+                  • 현장접수: 설명회장에서 종이 신청서로 진단검사 접수. 온라인 진단검사 플로우(시험지 다운로드/방문 예약) 없음
                 </div>
               </div>
 
@@ -554,6 +569,16 @@ export default function CreateCampaignModal({ onClose }) {
                   <p>
                     💡 가정 셀프 테스트는 별도의 슬롯 설정이 필요하지 않습니다. 학부모가
                     자유롭게 테스트 자료를 다운로드할 수 있습니다.
+                  </p>
+                </div>
+              )}
+
+              {testMethod === 'offline' && (
+                <div className="info-box">
+                  <p>
+                    💡 현장접수 캠페인은 온라인 진단검사 플로우가 표시되지 않습니다.
+                    컨설팅 예약만 진행되며, 진단검사는 설명회 현장에서 종이 신청서로 접수받으세요.
+                    별도의 진단검사 슬롯 설정이 필요하지 않습니다.
                   </p>
                 </div>
               )}
