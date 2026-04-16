@@ -493,6 +493,38 @@ export function AdminProvider({ children }) {
         }
       });
 
+      // 4-1-4. ⭐ 관리자 수동 배정(manual) 예약 조회
+      //        통합학생관리에서 수동 배정된 test_reservations는 consulting_reservation_id가
+      //        없을 수 있어 기존 경로(1~3)로 안 잡힌다. 현재 캠페인에 속한 test_slots를
+      //        통해 scoping 하여 추가.
+      const { data: manualTests } = await supabase
+        .from('test_reservations')
+        .select('*, test_slots(*)')
+        .eq('reservation_type', 'manual')
+        .in('status', ['confirmed', '예약'])
+        .order('created_at', { ascending: false });
+
+      (manualTests || []).forEach((test) => {
+        if (testIds.has(test.id)) return;
+
+        // 캠페인 scoping: 1) slot의 campaign_id 일치, 2) 폴백으로 지역 일치
+        const slotCampaignId = test.test_slots?.campaign_id;
+        const slotLocation = test.test_slots?.location;
+        const matchesCampaign = slotCampaignId
+          ? slotCampaignId === campaignId
+          : slotLocation === campaign.location;
+
+        if (!matchesCampaign) return;
+
+        testIds.add(test.id);
+        tests.push({
+          ...test,
+          test_date: test.test_slots?.date,
+          test_time: test.test_slots?.time,
+          location: test.test_slots?.location,
+        });
+      });
+
       console.log('✅ 진단검사 예약 수:', tests?.length || 0);
 
       // 4-2. 진단검사 슬롯 정보 추가

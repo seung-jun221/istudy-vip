@@ -43,6 +43,8 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
   const [testAssignSlots, setTestAssignSlots] = useState([]);
   const [selectedTestSlotId, setSelectedTestSlotId] = useState('');
   const [assigningTest, setAssigningTest] = useState(false);
+  // ⭐ 배정 모드: 'entrance_test'(기존: 입학테스트 등록 전환) | 'manual'(신규: 수동 배정)
+  const [testAssignMode, setTestAssignMode] = useState('entrance_test');
 
   // 신규 학생 등록
   const [showAddForm, setShowAddForm] = useState(false);
@@ -660,21 +662,70 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
   // 시험 배정 (입학테스트 등록 → 입학테스트 예약)
   // ============================================================
 
-  const startTestAssign = async (event) => {
-    setTestAssignTarget(event);
-    setSelectedTestSlotId('');
+  // 슬롯 로드 (공통)
+  const loadAssignableTestSlots = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    let query = supabase
+      .from('test_slots')
+      .select('*')
+      .gte('date', today)
+      .eq('status', 'active');
 
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const { data: slots } = await supabase
+    // ⭐ campaign_id가 있는 슬롯 우선. 없으면 전체(location 기반 폴백 데이터 포함)
+    if (campaignId) {
+      query = query.eq('campaign_id', campaignId);
+    }
+
+    const { data: campaignSlots } = await query
+      .order('date', { ascending: true })
+      .order('time', { ascending: true });
+
+    // 캠페인 슬롯이 하나도 없으면 마이그레이션 전 데이터 호환을 위해 전체 active 슬롯 조회
+    if (!campaignSlots || campaignSlots.length === 0) {
+      const { data: fallbackSlots } = await supabase
         .from('test_slots')
         .select('*')
         .gte('date', today)
         .eq('status', 'active')
         .order('date', { ascending: true })
         .order('time', { ascending: true });
+      return fallbackSlots || [];
+    }
 
-      setTestAssignSlots(slots || []);
+    return campaignSlots;
+  };
+
+  const startTestAssign = async (event) => {
+    setTestAssignMode('entrance_test');
+    setTestAssignTarget(event);
+    setSelectedTestSlotId('');
+
+    try {
+      const slots = await loadAssignableTestSlots();
+      setTestAssignSlots(slots);
+    } catch (error) {
+      console.error('슬롯 로드 실패:', error);
+      setTestAssignSlots([]);
+    }
+  };
+
+  // ⭐ 수동 진단검사 배정 (통합학생관리 → 학생 카드에서 직접 배정)
+  //    TestsTab의 '수동등록' 카테고리에 집계되도록 reservation_type='manual'로 저장
+  const startManualTestAssign = async (student) => {
+    setTestAssignMode('manual');
+    setTestAssignTarget({
+      // executeTestAssign가 참조하는 구조(studentName/testType/school/grade/mathLevel)에 맞춤
+      studentName: student.name,
+      testType: student.info?.test_type || 'MONO',
+      school: student.info?.school || '',
+      grade: student.info?.grade || '',
+      mathLevel: student.info?.math_level || '',
+    });
+    setSelectedTestSlotId('');
+
+    try {
+      const slots = await loadAssignableTestSlots();
+      setTestAssignSlots(slots);
     } catch (error) {
       console.error('슬롯 로드 실패:', error);
       setTestAssignSlots([]);
@@ -695,7 +746,12 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
 
       const defaultPassword = hashPassword(journeyData.phone.replace(/-/g, ''));
 
-      // test_reservations 생성
+      // ⭐ 모드에 따라 reservation_type 분기
+      //    - 'entrance_test': 입학테스트 등록 → 예약 전환 (기존)
+      //    - 'manual': 관리자 수동 배정 (신규) → TestsTab '수동등록' 카테고리에 집계됨
+      const reservationType =
+        testAssignMode === 'manual' ? 'manual' : 'entrance_test';
+
       const { error: testError } = await supabase
         .from('test_reservations')
         .insert({
@@ -708,7 +764,7 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
           math_level: testAssignTarget.mathLevel || '',
           password: defaultPassword,
           status: '예약',
-          reservation_type: 'entrance_test',
+          reservation_type: reservationType,
           test_date: slot.date,
           test_time: slot.time,
         });
@@ -722,6 +778,7 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
         .eq('id', selectedTestSlotId);
 
       setTestAssignTarget(null);
+      setTestAssignMode('entrance_test');
       await loadJourney(journeyData.phone);
       if (onUpdate) onUpdate();
     } catch (error) {
@@ -1210,6 +1267,22 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
                       }}
                     >
                       정보 수정
+                    </button>
+                    <button
+                      onClick={() => startManualTestAssign(student)}
+                      style={{
+                        padding: '4px 12px',
+                        background: '#ede9fe',
+                        color: '#7c3aed',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                      }}
+                      title="현재 선택 가능한 진단검사 슬롯에서 수동 배정합니다. 수동등록 카테고리에 집계됩니다."
+                    >
+                      진단검사 배정
                     </button>
                     <button
                       onClick={() => setResetPasswordTarget(student)}
@@ -1843,13 +1916,25 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#7c3aed' }}>시험 일정 배정</h3>
+            <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#7c3aed' }}>
+              {testAssignMode === 'manual' ? '진단검사 배정 (수동)' : '시험 일정 배정'}
+            </h3>
             <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '4px' }}>
-              <strong>{testAssignTarget.studentName}</strong>님에게 시험 일정을 배정합니다.
+              <strong>{testAssignTarget.studentName}</strong>님에게{' '}
+              {testAssignMode === 'manual' ? '진단검사 일정을' : '시험 일정을'} 배정합니다.
             </p>
-            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
-              검사 유형: {testAssignTarget.testType || 'MONO'}
-            </p>
+            {testAssignMode === 'manual' ? (
+              <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+                현재 선택 가능한 슬롯만 표시됩니다. 기타 시간에 응시해야 하는
+                경우 진단검사 탭에서 직접 학생을 추가해주세요. 배정 시{' '}
+                <strong style={{ color: '#7c3aed' }}>수동등록</strong>{' '}
+                카테고리에 집계됩니다.
+              </p>
+            ) : (
+              <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+                검사 유형: {testAssignTarget.testType || 'MONO'}
+              </p>
+            )}
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
