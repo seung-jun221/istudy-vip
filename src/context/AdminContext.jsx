@@ -576,13 +576,34 @@ export function AdminProvider({ children }) {
       }
       console.log('✅ 진단검사 슬롯 수:', allTestSlots?.length || 0);
 
-      // 4-4. ⭐ 진단검사 수동등록(diagnostic_submissions registration) 건수 조회
-      //      탭 카운터가 TestsTab의 '전체' 합계와 일치하도록 별도 카운트
-      const { count: testRegistrationsCount } = await supabase
-        .from('diagnostic_submissions')
-        .select('*', { count: 'exact', head: true })
-        .eq('campaign_id', campaignId)
-        .eq('submission_type', 'registration');
+      // 4-4. ⭐ 진단검사 탭 '전체' 합계와 일치하는 카운터 계산
+      //      TestsTab.allStudents 의 3개 소스를 동일하게 집계:
+      //      (1) tests (이미 로드됨)
+      //      (2) diagnostic_submissions registrations
+      //      (3) entrance_test test_reservations 중 tests에 없는 것
+      const [{ count: registrationsCount }, { data: entranceTestsForCount }] =
+        await Promise.all([
+          supabase
+            .from('diagnostic_submissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('campaign_id', campaignId)
+            .eq('submission_type', 'registration'),
+          supabase
+            .from('test_reservations')
+            .select('id, test_slots!inner(location)')
+            .eq('reservation_type', 'entrance_test')
+            .in('status', ['confirmed', '예약']),
+        ]);
+
+      // 해당 캠페인 지역과 일치하고 tests에 아직 포함되지 않은 entrance_test만 +1
+      const extraEntranceTestsCount = (entranceTestsForCount || []).filter(
+        (et) => et.test_slots?.location === campaign.location && !testIds.has(et.id)
+      ).length;
+
+      const testCount =
+        (testsWithSlots?.length || 0) +
+        (registrationsCount || 0) +
+        extraEntranceTestsCount;
 
       console.log('🎉 캠페인 상세 조회 완료!');
       return {
@@ -592,7 +613,7 @@ export function AdminProvider({ children }) {
         cancelledConsultings: cancelledWithSlots || [], // ⭐ 취소된 컨설팅 예약
         consultingSlots: allConsultingSlots || [],
         tests: testsWithSlots || [],
-        testRegistrationsCount: testRegistrationsCount || 0, // ⭐ 수동등록(레지스트레이션) 건수
+        testCount, // ⭐ TestsTab '전체' 합계와 일치하는 통합 카운터
         testSlots: allTestSlots || [],
         seminarSlots: campaign.seminar_slots || [], // ⭐ 설명회 슬롯 명시적 추가
       };

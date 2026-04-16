@@ -74,16 +74,16 @@ export default function CampaignDetail() {
     );
   }
 
-  const { campaign, attendees, consultings, cancelledConsultings, consultingSlots, tests, testRegistrationsCount, testSlots, seminarSlots } = campaignData;
+  const { campaign, attendees, consultings, cancelledConsultings, consultingSlots, tests, testCount, testSlots, seminarSlots } = campaignData;
 
   // 통계 계산
-  // ⭐ 진단검사 탭 카운터는 TestsTab '전체' 합계와 일치시키기 위해
-  //    test_reservations 건수 + diagnostic_submissions registration 건수 합산
+  // ⭐ 진단검사 탭 카운터는 TestsTab '전체' 합계와 일치하도록
+  //    AdminContext에서 미리 합산한 testCount 사용 (없으면 tests.length 폴백)
   const stats = {
     attendees: attendees.length,
     consultings: consultings.length,
     cancelled: cancelledConsultings?.length || 0,
-    tests: tests.length + (testRegistrationsCount || 0),
+    tests: typeof testCount === 'number' ? testCount : tests.length,
     enrolled: consultings.filter((c) => c.enrollment_status === '확정').length,
   };
 
