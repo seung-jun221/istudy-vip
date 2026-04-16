@@ -716,12 +716,20 @@ export function AdminProvider({ children }) {
       if (campaignData.testMethod) {
         console.log('🧪 진단검사 방식 저장:', campaignData.testMethod);
 
+        const methodDescriptions = {
+          home: '가정 셀프 테스트',
+          onsite: '방문 진단검사',
+          both: '가정 + 방문 선택',
+          offline: '현장접수 (종이 신청서)',
+        };
+
         const { error: methodError } = await supabase
           .from('test_methods')
           .insert({
             location: campaignData.location,
-            method: campaignData.testMethod, // 'home' or 'onsite'
-            description: campaignData.testMethod === 'home' ? '가정 셀프 테스트' : '방문 진단검사',
+            method: campaignData.testMethod, // 'home' | 'onsite' | 'both' | 'offline'
+            description:
+              methodDescriptions[campaignData.testMethod] || '방문 진단검사',
           });
 
         if (methodError && methodError.code !== '23505') { // 중복 키 에러는 무시 (이미 존재)

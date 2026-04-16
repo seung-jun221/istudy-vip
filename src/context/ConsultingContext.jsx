@@ -525,7 +525,31 @@ export function ConsultingProvider({ children }) {
   // ========================================
 
   // 지점별 진단검사 방식 확인
-  const loadTestMethod = async (location) => {
+  // ⭐ 'offline'(현장접수) 캠페인은 DB 값을 존중하여 온라인 진단검사 플로우를 스킵
+  //    그 외에는 기존 임시 정책(모든 지점 onsite 고정) 유지
+  const loadTestMethod = async (location, seminarIdOverride = null) => {
+    try {
+      const campaignId = seminarIdOverride || selectedSeminarId;
+      let query = supabase.from('seminar_slots').select('test_method').limit(1);
+
+      if (campaignId) {
+        query = query.eq('campaign_id', campaignId);
+      } else if (location) {
+        query = query.eq('location', location);
+      }
+
+      const { data, error } = await query.maybeSingle();
+      if (error) throw error;
+
+      // 현장접수 캠페인이면 그대로 반환 (온라인 진단검사 플로우 스킵)
+      if (data?.test_method === 'offline') {
+        setTestMethod('offline');
+        return 'offline';
+      }
+    } catch (e) {
+      console.warn('[loadTestMethod] test_method 조회 실패, onsite로 폴백', e);
+    }
+
     // ⚠️ 임시: 사직점 오픈 기간(3개월) 동안 모든 지점 방문테스트로 고정
     // TODO: 추후 원인 파악 후 복원 필요
     setTestMethod('onsite');

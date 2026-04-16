@@ -28,11 +28,30 @@ export default function ConsultingComplete({
     : '-';
 
   // 컴포넌트 마운트 시 진단검사 방식 확인
+  // ⭐ 현장접수('offline') 캠페인은 온라인 진단검사 플로우를 스킵
   useEffect(() => {
-    // ⚠️ 임시: 사직점 오픈 기간(3개월) 동안 모든 지점 방문테스트로 고정
-    // TODO: 추후 원인 파악 후 복원 필요
-    setTestMethod('onsite');
-    setLoading(false);
+    let cancelled = false;
+    (async () => {
+      try {
+        const method = await loadTestMethod(
+          location,
+          reservation?.linked_seminar_id || null
+        );
+        if (!cancelled) {
+          setTestMethod(method);
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error('[ConsultingComplete] test_method 조회 실패:', e);
+        if (!cancelled) {
+          setTestMethod('onsite');
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [location, reservation]);
 
   // ⭐ 진단검사 예약 페이지로 이동 (동의는 이미 받음)
@@ -90,7 +109,25 @@ export default function ConsultingComplete({
       </div>
 
       {/* ⭐ 진단검사 안내 - 방식별 분기 */}
-      {testMethod === 'onsite' ? (
+      {testMethod === 'offline' ? (
+        // 🧾 현장접수 캠페인: 온라인 진단검사 플로우 없음
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 text-left">
+          <h4 className="text-lg font-bold text-emerald-800 mb-3">
+            📝 진단검사 안내
+          </h4>
+          <p className="text-sm text-gray-700 mb-4">
+            진단검사는 <strong>설명회 현장에서 접수하신 종이 신청서</strong>로
+            진행됩니다. 별도의 온라인 진단검사 예약은 필요하지 않습니다.
+          </p>
+
+          <button
+            onClick={onHome}
+            className="w-full py-3 bg-emerald-700 text-white rounded-lg font-semibold hover:bg-emerald-800 transition-all"
+          >
+            홈으로
+          </button>
+        </div>
+      ) : testMethod === 'onsite' ? (
         // 🏫 방문 진단검사만 (학원 방문 응시)
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 text-left">
           <h4 className="text-lg font-bold text-emerald-800 mb-3">
@@ -210,6 +247,11 @@ export default function ConsultingComplete({
           {testMethod === 'onsite' ? (
             <>
               <li>• 진단검사는 학원에서 응시하고 보관합니다</li>
+              <li>• 최근 성적표나 문제집 지참 (선택)</li>
+            </>
+          ) : testMethod === 'offline' ? (
+            <>
+              <li>• 진단검사는 현장 접수하신 신청서로 진행됩니다</li>
               <li>• 최근 성적표나 문제집 지참 (선택)</li>
             </>
           ) : (
