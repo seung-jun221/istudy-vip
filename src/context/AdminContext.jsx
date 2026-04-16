@@ -142,23 +142,44 @@ export function AdminProvider({ children }) {
             : { count: 0 };
 
           // 진단검사 예약 수
-          const { data: consultingIds } = consultingSlotIds.length > 0
-            ? await supabase
-                .from('consulting_reservations')
-                .select('id')
-                .in('slot_id', consultingSlotIds)
-                .not('status', 'in', '(cancelled,auto_cancelled,취소)')
-            : { data: [] };
+          // ⭐ slot_id 기반으로 통일 (loadCampaignDetail 와 동일 기준)
+          //    - 컨설팅 연계 + 입학테스트 + 수동배정 모두 포함
+          //    - + diagnostic_submissions registration (수동등록)
+          //    location 기반 필터(설명회 장소 ≠ 검사 장소 케이스 누락) 제거
+          let { data: campaignTestSlots } = await supabase
+            .from('test_slots')
+            .select('id')
+            .eq('campaign_id', campaign.id);
 
-          const consultingIdList = consultingIds?.map(c => c.id) || [];
+          // campaign_id 슬롯이 없으면 location 폴백 (마이그레이션 전 데이터 호환)
+          if (!campaignTestSlots || campaignTestSlots.length === 0) {
+            const { data: locationSlots } = await supabase
+              .from('test_slots')
+              .select('id')
+              .eq('location', campaign.location)
+              .is('campaign_id', null);
+            campaignTestSlots = locationSlots || [];
+          }
 
-          const { count: testCount } = consultingIdList.length > 0
-            ? await supabase
-                .from('test_reservations')
+          const testSlotIdList = (campaignTestSlots || []).map((s) => s.id);
+
+          const [{ count: testReservationCount }, { count: testRegistrationCount }] =
+            await Promise.all([
+              testSlotIdList.length > 0
+                ? supabase
+                    .from('test_reservations')
+                    .select('*', { count: 'exact', head: true })
+                    .in('slot_id', testSlotIdList)
+                    .in('status', ['confirmed', '예약'])
+                : Promise.resolve({ count: 0 }),
+              supabase
+                .from('diagnostic_submissions')
                 .select('*', { count: 'exact', head: true })
-                .in('consulting_reservation_id', consultingIdList)
-                .in('status', ['confirmed', '예약'])
-            : { count: 0 };
+                .eq('campaign_id', campaign.id)
+                .eq('submission_type', 'registration'),
+            ]);
+
+          const testCount = (testReservationCount || 0) + (testRegistrationCount || 0);
 
           // 최종 등록 수 (slot_id 기반으로 조회)
           const { count: enrolledCount } = consultingSlotIds.length > 0
