@@ -577,33 +577,48 @@ export function AdminProvider({ children }) {
       console.log('✅ 진단검사 슬롯 수:', allTestSlots?.length || 0);
 
       // 4-4. ⭐ 진단검사 탭 '전체' 합계와 일치하는 카운터 계산
-      //      TestsTab.allStudents 의 3개 소스를 동일하게 집계:
+      //      TestsTab.allStudents 와 동일한 로직으로 집계:
       //      (1) tests (이미 로드됨)
-      //      (2) diagnostic_submissions registrations
+      //      (2) diagnostic_submissions registrations (campaign_id 일치)
       //      (3) entrance_test test_reservations 중 tests에 없는 것
-      const [{ count: registrationsCount }, { data: entranceTestsForCount }] =
-        await Promise.all([
-          supabase
-            .from('diagnostic_submissions')
-            .select('*', { count: 'exact', head: true })
-            .eq('campaign_id', campaignId)
-            .eq('submission_type', 'registration'),
-          supabase
-            .from('test_reservations')
-            .select('id, test_slots!inner(location)')
-            .eq('reservation_type', 'entrance_test')
-            .in('status', ['confirmed', '예약']),
-        ]);
+      //      ※ getAllRegistrations/loadEntranceTests 쿼리와 최대한 동일하게 작성
+      const [regResult, entranceTestsResult] = await Promise.all([
+        supabase
+          .from('diagnostic_submissions')
+          .select('id, campaign_id, submission_type')
+          .eq('submission_type', 'registration')
+          .eq('campaign_id', campaignId),
+        supabase
+          .from('test_reservations')
+          .select('id, test_slots(location)')
+          .eq('reservation_type', 'entrance_test')
+          .in('status', ['confirmed', '예약']),
+      ]);
 
-      // 해당 캠페인 지역과 일치하고 tests에 아직 포함되지 않은 entrance_test만 +1
-      const extraEntranceTestsCount = (entranceTestsForCount || []).filter(
+      if (regResult.error) {
+        console.warn('⚠️ 수동등록 카운트 조회 실패:', regResult.error);
+      }
+      if (entranceTestsResult.error) {
+        console.warn('⚠️ 입학테스트 카운트 조회 실패:', entranceTestsResult.error);
+      }
+
+      const registrationsCount = regResult.data?.length || 0;
+
+      const extraEntranceTestsCount = (entranceTestsResult.data || []).filter(
         (et) => et.test_slots?.location === campaign.location && !testIds.has(et.id)
       ).length;
 
       const testCount =
         (testsWithSlots?.length || 0) +
-        (registrationsCount || 0) +
+        registrationsCount +
         extraEntranceTestsCount;
+
+      console.log('📊 진단검사 탭 카운터:', {
+        tests: testsWithSlots?.length || 0,
+        registrations: registrationsCount,
+        extraEntranceTests: extraEntranceTestsCount,
+        total: testCount,
+      });
 
       console.log('🎉 캠페인 상세 조회 완료!');
       return {
