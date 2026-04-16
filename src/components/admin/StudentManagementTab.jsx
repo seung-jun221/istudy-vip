@@ -783,7 +783,19 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error('시험 배정 실패:', error);
-      alert('시험 배정에 실패했습니다.');
+      // CHECK 제약 위반(수동 배정용 'manual' 값 미허용)인 경우 구체 안내
+      const isCheckViolation =
+        error?.code === '23514' ||
+        (error?.message && error.message.includes('reservation_type'));
+      if (testAssignMode === 'manual' && isCheckViolation) {
+        alert(
+          "수동 배정에 실패했습니다.\n\n" +
+            "DB CHECK 제약조건에 'manual' 값이 아직 추가되지 않은 것 같습니다.\n" +
+            "Supabase SQL Editor에서 `add_manual_to_test_reservation_type.sql` 을 실행한 뒤 다시 시도해주세요."
+        );
+      } else {
+        alert('시험 배정에 실패했습니다.');
+      }
     } finally {
       setAssigningTest(false);
     }

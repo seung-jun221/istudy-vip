@@ -611,8 +611,23 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
   };
 
   // 슬롯별 예약 현황 계산
+  // ⭐ allStudents 기준으로 계산하여 slot_id 없는 수동등록(diagnostic_submissions)
+  //   학생도 날짜+시간 매칭으로 포함. 필터 탭/목록과 슬롯 요약이 일치하도록 함.
   const slotStats = (testSlots || []).map(slot => {
-    const reservationsForSlot = tests.filter(t => t.slot_id === slot.id).length;
+    const slotDate = String(slot.date);
+    const slotTime = String(slot.time).slice(0, 5);
+
+    const reservationsForSlot = allStudents.filter(s => {
+      if (s.slot_id === slot.id) return true;
+      // slot_id가 없는 수동등록은 날짜/시간으로 매칭
+      if (!s.slot_id && s.test_date && s.test_time) {
+        const testDate = String(s.test_date);
+        const testTime = String(s.test_time).slice(0, 5);
+        return testDate === slotDate && testTime === slotTime;
+      }
+      return false;
+    }).length;
+
     return {
       ...slot,
       reservations: reservationsForSlot
