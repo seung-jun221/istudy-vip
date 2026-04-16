@@ -537,6 +537,19 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
       })),
   ];
 
+  // 🔍 debug: 헤더 카운터(AdminContext)와 allStudents 의 소스별 수치 비교용
+  console.log('🧪 TestsTab allStudents 계산:', {
+    testsFromProp: tests.length,
+    registrationsFiltered: registrations.filter(
+      (reg) => reg.submission_type === 'registration'
+    ).length,
+    entranceTestsNotInTests: entranceTests.filter(
+      (t) => !testsIds.has(t.id)
+    ).length,
+    allStudentsTotal: allStudents.length,
+    campaignId,
+  });
+
   // 필터링 (검색어 + 슬롯 필터 + 예약 유형 필터)
   const filteredTests = allStudents.filter((test) => {
     const matchesSearch =
