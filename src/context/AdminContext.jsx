@@ -576,6 +576,14 @@ export function AdminProvider({ children }) {
       }
       console.log('✅ 진단검사 슬롯 수:', allTestSlots?.length || 0);
 
+      // 4-4. ⭐ 진단검사 수동등록(diagnostic_submissions registration) 건수 조회
+      //      탭 카운터가 TestsTab의 '전체' 합계와 일치하도록 별도 카운트
+      const { count: testRegistrationsCount } = await supabase
+        .from('diagnostic_submissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('campaign_id', campaignId)
+        .eq('submission_type', 'registration');
+
       console.log('🎉 캠페인 상세 조회 완료!');
       return {
         campaign,
@@ -584,6 +592,7 @@ export function AdminProvider({ children }) {
         cancelledConsultings: cancelledWithSlots || [], // ⭐ 취소된 컨설팅 예약
         consultingSlots: allConsultingSlots || [],
         tests: testsWithSlots || [],
+        testRegistrationsCount: testRegistrationsCount || 0, // ⭐ 수동등록(레지스트레이션) 건수
         testSlots: allTestSlots || [],
         seminarSlots: campaign.seminar_slots || [], // ⭐ 설명회 슬롯 명시적 추가
       };
