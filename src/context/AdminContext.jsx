@@ -406,6 +406,29 @@ export function AdminProvider({ children }) {
       // 4. 진단검사 예약 목록 (consulting_reservations를 통해 간접 조회 + 전화번호 기반 조회)
       console.log('4️⃣ 진단검사 예약 조회...');
 
+      // 4-0. ⭐ 이 캠페인에 속한 test_slot ID Set 미리 로드
+      //      이후 entrance_test/manual reservation 들을 scoping 하는 단일 기준으로 사용.
+      //      campaign.location(설명회 장소)과 test_slot.location(검사 장소)이 다를 수 있어
+      //      location 기반 필터는 누락이 발생함 (예: 설명회=거제종합사회복지관 / 검사=사직직영점).
+      let { data: campaignSlotsForScoping } = await supabase
+        .from('test_slots')
+        .select('id')
+        .eq('campaign_id', campaignId);
+
+      // campaign_id로 슬롯이 없으면 location 기반 폴백 (마이그레이션 전 데이터 호환)
+      if (!campaignSlotsForScoping || campaignSlotsForScoping.length === 0) {
+        const { data: locationSlots } = await supabase
+          .from('test_slots')
+          .select('id')
+          .eq('location', campaign.location)
+          .is('campaign_id', null);
+        campaignSlotsForScoping = locationSlots || [];
+      }
+      const campaignTestSlotIds = new Set(
+        (campaignSlotsForScoping || []).map((s) => s.id)
+      );
+      console.log('📌 캠페인 소속 test_slot ID 수:', campaignTestSlotIds.size);
+
       // 4-1. 해당 캠페인의 컨설팅 예약 ID 및 전화번호 목록 조회
       const consultingIdList = consultingsWithSlots?.map(c => c.id) || [];
       const consultingPhones = [...new Set(consultingsWithSlots?.map(c => c.parent_phone).filter(Boolean) || [])];
@@ -480,9 +503,10 @@ export function AdminProvider({ children }) {
         .in('status', ['confirmed', '예약'])
         .order('created_at', { ascending: false });
 
-      // 해당 캠페인 지역과 일치하는 입학테스트만 추가
+      // ⭐ 이 캠페인의 test_slot 에 속한 입학테스트만 추가
+      //    (campaign.location ≠ test_slot.location 인 케이스 대응)
       (entranceTests || []).forEach((test) => {
-        if (!testIds.has(test.id) && test.test_slots?.location === campaign.location) {
+        if (!testIds.has(test.id) && campaignTestSlotIds.has(test.slot_id)) {
           testIds.add(test.id);
           tests.push({
             ...test,
@@ -495,8 +519,8 @@ export function AdminProvider({ children }) {
 
       // 4-1-4. ⭐ 관리자 수동 배정(manual) 예약 조회
       //        통합학생관리에서 수동 배정된 test_reservations는 consulting_reservation_id가
-      //        없을 수 있어 기존 경로(1~3)로 안 잡힌다. 현재 캠페인에 속한 test_slots를
-      //        통해 scoping 하여 추가.
+      //        없을 수 있어 기존 경로(1~3)로 안 잡힌다. 현재 캠페인에 속한 test_slots
+      //        ID Set 기준으로 scoping (entrance_test와 동일한 기준).
       const { data: manualTests } = await supabase
         .from('test_reservations')
         .select('*, test_slots(*)')
@@ -506,15 +530,7 @@ export function AdminProvider({ children }) {
 
       (manualTests || []).forEach((test) => {
         if (testIds.has(test.id)) return;
-
-        // 캠페인 scoping: 1) slot의 campaign_id 일치, 2) 폴백으로 지역 일치
-        const slotCampaignId = test.test_slots?.campaign_id;
-        const slotLocation = test.test_slots?.location;
-        const matchesCampaign = slotCampaignId
-          ? slotCampaignId === campaignId
-          : slotLocation === campaign.location;
-
-        if (!matchesCampaign) return;
+        if (!campaignTestSlotIds.has(test.slot_id)) return;
 
         testIds.add(test.id);
         tests.push({
@@ -576,49 +592,22 @@ export function AdminProvider({ children }) {
       }
       console.log('✅ 진단검사 슬롯 수:', allTestSlots?.length || 0);
 
-      // 4-4. ⭐ 진단검사 탭 '전체' 합계와 일치하는 카운터 계산
-      //      TestsTab.allStudents 와 동일한 로직으로 집계:
-      //      (1) tests (이미 로드됨)
-      //      (2) diagnostic_submissions registrations (campaign_id 일치)
-      //      (3) entrance_test test_reservations 중 tests에 없는 것
-      //      ※ getAllRegistrations/loadEntranceTests 쿼리와 최대한 동일하게 작성
-      const [regResult, entranceTestsResult] = await Promise.all([
-        supabase
-          .from('diagnostic_submissions')
-          .select('id, campaign_id, submission_type')
-          .eq('submission_type', 'registration')
-          .eq('campaign_id', campaignId),
-        supabase
-          .from('test_reservations')
-          .select('id, test_slots(location)')
-          .eq('reservation_type', 'entrance_test')
-          .in('status', ['confirmed', '예약']),
-      ]);
+      // 4-4. ⭐ 진단검사 탭 '전체' 합계 카운터 계산
+      //      tests 에는 path 4-1-1 ~ 4-1-4 결과가 모두 포함되었고,
+      //      campaignTestSlotIds 기준으로 entrance_test/manual 도 모두 잡혔으므로
+      //      여기서는 diagnostic_submissions registrations만 추가로 합산하면 충분.
+      const { data: regData, error: regError } = await supabase
+        .from('diagnostic_submissions')
+        .select('id')
+        .eq('submission_type', 'registration')
+        .eq('campaign_id', campaignId);
 
-      if (regResult.error) {
-        console.warn('⚠️ 수동등록 카운트 조회 실패:', regResult.error);
-      }
-      if (entranceTestsResult.error) {
-        console.warn('⚠️ 입학테스트 카운트 조회 실패:', entranceTestsResult.error);
+      if (regError) {
+        console.warn('⚠️ 수동등록 카운트 조회 실패:', regError);
       }
 
-      const registrationsCount = regResult.data?.length || 0;
-
-      const extraEntranceTestsCount = (entranceTestsResult.data || []).filter(
-        (et) => et.test_slots?.location === campaign.location && !testIds.has(et.id)
-      ).length;
-
-      const testCount =
-        (testsWithSlots?.length || 0) +
-        registrationsCount +
-        extraEntranceTestsCount;
-
-      console.log('📊 진단검사 탭 카운터:', {
-        tests: testsWithSlots?.length || 0,
-        registrations: registrationsCount,
-        extraEntranceTests: extraEntranceTestsCount,
-        total: testCount,
-      });
+      const registrationsCount = regData?.length || 0;
+      const testCount = (testsWithSlots?.length || 0) + registrationsCount;
 
       console.log('🎉 캠페인 상세 조회 완료!');
       return {
