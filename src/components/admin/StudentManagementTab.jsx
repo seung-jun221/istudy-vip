@@ -46,6 +46,12 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
   // ⭐ 배정 모드: 'entrance_test'(기존: 입학테스트 등록 전환) | 'manual'(신규: 수동 배정)
   const [testAssignMode, setTestAssignMode] = useState('entrance_test');
 
+  // 컨설팅 수동 배정 (통합학생관리 → 학생 카드에서 직접 배정)
+  const [consultingAssignTarget, setConsultingAssignTarget] = useState(null);
+  const [consultingAssignSlots, setConsultingAssignSlots] = useState([]);
+  const [selectedConsultingSlotId, setSelectedConsultingSlotId] = useState('');
+  const [assigningConsulting, setAssigningConsulting] = useState(false);
+
   // 신규 학생 등록
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState({
@@ -802,6 +808,106 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
   };
 
   // ============================================================
+  // 컨설팅 수동 배정 (통합학생관리 → 학생 카드에서 직접 배정)
+  // ============================================================
+
+  // 배정 가능한 컨설팅 슬롯 로드 (현재 캠페인 기준, 미래 일정, 정원 여유)
+  const loadAssignableConsultingSlots = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    let query = supabase
+      .from('consulting_slots')
+      .select('*')
+      .gte('date', today);
+
+    // ⭐ 현재 캠페인 소속 슬롯만 노출
+    if (campaignId) {
+      query = query.eq('linked_seminar_id', campaignId);
+    }
+
+    const { data: slots } = await query
+      .order('date', { ascending: true })
+      .order('time', { ascending: true });
+
+    return slots || [];
+  };
+
+  const startConsultingAssign = async (student) => {
+    setConsultingAssignTarget({
+      studentName: student.name,
+      school: student.info?.school || '',
+      grade: student.info?.grade || '',
+      mathLevel: student.info?.math_level || '',
+    });
+    setSelectedConsultingSlotId('');
+
+    try {
+      const slots = await loadAssignableConsultingSlots();
+      setConsultingAssignSlots(slots);
+    } catch (error) {
+      console.error('컨설팅 슬롯 로드 실패:', error);
+      setConsultingAssignSlots([]);
+    }
+  };
+
+  const executeConsultingAssign = async () => {
+    if (!consultingAssignTarget || !selectedConsultingSlotId || !journeyData?.phone)
+      return;
+    setAssigningConsulting(true);
+    try {
+      const slot = consultingAssignSlots.find(
+        (s) => s.id === selectedConsultingSlotId
+      );
+      if (!slot) throw new Error('슬롯을 찾을 수 없습니다.');
+
+      if ((slot.current_bookings || 0) >= slot.max_capacity) {
+        alert('선택한 시간은 이미 마감되었습니다.');
+        return;
+      }
+
+      const defaultPassword = hashPassword(journeyData.phone.replace(/-/g, ''));
+
+      // consulting_reservations 직접 INSERT
+      //   - reservation_type 필드 없음 (일반 예약과 동일)
+      //   - test_deadline_agreed=false: 진단검사 자정 자동취소 대상 제외
+      //   - privacy_consent='Y': 관리자 수기 수집 가정
+      const { error: insertError } = await supabase
+        .from('consulting_reservations')
+        .insert({
+          slot_id: selectedConsultingSlotId,
+          student_name: consultingAssignTarget.studentName,
+          parent_phone: journeyData.phone,
+          school: consultingAssignTarget.school || '',
+          grade: consultingAssignTarget.grade || '',
+          math_level: consultingAssignTarget.mathLevel || '',
+          password: defaultPassword,
+          is_seminar_attendee: false,
+          linked_seminar_id: campaignId || null,
+          privacy_consent: 'Y',
+          status: 'confirmed',
+          test_deadline_agreed: false,
+          test_deadline_agreed_at: null,
+        });
+
+      if (insertError) throw insertError;
+
+      // 슬롯 카운트 증가
+      await supabase
+        .from('consulting_slots')
+        .update({ current_bookings: (slot.current_bookings || 0) + 1 })
+        .eq('id', selectedConsultingSlotId);
+
+      setConsultingAssignTarget(null);
+      await loadJourney(journeyData.phone);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error('컨설팅 배정 실패:', error);
+      alert('컨설팅 배정에 실패했습니다.');
+    } finally {
+      setAssigningConsulting(false);
+    }
+  };
+
+  // ============================================================
   // 신규 학생 등록
   // ============================================================
 
@@ -1279,6 +1385,22 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
                       }}
                     >
                       정보 수정
+                    </button>
+                    <button
+                      onClick={() => startConsultingAssign(student)}
+                      style={{
+                        padding: '4px 12px',
+                        background: '#dcfce7',
+                        color: '#15803d',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                      }}
+                      title="현재 선택 가능한 컨설팅 슬롯에서 수동 배정합니다."
+                    >
+                      컨설팅 배정
                     </button>
                     <button
                       onClick={() => startManualTestAssign(student)}
@@ -2016,6 +2138,110 @@ export default function StudentManagementTab({ campaignId, onUpdate }) {
                 }}
               >
                 {assigningTest ? '배정 중...' : '시험 배정'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 컨설팅 배정 모달 */}
+      {consultingAssignTarget && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setConsultingAssignTarget(null)}
+        >
+          <div
+            style={{
+              background: 'white', borderRadius: '12px', padding: '24px',
+              maxWidth: '440px', width: '100%', maxHeight: '70vh', overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#15803d' }}>
+              컨설팅 배정 (수동)
+            </h3>
+            <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '4px' }}>
+              <strong>{consultingAssignTarget.studentName}</strong>님에게 컨설팅 일정을 배정합니다.
+            </p>
+            <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>
+              현재 캠페인의 미래 슬롯만 표시됩니다. 마감된 슬롯은 선택할 수 없습니다.
+            </p>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '8px', display: 'block' }}>
+                배정할 컨설팅 일정 선택:
+              </label>
+              {consultingAssignSlots.length === 0 ? (
+                <p style={{ color: '#94a3b8', fontSize: '13px' }}>
+                  배정 가능한 컨설팅 일정이 없습니다.
+                </p>
+              ) : (
+                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+                  {consultingAssignSlots.map((slot) => {
+                    const isFull = (slot.current_bookings || 0) >= slot.max_capacity;
+                    const isSelected = selectedConsultingSlotId === slot.id;
+                    return (
+                      <div
+                        key={slot.id}
+                        onClick={() => !isFull && setSelectedConsultingSlotId(slot.id)}
+                        style={{
+                          padding: '10px 12px',
+                          borderBottom: '1px solid #f1f5f9',
+                          cursor: isFull ? 'not-allowed' : 'pointer',
+                          background: isSelected ? '#dcfce7' : isFull ? '#f9fafb' : 'white',
+                          opacity: isFull ? 0.5 : 1,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div>
+                          <span style={{ fontWeight: '500', fontSize: '14px' }}>
+                            {formatDateTime(slot.date, slot.time)}
+                          </span>
+                          <span style={{ marginLeft: '8px', fontSize: '13px', color: '#64748b' }}>
+                            {slot.location || ''}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '12px', color: isFull ? '#dc2626' : '#64748b' }}>
+                          {isFull ? '마감' : `${slot.current_bookings || 0}/${slot.max_capacity}`}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setConsultingAssignTarget(null)}
+                style={{
+                  flex: 1, padding: '10px', border: '1px solid #d1d5db',
+                  borderRadius: '6px', background: 'white', cursor: 'pointer',
+                  fontWeight: '500',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={executeConsultingAssign}
+                disabled={!selectedConsultingSlotId || assigningConsulting}
+                style={{
+                  flex: 1, padding: '10px', border: 'none',
+                  borderRadius: '6px',
+                  background: !selectedConsultingSlotId || assigningConsulting ? '#d1d5db' : '#15803d',
+                  color: 'white',
+                  cursor: !selectedConsultingSlotId || assigningConsulting ? 'not-allowed' : 'pointer',
+                  fontWeight: '500',
+                }}
+              >
+                {assigningConsulting ? '배정 중...' : '컨설팅 배정'}
               </button>
             </div>
           </div>
