@@ -9,6 +9,7 @@ import SettingsTab from '../../components/admin/SettingsTab';
 import CustomerManagementTab from '../../components/admin/CustomerManagementTab';
 import StudentManagementTab from '../../components/admin/StudentManagementTab';
 import CustomerJourneyModal from '../../components/admin/CustomerJourneyModal';
+import TargetExtractTab from '../../components/admin/TargetExtractTab';
 import './CampaignDetail.css';
 
 export default function CampaignDetail() {
@@ -175,6 +176,13 @@ export default function CampaignDetail() {
         >
           캠페인 설정
         </button>
+        <button
+          className={`tab-btn ${activeTab === 'target' ? 'active' : ''}`}
+          onClick={() => setActiveTab('target')}
+          style={activeTab === 'target' ? {} : { color: '#f59e0b' }}
+        >
+          타겟 추출
+        </button>
       </div>
 
       {/* 탭 컨텐츠 */}
@@ -216,6 +224,12 @@ export default function CampaignDetail() {
             consultingSlots={consultingSlots}
             testSlots={testSlots}
             onUpdate={fetchCampaignDetail}
+          />
+        )}
+        {activeTab === 'target' && (
+          <TargetExtractTab
+            campaignId={id}
+            onPhoneClick={handlePhoneClick}
           />
         )}
       </div>
