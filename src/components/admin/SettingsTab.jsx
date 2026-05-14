@@ -68,12 +68,23 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
 
   // 설명회 슬롯 생성기 상태
   const [seminarGenerator, setSeminarGenerator] = useState({
+    slot_type: 'normal', // 'normal' | 'pre_register'
+    title: '',
     date: '',
     time: '14:00',
     location: campaign.location || '',
     max_capacity: 100,
     display_capacity: 100,
   });
+
+  // 사전 알림 신청 슬롯 placeholder 값 (일정 미정 상태)
+  const PRE_REGISTER_PLACEHOLDER = {
+    date: '2099-12-31',
+    time: '00:00',
+    location: '',
+    max_capacity: 999999,
+    display_capacity: 999999,
+  };
 
   // 설명회 슬롯 편집 상태
   const [editingSeminarSlot, setEditingSeminarSlot] = useState(null);
@@ -84,6 +95,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     location: '',
     max_capacity: 100,
     display_capacity: 100,
+    is_pre_register: false,
   });
 
   // 진단검사 슬롯 생성기 상태
@@ -315,9 +327,15 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
 
   // 설명회 슬롯 추가
   const addSeminarSlot = async () => {
-    const { date, time, location, max_capacity, display_capacity } = seminarGenerator;
+    const { slot_type, title, date, time, location, max_capacity, display_capacity } = seminarGenerator;
+    const isPreRegister = slot_type === 'pre_register';
 
-    if (!date || !time || !location) {
+    if (isPreRegister) {
+      if (!title.trim()) {
+        alert('사전 알림 신청 슬롯은 제목을 입력해주세요.');
+        return;
+      }
+    } else if (!date || !time || !location) {
       alert('모든 필드를 입력해주세요.');
       return;
     }
@@ -325,21 +343,32 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     // ⭐ 기존 슬롯의 test_method 또는 현재 formData의 test_method 사용
     const currentTestMethod = formData.test_method || seminarSlots?.[0]?.test_method || 'home';
 
-    const success = await createSeminarSlots(campaign.id, [
-      {
-        date,
-        time,
-        location,
-        max_capacity,
-        display_capacity,
-        session_number: (seminarSlots?.length || 0) + 1,
-        test_method: currentTestMethod, // ⭐ 진단검사 방식 상속
-      },
-    ]);
+    // 사전 알림 신청 슬롯은 일정/장소 미정 → placeholder 값으로 저장
+    const slotData = isPreRegister
+      ? {
+          title: title.trim(),
+          ...PRE_REGISTER_PLACEHOLDER,
+          is_pre_register: true,
+          session_number: (seminarSlots?.length || 0) + 1,
+          test_method: currentTestMethod,
+        }
+      : {
+          date,
+          time,
+          location,
+          max_capacity,
+          display_capacity,
+          session_number: (seminarSlots?.length || 0) + 1,
+          test_method: currentTestMethod, // ⭐ 진단검사 방식 상속
+        };
+
+    const success = await createSeminarSlots(campaign.id, [slotData]);
 
     if (success) {
       onUpdate();
       setSeminarGenerator({
+        slot_type: 'normal',
+        title: '',
         date: '',
         time: '14:00',
         location: campaign.location || '',
@@ -359,25 +388,33 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
       location: slot.location || '',
       max_capacity: slot.max_capacity || 100,
       display_capacity: slot.display_capacity || 100,
+      is_pre_register: slot.is_pre_register || false,
     });
   };
 
   // 설명회 슬롯 저장
   const saveSeminarSlot = async (slotId) => {
-    const { title, date, time, location, max_capacity, display_capacity } = seminarSlotFormData;
+    const { title, date, time, location, max_capacity, display_capacity, is_pre_register } = seminarSlotFormData;
 
-    if (!date || !time || !location) {
-      alert('날짜, 시간, 장소는 필수 항목입니다.');
+    // 사전 알림 신청 슬롯이 아니면(또는 일반 설명회로 전환하면) 일정/장소 필수
+    if (!is_pre_register && (!date || !time || !location)) {
+      alert('일반 설명회로 전환하려면 날짜, 시간, 장소를 입력해야 합니다.');
+      return;
+    }
+
+    if (is_pre_register && !title.trim()) {
+      alert('사전 알림 신청 슬롯은 제목이 필요합니다.');
       return;
     }
 
     const success = await updateSeminarSlot(slotId, {
       title: title || null,
-      date,
-      time,
-      location,
-      max_capacity: parseInt(max_capacity),
-      display_capacity: parseInt(display_capacity),
+      date: is_pre_register ? PRE_REGISTER_PLACEHOLDER.date : date,
+      time: is_pre_register ? PRE_REGISTER_PLACEHOLDER.time : time,
+      location: is_pre_register ? PRE_REGISTER_PLACEHOLDER.location : location,
+      max_capacity: is_pre_register ? PRE_REGISTER_PLACEHOLDER.max_capacity : parseInt(max_capacity),
+      display_capacity: is_pre_register ? PRE_REGISTER_PLACEHOLDER.display_capacity : parseInt(display_capacity),
+      is_pre_register,
     });
 
     if (success) {
@@ -389,6 +426,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
         location: '',
         max_capacity: 100,
         display_capacity: 100,
+        is_pre_register: false,
       });
       onUpdate();
     }
@@ -404,6 +442,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
       location: '',
       max_capacity: 100,
       display_capacity: 100,
+      is_pre_register: false,
     });
   };
 
@@ -750,58 +789,108 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
             <div className="slot-generator">
               <h4 className="generator-title">새 설명회 슬롯 추가</h4>
               <div className="generator-form">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">날짜</label>
-                    <input
-                      type="date"
-                      className="form-input"
-                      value={seminarGenerator.date}
-                      onChange={(e) => setSeminarGenerator({ ...seminarGenerator, date: e.target.value })}
-                    />
+                {/* 슬롯 유형 선택 */}
+                <div className="form-group">
+                  <label className="form-label">슬롯 유형</label>
+                  <div className="radio-group" style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="seminar_slot_type"
+                        value="normal"
+                        checked={seminarGenerator.slot_type === 'normal'}
+                        onChange={(e) => setSeminarGenerator({ ...seminarGenerator, slot_type: e.target.value })}
+                      />
+                      <span>일반 설명회</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="seminar_slot_type"
+                        value="pre_register"
+                        checked={seminarGenerator.slot_type === 'pre_register'}
+                        onChange={(e) => setSeminarGenerator({ ...seminarGenerator, slot_type: e.target.value })}
+                      />
+                      <span>사전 알림 신청 (일정·장소 미정)</span>
+                    </label>
                   </div>
+                  {seminarGenerator.slot_type === 'pre_register' && (
+                    <div className="form-hint">
+                      일정/장소가 미정인 상태에서 사전 알림 신청만 먼저 받습니다.
+                      일정이 확정되면 슬롯 수정 화면에서 날짜·장소를 입력하고 "일반 설명회로 전환"하세요.
+                    </div>
+                  )}
+                </div>
+
+                {seminarGenerator.slot_type === 'pre_register' ? (
+                  /* 사전 알림 신청 슬롯: 제목만 입력 */
                   <div className="form-group">
-                    <label className="form-label">시간</label>
-                    <input
-                      type="time"
-                      className="form-input"
-                      value={seminarGenerator.time}
-                      onChange={(e) => setSeminarGenerator({ ...seminarGenerator, time: e.target.value })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">장소</label>
+                    <label className="form-label">제목</label>
                     <input
                       type="text"
                       className="form-input"
-                      value={seminarGenerator.location}
-                      onChange={(e) => setSeminarGenerator({ ...seminarGenerator, location: e.target.value })}
-                      placeholder="예: 분당점 3층"
+                      value={seminarGenerator.title}
+                      onChange={(e) => setSeminarGenerator({ ...seminarGenerator, title: e.target.value })}
+                      placeholder="예: 7월 대형 설명회 사전 알림 신청"
                     />
                   </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">정원 (실제)</label>
-                    <input
-                      type="number"
-                      className="form-input"
-                      value={seminarGenerator.max_capacity}
-                      onChange={(e) => setSeminarGenerator({ ...seminarGenerator, max_capacity: parseInt(e.target.value) })}
-                      min="1"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">정원 (노출)</label>
-                    <input
-                      type="number"
-                      className="form-input"
-                      value={seminarGenerator.display_capacity}
-                      onChange={(e) => setSeminarGenerator({ ...seminarGenerator, display_capacity: parseInt(e.target.value) })}
-                      min="1"
-                    />
-                  </div>
-                </div>
+                ) : (
+                  /* 일반 설명회 슬롯 */
+                  <>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label">날짜</label>
+                        <input
+                          type="date"
+                          className="form-input"
+                          value={seminarGenerator.date}
+                          onChange={(e) => setSeminarGenerator({ ...seminarGenerator, date: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">시간</label>
+                        <input
+                          type="time"
+                          className="form-input"
+                          value={seminarGenerator.time}
+                          onChange={(e) => setSeminarGenerator({ ...seminarGenerator, time: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">장소</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={seminarGenerator.location}
+                          onChange={(e) => setSeminarGenerator({ ...seminarGenerator, location: e.target.value })}
+                          placeholder="예: 분당점 3층"
+                        />
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label">정원 (실제)</label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          value={seminarGenerator.max_capacity}
+                          onChange={(e) => setSeminarGenerator({ ...seminarGenerator, max_capacity: parseInt(e.target.value) })}
+                          min="1"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">정원 (노출)</label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          value={seminarGenerator.display_capacity}
+                          onChange={(e) => setSeminarGenerator({ ...seminarGenerator, display_capacity: parseInt(e.target.value) })}
+                          min="1"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
                 <button className="btn btn-primary" onClick={addSeminarSlot}>
                   슬롯 추가
                 </button>
@@ -827,6 +916,14 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                           /* 편집 모드 */
                           <div style={{ padding: '16px', background: '#f8f9fa', borderRadius: '4px' }}>
                             <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600 }}>슬롯 정보 수정</h5>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: '12px', fontSize: '13px' }}>
+                              <input
+                                type="checkbox"
+                                checked={seminarSlotFormData.is_pre_register}
+                                onChange={(e) => setSeminarSlotFormData({ ...seminarSlotFormData, is_pre_register: e.target.checked })}
+                              />
+                              <span>사전 알림 신청 슬롯 (일정·장소 미정) — 일정이 확정되면 체크 해제 후 날짜/장소를 입력하세요</span>
+                            </label>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                               <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label className="form-label" style={{ fontSize: '13px' }}>제목</label>
@@ -839,7 +936,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                                   style={{ fontSize: '14px' }}
                                 />
                               </div>
-                              <div className="form-group" style={{ marginBottom: 0 }}>
+                              <div className="form-group" style={{ marginBottom: 0, display: seminarSlotFormData.is_pre_register ? 'none' : 'block' }}>
                                 <label className="form-label" style={{ fontSize: '13px' }}>날짜</label>
                                 <input
                                   type="date"
@@ -849,7 +946,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                                   style={{ fontSize: '14px' }}
                                 />
                               </div>
-                              <div className="form-group" style={{ marginBottom: 0 }}>
+                              <div className="form-group" style={{ marginBottom: 0, display: seminarSlotFormData.is_pre_register ? 'none' : 'block' }}>
                                 <label className="form-label" style={{ fontSize: '13px' }}>시간</label>
                                 <input
                                   type="time"
@@ -859,7 +956,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                                   style={{ fontSize: '14px' }}
                                 />
                               </div>
-                              <div className="form-group" style={{ marginBottom: 0 }}>
+                              <div className="form-group" style={{ marginBottom: 0, display: seminarSlotFormData.is_pre_register ? 'none' : 'block' }}>
                                 <label className="form-label" style={{ fontSize: '13px' }}>장소</label>
                                 <input
                                   type="text"
@@ -870,7 +967,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                                   style={{ fontSize: '14px' }}
                                 />
                               </div>
-                              <div className="form-group" style={{ marginBottom: 0 }}>
+                              <div className="form-group" style={{ marginBottom: 0, display: seminarSlotFormData.is_pre_register ? 'none' : 'block' }}>
                                 <label className="form-label" style={{ fontSize: '13px' }}>정원 (실제)</label>
                                 <input
                                   type="number"
@@ -881,7 +978,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                                   style={{ fontSize: '14px' }}
                                 />
                               </div>
-                              <div className="form-group" style={{ marginBottom: 0 }}>
+                              <div className="form-group" style={{ marginBottom: 0, display: seminarSlotFormData.is_pre_register ? 'none' : 'block' }}>
                                 <label className="form-label" style={{ fontSize: '13px' }}>정원 (노출)</label>
                                 <input
                                   type="number"
@@ -915,10 +1012,19 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
                           <>
                             <div className="slot-info" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', flex: 1 }}>
                               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                <span className="slot-date">{formatDate(slot.date)}</span>
-                                <span className="slot-time">{formatTime(slot.time)}</span>
-                                <span className="slot-location">{slot.location}</span>
-                                <span className="slot-capacity">정원 {slot.max_capacity}명 (노출: {slot.display_capacity}명)</span>
+                                {slot.is_pre_register ? (
+                                  <>
+                                    <span className="slot-status" style={{ background: '#fff3cd', color: '#856404' }}>사전 알림 신청</span>
+                                    <span className="slot-date" style={{ color: '#999' }}>일정·장소 미정</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="slot-date">{formatDate(slot.date)}</span>
+                                    <span className="slot-time">{formatTime(slot.time)}</span>
+                                    <span className="slot-location">{slot.location}</span>
+                                    <span className="slot-capacity">정원 {slot.max_capacity}명 (노출: {slot.display_capacity}명)</span>
+                                  </>
+                                )}
                                 <span className={`slot-status ${slot.status === 'active' ? 'open' : 'closed'}`}>
                                   {slot.status === 'active' ? '예약중' : '마감'}
                                 </span>

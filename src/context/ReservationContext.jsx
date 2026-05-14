@@ -95,8 +95,10 @@ export function ReservationProvider({ children }) {
         });
       });
 
-      // 날짜순 정렬
+      // 정렬: 사전 알림 신청 슬롯을 상단에, 그 외는 날짜순
       allSlots.sort((a, b) => {
+        if (a.is_pre_register && !b.is_pre_register) return -1;
+        if (!a.is_pre_register && b.is_pre_register) return 1;
         const dateCompare = new Date(a.date) - new Date(b.date);
         if (dateCompare !== 0) return dateCompare;
         return (a.time || '').localeCompare(b.time || '');
@@ -120,9 +122,12 @@ export function ReservationProvider({ children }) {
           const actualAvailable = maxCapacity - reserved;
 
           // 상태 결정: 마감 → closed, 실제정원 초과 → 대기자, 노출정원 기준 6석 이하 → 마감임박, 그 외 → 예약가능
+          // 사전 알림 신청 슬롯은 정원/마감임박 개념 없이 항상 신청 가능 (관리자 마감 처리 시에만 closed)
           let status = 'available';
           if (slot.isClosed) {
             status = 'closed';    // 관리자가 마감 처리
+          } else if (slot.is_pre_register) {
+            status = 'available'; // 사전 알림 신청은 무제한 수용
           } else if (actualAvailable <= 0) {
             status = 'waitlist';  // 대기자 예약
           } else if (displayAvailable <= 6) {
