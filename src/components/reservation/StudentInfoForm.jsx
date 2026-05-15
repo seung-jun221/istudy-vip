@@ -152,6 +152,8 @@ export default function StudentInfoForm({
 
   // 실제 예약 생성 로직
   const createReservation = async () => {
+    const isPreRegister = selectedSeminar.is_pre_register;
+
     const reservationData = {
       reservation_id: 'R' + Date.now(),
       seminar_slot_id: selectedSeminar.id,
@@ -163,7 +165,7 @@ export default function StudentInfoForm({
       math_level: formData.mathLevel,
       password: hashPassword(formData.password),
       privacy_consent: 'Y',
-      status: selectedSeminar.isFull ? '대기' : '예약',
+      status: isPreRegister ? '사전알림' : selectedSeminar.isFull ? '대기' : '예약',
     };
 
     const { data, error } = await supabase
@@ -175,32 +177,38 @@ export default function StudentInfoForm({
     if (error) throw error;
 
     // SMS 발송 (비동기로 처리, 실패해도 예약은 완료)
-    try {
-      const isWaitlist = selectedSeminar.isFull;
-      const eventDate = selectedSeminar.date ? new Date(selectedSeminar.date).toLocaleDateString('ko-KR') : '';
-      const eventTime = selectedSeminar.time || '';
+    // 사전 알림 신청은 일정/장소가 미정이므로 SMS를 보내지 않음 (확정 후 관리자가 개별 안내)
+    if (!isPreRegister) {
+      try {
+        const isWaitlist = selectedSeminar.isFull;
+        const eventDate = selectedSeminar.date ? new Date(selectedSeminar.date).toLocaleDateString('ko-KR') : '';
+        const eventTime = selectedSeminar.time || '';
 
-      if (isWaitlist) {
-        await sendWaitlistConfirmSms({
-          studentName: formData.studentName,
-          parentPhone: phone,
-          eventDate,
-        });
-      } else {
-        await sendReservationConfirmSms({
-          studentName: formData.studentName,
-          parentPhone: phone,
-          eventDate,
-          eventTime,
-          location: selectedSeminar.location,
-        });
+        if (isWaitlist) {
+          await sendWaitlistConfirmSms({
+            studentName: formData.studentName,
+            parentPhone: phone,
+            eventDate,
+          });
+        } else {
+          await sendReservationConfirmSms({
+            studentName: formData.studentName,
+            parentPhone: phone,
+            eventDate,
+            eventTime,
+            location: selectedSeminar.location,
+          });
+        }
+      } catch (smsError) {
+        console.error('SMS 발송 실패:', smsError);
+        // SMS 실패해도 예약은 완료 처리
       }
-    } catch (smsError) {
-      console.error('SMS 발송 실패:', smsError);
-      // SMS 실패해도 예약은 완료 처리
     }
 
-    showToast('예약이 완료되었습니다!', 'success');
+    showToast(
+      isPreRegister ? '사전 알림 신청이 완료되었습니다!' : '예약이 완료되었습니다!',
+      'success'
+    );
     onComplete(data);
     setLoading(false);
   };
@@ -495,7 +503,11 @@ export default function StudentInfoForm({
           ← 뒤로
         </Button>
         <Button type="submit">
-          {selectedSeminar?.isFull ? '대기예약 신청' : '예약 확정'}
+          {selectedSeminar?.is_pre_register
+            ? '사전 알림 신청'
+            : selectedSeminar?.isFull
+            ? '대기예약 신청'
+            : '예약 확정'}
         </Button>
       </div>
 

@@ -62,7 +62,7 @@ export default function ReservationCheck({
         .from('reservations')
         .select('*')
         .eq('parent_phone', phone)
-        .in('status', ['예약', '대기'])
+        .in('status', ['예약', '대기', '사전알림'])
         .order('registered_at', { ascending: false });
 
       if (error) throw error;

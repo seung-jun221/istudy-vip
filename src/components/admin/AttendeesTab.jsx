@@ -183,6 +183,12 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
     if (!slot) return '슬롯 정보 없음';
 
     const title = slot.title || '';
+
+    // 사전 알림 신청 슬롯은 일정 미정
+    if (slot.is_pre_register) {
+      return `${title || '사전 알림 신청'} (일정 미정)`;
+    }
+
     const dateStr = slot.date ? formatDateShort(slot.date) : '';
     const time = slot.time ? slot.time.slice(0, 5) : '';
 
@@ -298,20 +304,35 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
       )}
 
       {/* 통계 정보 */}
-      <div className="stats-info-bar">
-        <div className="stat-info-item">
-          <span className="stat-info-label">예약 현황:</span>
-          <span className="stat-info-value">{confirmedCount} / {maxCapacity}명</span>
+      {currentSlot?.is_pre_register ? (
+        <div className="stats-info-bar">
+          <div className="stat-info-item">
+            <span className="stat-info-label">사전 알림 신청:</span>
+            <span className="stat-info-value highlight">
+              {currentAttendees.filter(a => a.status === '사전알림').length}명
+            </span>
+          </div>
+          <div className="stat-info-item">
+            <span className="stat-info-label">유형:</span>
+            <span className="stat-info-value">사전 알림 신청 (일정·장소 미정)</span>
+          </div>
         </div>
-        <div className="stat-info-item">
-          <span className="stat-info-label">노출 정원:</span>
-          <span className="stat-info-value">{displayCapacity}석</span>
+      ) : (
+        <div className="stats-info-bar">
+          <div className="stat-info-item">
+            <span className="stat-info-label">예약 현황:</span>
+            <span className="stat-info-value">{confirmedCount} / {maxCapacity}명</span>
+          </div>
+          <div className="stat-info-item">
+            <span className="stat-info-label">노출 정원:</span>
+            <span className="stat-info-value">{displayCapacity}석</span>
+          </div>
+          <div className="stat-info-item">
+            <span className="stat-info-label">예약율:</span>
+            <span className="stat-info-value highlight">{reservationRate}%</span>
+          </div>
         </div>
-        <div className="stat-info-item">
-          <span className="stat-info-label">예약율:</span>
-          <span className="stat-info-value highlight">{reservationRate}%</span>
-        </div>
-      </div>
+      )}
 
       {/* 필터 영역 */}
       <div className="filter-bar">
@@ -330,6 +351,7 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
           <option value="all">전체 상태</option>
           <option value="예약">예약</option>
           <option value="대기">대기</option>
+          <option value="사전알림">사전알림</option>
           <option value="참석">참석</option>
           <option value="불참">불참</option>
           <option value="취소">취소</option>
@@ -412,12 +434,14 @@ export default function AttendeesTab({ attendees, campaign, seminarSlots, onUpda
                           attendee.status === '참석' ? '#d4edda' :
                           attendee.status === '예약' ? '#d1ecf1' :
                           attendee.status === '대기' ? '#fff3cd' :
+                          attendee.status === '사전알림' ? '#e2e3f3' :
                           attendee.status === '불참' ? '#f8d7da' :
                           attendee.status === '취소' ? '#f5c6cb' : '#fff',
                       }}
                     >
                       <option value="예약">예약</option>
                       <option value="대기">대기</option>
+                      <option value="사전알림">사전알림</option>
                       <option value="참석">참석</option>
                       <option value="불참">불참</option>
                       <option value="취소">취소</option>

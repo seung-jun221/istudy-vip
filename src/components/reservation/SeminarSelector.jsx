@@ -54,7 +54,7 @@ export default function SeminarSelector() {
     setPendingSeminar(null);
   };
 
-  // 설명회 정렬: 활성 슬롯(예약가능, 마감임박, 대기접수) 상단, 마감 슬롯 하단, 날짜순
+  // 설명회 정렬: 사전 알림 신청 상단, 활성 슬롯, 마감 슬롯 하단, 날짜순
   const sortedSeminars = [...seminars].sort((a, b) => {
     // closed 상태는 뒤로
     const aIsClosed = a.status === 'closed';
@@ -62,6 +62,10 @@ export default function SeminarSelector() {
 
     if (aIsClosed && !bIsClosed) return 1;
     if (!aIsClosed && bIsClosed) return -1;
+
+    // 사전 알림 신청 슬롯은 같은 그룹 내에서 상단
+    if (a.is_pre_register && !b.is_pre_register) return -1;
+    if (!a.is_pre_register && b.is_pre_register) return 1;
 
     // 같은 그룹 내에서는 날짜순 정렬
     const dateA = new Date(`${a.date}T${a.time}`);
@@ -94,13 +98,24 @@ export default function SeminarSelector() {
             }
           >
             <h4>{seminar.title}</h4>
-            <p>
-              {formatDate(seminar.date)} {formatTime(seminar.time)}
-            </p>
-            <p>{seminar.location}</p>
+            {seminar.is_pre_register ? (
+              <p style={{ color: '#856404' }}>일정·장소 추후 공지</p>
+            ) : (
+              <>
+                <p>
+                  {formatDate(seminar.date)} {formatTime(seminar.time)}
+                </p>
+                <p>{seminar.location}</p>
+              </>
+            )}
 
-            {/* 우선예약 오픈 전 */}
-            {seminar.priorityStatus?.type === 'not_opened' ? (
+            {/* 사전 알림 신청 슬롯 */}
+            {seminar.is_pre_register ? (
+              <span className="availability-badge available">
+                {seminar.status === 'closed' ? '신청 마감' : '사전 알림 신청 접수중'}
+              </span>
+            ) : /* 우선예약 오픈 전 */
+            seminar.priorityStatus?.type === 'not_opened' ? (
               <span className="availability-badge not-opened">
                 {seminar.priorityStatus.message}
               </span>

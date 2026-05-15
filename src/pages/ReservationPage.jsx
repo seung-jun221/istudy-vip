@@ -88,15 +88,23 @@ export default function ReservationPage() {
                 <strong>{selectedSeminar.title}</strong>
               </p>
               <ul>
-                <li>
-                  일시: {formatDate(selectedSeminar.date)}{' '}
-                  {formatTime(selectedSeminar.time)}
-                </li>
-                <li>장소: {selectedSeminar.location}</li>
+                {selectedSeminar.is_pre_register ? (
+                  <li>일시·장소: 추후 공지 예정</li>
+                ) : (
+                  <>
+                    <li>
+                      일시: {formatDate(selectedSeminar.date)}{' '}
+                      {formatTime(selectedSeminar.time)}
+                    </li>
+                    <li>장소: {selectedSeminar.location}</li>
+                  </>
+                )}
                 <li>대상: 초/중등 학부모님</li>
               </ul>
               <p style={{ fontSize: '13px', marginTop: '10px', color: '#666' }}>
-                ※ 설명회 참석 후 개별 맞춤 컨설팅이 가능합니다.
+                {selectedSeminar.is_pre_register
+                  ? '※ 일정이 확정되면 신청해주신 연락처로 개별 안내드립니다.'
+                  : '※ 설명회 참석 후 개별 맞춤 컨설팅이 가능합니다.'}
               </p>
             </div>
           )}
@@ -128,7 +136,11 @@ export default function ReservationPage() {
           </button>
 
           <h2 id="phoneTitle">
-            {selectedSeminar?.isFull ? '대기예약 신청하기' : '설명회 예약하기'}
+            {selectedSeminar?.is_pre_register
+              ? '사전 알림 신청하기'
+              : selectedSeminar?.isFull
+              ? '대기예약 신청하기'
+              : '설명회 예약하기'}
           </h2>
           <p style={{ marginBottom: '20px', color: '#666' }}>
             학부모님 연락처를 입력해주세요.
@@ -145,7 +157,11 @@ export default function ReservationPage() {
       {step === 'info' && (
         <div className="card">
           <h1>
-            {selectedSeminar?.isFull ? '대기예약 신청하기' : '설명회 예약하기'}
+            {selectedSeminar?.is_pre_register
+              ? '사전 알림 신청하기'
+              : selectedSeminar?.isFull
+              ? '대기예약 신청하기'
+              : '설명회 예약하기'}
           </h1>
           <h2>참석자 정보를 입력해주세요</h2>
 

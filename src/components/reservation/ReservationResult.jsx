@@ -70,24 +70,33 @@ export default function ReservationResult({ reservation, onBack, onHome }) {
           <span className="font-semibold">{reservation.seminar?.title}</span>
         </div>
 
-        <div className="flex justify-between">
-          <span className="text-gray-600">날짜</span>
-          <span className="font-semibold">
-            {formatDate(reservation.seminar?.date)}
-          </span>
-        </div>
+        {reservation.seminar?.is_pre_register ? (
+          <div className="flex justify-between">
+            <span className="text-gray-600">일시·장소</span>
+            <span className="font-semibold">추후 공지 예정</span>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-between">
+              <span className="text-gray-600">날짜</span>
+              <span className="font-semibold">
+                {formatDate(reservation.seminar?.date)}
+              </span>
+            </div>
 
-        <div className="flex justify-between">
-          <span className="text-gray-600">시간</span>
-          <span className="font-semibold">
-            {formatTime(reservation.seminar?.time)}
-          </span>
-        </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">시간</span>
+              <span className="font-semibold">
+                {formatTime(reservation.seminar?.time)}
+              </span>
+            </div>
 
-        <div className="flex justify-between">
-          <span className="text-gray-600">장소</span>
-          <span className="font-semibold">{reservation.seminar?.location}</span>
-        </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">장소</span>
+              <span className="font-semibold">{reservation.seminar?.location}</span>
+            </div>
+          </>
+        )}
 
         <div className="flex justify-between border-t pt-3">
           <span className="text-gray-600">학생명</span>

@@ -129,7 +129,7 @@ export function AdminProvider({ children }) {
                 .from('reservations')
                 .select('*', { count: 'exact', head: true })
                 .in('seminar_slot_id', slotIds)
-                .in('status', ['예약', '참석'])
+                .in('status', ['예약', '참석', '사전알림'])
             : { count: 0 };
 
           // 컨설팅 예약 수 (slot_id 기반으로 조회)
@@ -1325,6 +1325,7 @@ export function AdminProvider({ children }) {
         current_bookings: 0,
         status: 'active',
         test_method: slot.test_method || 'home',
+        is_pre_register: slot.is_pre_register || false,
       }));
 
       const { error } = await supabase.from('seminar_slots').insert(slotsToInsert);
