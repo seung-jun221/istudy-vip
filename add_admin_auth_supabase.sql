@@ -44,7 +44,7 @@ CREATE OR REPLACE FUNCTION _admin_auth_upsert_user(
 RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, auth
+SET search_path = public, auth, extensions
 AS $$
 DECLARE
   v_user_id UUID;
@@ -102,7 +102,7 @@ CREATE OR REPLACE FUNCTION setup_admin_auth(p_super_password TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, auth
+SET search_path = public, auth, extensions
 AS $$
 DECLARE
   v_campaign RECORD;
@@ -154,7 +154,7 @@ CREATE OR REPLACE FUNCTION find_admin_by_password(p_password TEXT)
 RETURNS TABLE (email TEXT, admin_role TEXT, admin_campaign_id TEXT)
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, auth
+SET search_path = public, auth, extensions
 AS $$
 BEGIN
   IF p_password IS NULL OR p_password = '' THEN
@@ -190,7 +190,7 @@ CREATE OR REPLACE FUNCTION update_campaign_admin_password(
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, auth
+SET search_path = public, auth, extensions
 AS $$
 DECLARE
   v_caller_role TEXT;
@@ -227,7 +227,7 @@ CREATE OR REPLACE FUNCTION has_campaign_password(p_campaign_id TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, auth
+SET search_path = public, auth, extensions
 AS $$
 DECLARE
   v_email TEXT;
