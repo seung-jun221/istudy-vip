@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
+import { supabase } from '../../utils/supabase';
 import './AdminTabs.css';
 import './SettingsTab.css';
 
@@ -23,13 +24,15 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
   } = useAdmin();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  // 캠페인 접근 비밀번호 설정 여부 (값 자체는 클라이언트에서 조회 불가, 존재 여부만 RPC로 확인)
+  const [hasPassword, setHasPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     title: campaign.title || '',
     location: campaign.location || '',
     season: campaign.season || '',
     status: campaign.status || 'active',
-    access_password: campaign.access_password || '',
+    access_password: '', // ⭐ 비번 값은 읽을 수 없음. 변경 시에만 입력
     test_method: seminarSlots?.[0]?.test_method || 'home', // ⭐ seminar_slots에서 가져오기
     allow_duplicate_reservation: campaign.allow_duplicate_reservation !== false, // 기본값 true
     auto_open_threshold: campaign.auto_open_threshold || 0,
@@ -42,11 +45,18 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
       location: campaign.location || '',
       season: campaign.season || '',
       status: campaign.status || 'active',
-      access_password: campaign.access_password || '',
+      access_password: '', // ⭐ 비번 값은 읽을 수 없음
       test_method: seminarSlots?.[0]?.test_method || 'home', // ⭐ seminar_slots에서 가져오기
       allow_duplicate_reservation: campaign.allow_duplicate_reservation !== false, // 기본값 true
       auto_open_threshold: campaign.auto_open_threshold || 0,
     });
+
+    // 비밀번호 설정 여부만 별도 조회 (값은 가져오지 않음)
+    if (campaign.id) {
+      supabase
+        .rpc('has_campaign_password', { p_campaign_id: campaign.id })
+        .then(({ data }) => setHasPassword(Boolean(data)));
+    }
   }, [campaign, seminarSlots]); // ⭐ seminarSlots 의존성 추가
 
   // 컨설팅 슬롯 생성기 상태
@@ -127,6 +137,11 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
 
     if (success) {
       setEditing(false);
+      // 입력한 비밀번호가 있으면 화면상 hasPassword 갱신 (실제 값은 폼에서 비움)
+      if (formData.access_password) {
+        setHasPassword(true);
+        setFormData((prev) => ({ ...prev, access_password: '' }));
+      }
       onUpdate(); // 부모 컴포넌트에서 데이터 새로고침
     }
   };
@@ -137,7 +152,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
       location: campaign.location || '',
       season: campaign.season || '',
       status: campaign.status || 'active',
-      access_password: campaign.access_password || '',
+      access_password: '', // ⭐ 비번 값은 읽을 수 없음
       test_method: seminarSlots?.[0]?.test_method || 'home', // ⭐ seminar_slots에서 가져오기
       allow_duplicate_reservation: campaign.allow_duplicate_reservation !== false,
       auto_open_threshold: campaign.auto_open_threshold || 0,
@@ -640,16 +655,16 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
               className="form-input"
               value={formData.access_password}
               onChange={handleChange}
-              placeholder="담당자 전용 비밀번호를 입력하세요"
+              placeholder={hasPassword ? '변경할 비밀번호 입력 (비워두면 기존 유지)' : '담당자 전용 비밀번호를 입력하세요'}
             />
           ) : (
             <div className="form-value">
-              {campaign.access_password ? '●●●●●●●●' : '(미설정)'}
+              {hasPassword ? '●●●●●●●●' : '(미설정)'}
             </div>
           )}
           <div className="form-hint">
             이 비밀번호로 로그인하면 해당 캠페인 상세 페이지로 직접 접근할 수 있습니다.
-            담당자에게만 공유하세요.
+            담당자에게만 공유하세요. 보안상 현재 비밀번호 값은 화면에 표시되지 않습니다.
           </div>
         </div>
 

@@ -12,75 +12,109 @@ export function useAdmin() {
 }
 
 export function AdminProvider({ children }) {
-  // 로컬스토리지에서 인증 상태 동기적으로 복원 (초기값으로)
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('admin_authenticated') === 'true';
-  });
+  // 인증 상태는 Supabase Auth 세션에서 도출 (localStorage 사용하지 않음)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
-  const [authMode, setAuthMode] = useState(() => {
-    return localStorage.getItem('admin_auth_mode') || 'super';
-  });
-  const [allowedCampaignId, setAllowedCampaignId] = useState(() => {
-    return localStorage.getItem('admin_campaign_id') || null;
-  });
+  const [authMode, setAuthMode] = useState('super');
+  const [allowedCampaignId, setAllowedCampaignId] = useState(null);
 
-  // 로그인
-  const login = async (password) => {
-    // 환경변수에서 비밀번호 가져오기 (없으면 기본값)
-    const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'admin1234';
-
-    // 수퍼 관리자 로그인
-    if (password === adminPassword) {
-      setIsAuthenticated(true);
+  // JWT app_metadata에서 상태 도출
+  const applySession = (session) => {
+    if (!session?.user) {
+      setIsAuthenticated(false);
       setAuthMode('super');
       setAllowedCampaignId(null);
-      localStorage.setItem('admin_authenticated', 'true');
-      localStorage.setItem('admin_auth_mode', 'super');
-      localStorage.removeItem('admin_campaign_id');
-      return { success: true, mode: 'super' };
+      return;
     }
-
-    // 캠페인 비밀번호 확인
-    try {
-      const { data: campaigns, error } = await supabase
-        .from('campaigns')
-        .select('id, access_password, title, location')
-        .not('access_password', 'is', null);
-
-      if (error) throw error;
-
-      const matchedCampaign = campaigns?.find(c => c.access_password === password);
-
-      if (matchedCampaign) {
-        setIsAuthenticated(true);
-        setAuthMode('campaign');
-        setAllowedCampaignId(matchedCampaign.id);
-        localStorage.setItem('admin_authenticated', 'true');
-        localStorage.setItem('admin_auth_mode', 'campaign');
-        localStorage.setItem('admin_campaign_id', matchedCampaign.id);
-        return {
-          success: true,
-          mode: 'campaign',
-          campaignId: matchedCampaign.id,
-          campaignTitle: matchedCampaign.title || matchedCampaign.location
-        };
-      }
-    } catch (error) {
-      console.error('캠페인 비밀번호 확인 중 오류:', error);
-    }
-
-    return { success: false };
+    const meta = session.user.app_metadata || {};
+    setIsAuthenticated(true);
+    setAuthMode(meta.role === 'super_admin' ? 'super' : 'campaign');
+    setAllowedCampaignId(meta.campaign_id || null);
   };
 
-  // 로그아웃
-  const logout = () => {
-    setIsAuthenticated(false);
-    setAuthMode('super');
-    setAllowedCampaignId(null);
+  // 마운트 시 기존 Supabase 세션 복원 + 상태 변경 구독
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      applySession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
+    });
+
+    // 구버전 localStorage 플래그 정리 (혹시 남아 있다면)
     localStorage.removeItem('admin_authenticated');
     localStorage.removeItem('admin_auth_mode');
     localStorage.removeItem('admin_campaign_id');
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // 로그인 — 사용자는 비번만 입력. 클라이언트가 RPC로 매칭 admin lookup 후
+  // Supabase Auth로 로그인하여 JWT 발급받음.
+  const login = async (password) => {
+    if (!password) return { success: false };
+
+    try {
+      const { data: matches, error: rpcError } = await supabase
+        .rpc('find_admin_by_password', { p_password: password });
+
+      if (rpcError) {
+        console.error('어드민 lookup 실패:', rpcError);
+        return { success: false };
+      }
+
+      const admin = matches?.[0];
+      if (!admin?.email) return { success: false };
+
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: admin.email,
+        password,
+      });
+
+      if (authError || !authData?.user) {
+        console.error('Supabase Auth 로그인 실패:', authError);
+        return { success: false };
+      }
+
+      const meta = authData.user.app_metadata || {};
+      const role = meta.role || admin.admin_role;
+      const campaignId = meta.campaign_id || admin.admin_campaign_id;
+
+      // applySession은 onAuthStateChange 리스너에서도 호출되지만, 즉시 반영 위해 한 번 더
+      applySession(authData.session);
+
+      if (role === 'super_admin') {
+        return { success: true, mode: 'super' };
+      }
+
+      // 캠페인 admin인 경우 진입할 캠페인 정보 조회
+      const { data: campaign } = await supabase
+        .from('campaigns')
+        .select('title, location')
+        .eq('id', campaignId)
+        .single();
+
+      return {
+        success: true,
+        mode: 'campaign',
+        campaignId,
+        campaignTitle: campaign?.title || campaign?.location,
+      };
+    } catch (error) {
+      console.error('로그인 처리 중 오류:', error);
+      return { success: false };
+    }
+  };
+
+  // 로그아웃
+  const logout = async () => {
+    await supabase.auth.signOut();
+    // onAuthStateChange 리스너가 상태를 초기화하지만, 즉시 반영을 위해 명시 처리
+    setIsAuthenticated(false);
+    setAuthMode('super');
+    setAllowedCampaignId(null);
   };
 
   // Toast 표시
@@ -705,7 +739,6 @@ export function AdminProvider({ children }) {
           location: campaignData.location,
           season: campaignData.season || null,
           status: campaignData.status || 'active',
-          access_password: campaignData.access_password || null,
           auto_open_threshold: parseInt(campaignData.auto_open_threshold) || 0,
         })
         .select()
@@ -718,6 +751,18 @@ export function AdminProvider({ children }) {
 
       const id = campaignRecord.id;
       console.log('✅ 캠페인 기본 정보 생성 완료, ID:', id);
+
+      // 1-1. 접근 비밀번호: Supabase Auth 사용자 생성/갱신 (super admin만 가능)
+      if (campaignData.access_password) {
+        const { error: pwError } = await supabase.rpc('update_campaign_admin_password', {
+          p_campaign_id: id,
+          p_new_password: campaignData.access_password,
+        });
+        if (pwError) {
+          console.error('⚠️ 캠페인 어드민 계정 생성 실패:', pwError);
+          // 비번 저장 실패해도 캠페인은 생성됨 — 어드민이 나중에 다시 설정 가능
+        }
+      }
 
       // 2. seminar_slots 테이블에 설명회 슬롯 삽입
       if (campaignData.seminarSlots && campaignData.seminarSlots.length > 0) {
@@ -883,7 +928,6 @@ export function AdminProvider({ children }) {
         location: campaignData.location,
         season: campaignData.season,
         status: campaignData.status,
-        access_password: campaignData.access_password,
         allow_duplicate_reservation: campaignData.allow_duplicate_reservation, // ⭐ 중복 예약 설정
       };
 
@@ -903,6 +947,17 @@ export function AdminProvider({ children }) {
       }
 
       console.log('✅ 캠페인 업데이트 성공:', data);
+
+      // 접근 비밀번호: 값이 있으면 Supabase Auth 사용자 비번 변경, 빈 값이면 "변경 없음"
+      if (campaignData.access_password) {
+        const { error: pwError } = await supabase.rpc('update_campaign_admin_password', {
+          p_campaign_id: campaignId,
+          p_new_password: campaignData.access_password,
+        });
+        if (pwError) {
+          console.error('⚠️ 캠페인 어드민 비밀번호 업데이트 실패:', pwError);
+        }
+      }
 
       // seminar_slots 업데이트 (필요시 - 일반적으로 슬롯은 별도 관리)
       // 기본 슬롯 정보 업데이트 (date, time, max_capacity, test_method 등)
