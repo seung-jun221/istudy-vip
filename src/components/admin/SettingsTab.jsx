@@ -24,9 +24,6 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // localStorage에서 auto_open_threshold 읽기
-  const [autoOpenThreshold, setAutoOpenThreshold] = useState(0);
-
   const [formData, setFormData] = useState({
     title: campaign.title || '',
     location: campaign.location || '',
@@ -35,6 +32,7 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
     access_password: campaign.access_password || '',
     test_method: seminarSlots?.[0]?.test_method || 'home', // ⭐ seminar_slots에서 가져오기
     allow_duplicate_reservation: campaign.allow_duplicate_reservation !== false, // 기본값 true
+    auto_open_threshold: campaign.auto_open_threshold || 0,
   });
 
   // campaign가 업데이트되면 formData도 업데이트
@@ -47,11 +45,8 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
       access_password: campaign.access_password || '',
       test_method: seminarSlots?.[0]?.test_method || 'home', // ⭐ seminar_slots에서 가져오기
       allow_duplicate_reservation: campaign.allow_duplicate_reservation !== false, // 기본값 true
+      auto_open_threshold: campaign.auto_open_threshold || 0,
     });
-
-    const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
-    const threshold = settings[campaign.id]?.auto_open_threshold || 0;
-    setAutoOpenThreshold(threshold);
   }, [campaign, seminarSlots]); // ⭐ seminarSlots 의존성 추가
 
   // 컨설팅 슬롯 생성기 상태
@@ -128,15 +123,6 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
 
     const success = await updateCampaign(campaign.id, formData);
 
-    // auto_open_threshold를 localStorage에 저장
-    if (success) {
-      const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
-      settings[campaign.id] = {
-        auto_open_threshold: autoOpenThreshold,
-      };
-      localStorage.setItem('campaign_settings', JSON.stringify(settings));
-    }
-
     setSaving(false);
 
     if (success) {
@@ -153,11 +139,9 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
       status: campaign.status || 'active',
       access_password: campaign.access_password || '',
       test_method: seminarSlots?.[0]?.test_method || 'home', // ⭐ seminar_slots에서 가져오기
+      allow_duplicate_reservation: campaign.allow_duplicate_reservation !== false,
+      auto_open_threshold: campaign.auto_open_threshold || 0,
     });
-    // autoOpenThreshold도 원래 값으로 되돌리기
-    const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
-    const threshold = settings[campaign.id]?.auto_open_threshold || 0;
-    setAutoOpenThreshold(threshold);
     setEditing(false);
   };
 
@@ -633,12 +617,12 @@ export default function SettingsTab({ campaign, seminarSlots, consultingSlots, t
             <input
               type="number"
               className="form-input"
-              value={autoOpenThreshold}
-              onChange={(e) => setAutoOpenThreshold(parseInt(e.target.value) || 0)}
+              value={formData.auto_open_threshold}
+              onChange={(e) => setFormData({ ...formData, auto_open_threshold: parseInt(e.target.value) || 0 })}
               min="0"
             />
           ) : (
-            <div className="form-value">{autoOpenThreshold}개</div>
+            <div className="form-value">{formData.auto_open_threshold}개</div>
           )}
           <div className="form-hint">
             잔여 예약 가능 슬롯 수가 이 값 이하가 되면 다음 날짜의 슬롯이 자동으로

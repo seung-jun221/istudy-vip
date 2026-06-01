@@ -44,9 +44,15 @@ export function ConsultingProvider({ children }) {
     try {
       console.log('🔍 자동 슬롯 오픈 체크 시작...', campaignId);
 
-      // localStorage에서 auto_open_threshold 가져오기
-      const settings = JSON.parse(localStorage.getItem('campaign_settings') || '{}');
-      const threshold = settings[campaignId]?.auto_open_threshold;
+      // 1. 캠페인에서 임계값 조회 (DB가 단일 진실원)
+      const { data: campaignRow, error: campaignError } = await supabase
+        .from('campaigns')
+        .select('auto_open_threshold')
+        .eq('id', campaignId)
+        .single();
+
+      if (campaignError) throw campaignError;
+      const threshold = campaignRow?.auto_open_threshold;
 
       if (!threshold || threshold <= 0) {
         console.log('⏭️ 자동 슬롯 오픈 설정이 없습니다.');
@@ -55,11 +61,11 @@ export function ConsultingProvider({ children }) {
 
       console.log('📊 임계값:', threshold);
 
-      // 1. 해당 캠페인의 모든 컨설팅 슬롯 조회
+      // 2. 해당 캠페인의 모든 컨설팅 슬롯 조회
       const { data: allSlots, error: slotsError } = await supabase
         .from('consulting_slots')
         .select('*')
-        .eq('linked_seminar_id', campaignId) // ⭐ 원본 그대로 사용 (_campaign 포함)
+        .eq('linked_seminar_id', campaignId)
         .order('date', { ascending: true })
         .order('time', { ascending: true });
 
@@ -69,19 +75,19 @@ export function ConsultingProvider({ children }) {
         return;
       }
 
-      // 2. 현재 오픈된 슬롯만 필터링
+      // 3. 현재 오픈된 슬롯만 필터링
       const availableSlots = allSlots.filter((slot) => slot.is_available);
 
-      // 3. 예약된 슬롯 조회
+      // 4. 예약된 슬롯 조회
       const { data: reservations, error: reservationsError } = await supabase
         .from('consulting_reservations')
         .select('slot_id')
-        .eq('linked_seminar_id', campaignId) // ⭐ 원본 그대로 사용 (_campaign 포함)
+        .eq('linked_seminar_id', campaignId)
         .not('status', 'in', '(cancelled,auto_cancelled,취소)');
 
       if (reservationsError) throw reservationsError;
 
-      // 4. 남은 슬롯 수 계산
+      // 5. 남은 슬롯 수 계산
       const reservedSlotIds = new Set(reservations?.map((r) => r.slot_id) || []);
       const remainingSlots = availableSlots.filter((slot) => !reservedSlotIds.has(slot.id));
       const remainingCount = remainingSlots.length;
@@ -91,7 +97,7 @@ export function ConsultingProvider({ children }) {
       console.log(`📈 예약된 슬롯: ${reservedSlotIds.size}개`);
       console.log(`📈 남은 슬롯: ${remainingCount}개`);
 
-      // 5. 임계값 체크
+      // 6. 임계값 체크
       if (remainingCount > threshold) {
         console.log('✅ 남은 슬롯이 충분합니다.');
         return;
@@ -99,16 +105,21 @@ export function ConsultingProvider({ children }) {
 
       console.log('🚨 임계값 이하! 다음 날짜 슬롯 오픈 필요');
 
-      // 6. 현재 오픈된 슬롯의 마지막 날짜 찾기
+      // 7. 다음 오픈 대상 날짜 결정
+      // - 오픈된 날짜가 있으면 그 다음으로 가장 빠른 비공개 날짜
+      // - 오픈된 날짜가 없으면(초기 부트스트랩) 가장 빠른 비공개 날짜
+      const closedSlots = allSlots.filter((slot) => !slot.is_available);
+      if (closedSlots.length === 0) {
+        console.log('⚠️ 오픈할 비공개 슬롯이 없습니다.');
+        return;
+      }
+      const closedDates = [...new Set(closedSlots.map((slot) => slot.date))].sort();
       const openedDates = [...new Set(availableSlots.map((slot) => slot.date))].sort();
       const lastOpenedDate = openedDates[openedDates.length - 1];
 
-      console.log('📅 마지막 오픈 날짜:', lastOpenedDate);
-
-      // 7. 다음 날짜의 슬롯 찾기
-      const closedSlots = allSlots.filter((slot) => !slot.is_available);
-      const closedDates = [...new Set(closedSlots.map((slot) => slot.date))].sort();
-      const nextDate = closedDates.find((date) => date > lastOpenedDate);
+      const nextDate = lastOpenedDate
+        ? closedDates.find((date) => date > lastOpenedDate)
+        : closedDates[0];
 
       if (!nextDate) {
         console.log('⚠️ 오픈할 다음 날짜가 없습니다.');
@@ -123,14 +134,24 @@ export function ConsultingProvider({ children }) {
 
       console.log(`🔓 ${slotIdsToOpen.length}개 슬롯 오픈 중...`);
 
-      const { error: updateError } = await supabase
+      // .select()로 영향받은 row 수 확인 (RLS UPDATE 정책 누락 시 silent 실패 방지)
+      const { data: updatedRows, error: updateError } = await supabase
         .from('consulting_slots')
         .update({ is_available: true })
-        .in('id', slotIdsToOpen);
+        .in('id', slotIdsToOpen)
+        .select();
 
       if (updateError) throw updateError;
 
-      console.log(`✅ ${nextDate} 날짜의 ${slotIdsToOpen.length}개 슬롯이 자동 오픈되었습니다!`);
+      if (!updatedRows || updatedRows.length === 0) {
+        console.error(
+          '⚠️ 자동 슬롯 오픈: 0 row 업데이트 (RLS UPDATE 정책 누락 가능성). ' +
+            'add_slot_update_delete_rls_policies.sql 확인 필요.'
+        );
+        return;
+      }
+
+      console.log(`✅ ${nextDate} 날짜의 ${updatedRows.length}개 슬롯이 자동 오픈되었습니다!`);
     } catch (error) {
       console.error('❌ 자동 슬롯 오픈 체크 실패:', error);
       // 실패해도 예약은 계속 진행되도록 에러를 던지지 않음
