@@ -41,16 +41,14 @@ export function AdminProvider({ children }) {
       return { success: true, mode: 'super' };
     }
 
-    // 캠페인 비밀번호 확인
+    // 캠페인 비밀번호 확인 (RPC 사용 — campaign_credentials는 REST 직접 조회 차단)
     try {
-      const { data: campaigns, error } = await supabase
-        .from('campaigns')
-        .select('id, access_password, title, location')
-        .not('access_password', 'is', null);
+      const { data: matched, error } = await supabase
+        .rpc('verify_campaign_password', { p_password: password });
 
       if (error) throw error;
 
-      const matchedCampaign = campaigns?.find(c => c.access_password === password);
+      const matchedCampaign = matched?.[0];
 
       if (matchedCampaign) {
         setIsAuthenticated(true);
@@ -705,7 +703,6 @@ export function AdminProvider({ children }) {
           location: campaignData.location,
           season: campaignData.season || null,
           status: campaignData.status || 'active',
-          access_password: campaignData.access_password || null,
           auto_open_threshold: parseInt(campaignData.auto_open_threshold) || 0,
         })
         .select()
@@ -718,6 +715,18 @@ export function AdminProvider({ children }) {
 
       const id = campaignRecord.id;
       console.log('✅ 캠페인 기본 정보 생성 완료, ID:', id);
+
+      // 1-1. 접근 비밀번호 별도 테이블에 저장 (RPC 경유)
+      if (campaignData.access_password) {
+        const { error: pwError } = await supabase.rpc('upsert_campaign_password', {
+          p_campaign_id: id,
+          p_password: campaignData.access_password,
+        });
+        if (pwError) {
+          console.error('⚠️ 캠페인 접근 비밀번호 저장 실패:', pwError);
+          // 비번 저장 실패해도 캠페인은 생성됨 — 어드민이 나중에 다시 설정 가능
+        }
+      }
 
       // 2. seminar_slots 테이블에 설명회 슬롯 삽입
       if (campaignData.seminarSlots && campaignData.seminarSlots.length > 0) {
@@ -883,7 +892,6 @@ export function AdminProvider({ children }) {
         location: campaignData.location,
         season: campaignData.season,
         status: campaignData.status,
-        access_password: campaignData.access_password,
         allow_duplicate_reservation: campaignData.allow_duplicate_reservation, // ⭐ 중복 예약 설정
       };
 
@@ -903,6 +911,18 @@ export function AdminProvider({ children }) {
       }
 
       console.log('✅ 캠페인 업데이트 성공:', data);
+
+      // 접근 비밀번호: 값이 있으면 설정/변경, 빈 값이면 "변경 없음"으로 간주
+      // (UI에서 비번 삭제 기능은 Phase B에서 별도 처리)
+      if (campaignData.access_password) {
+        const { error: pwError } = await supabase.rpc('upsert_campaign_password', {
+          p_campaign_id: campaignId,
+          p_password: campaignData.access_password,
+        });
+        if (pwError) {
+          console.error('⚠️ 캠페인 접근 비밀번호 업데이트 실패:', pwError);
+        }
+      }
 
       // seminar_slots 업데이트 (필요시 - 일반적으로 슬롯은 별도 관리)
       // 기본 슬롯 정보 업데이트 (date, time, max_capacity, test_method 등)

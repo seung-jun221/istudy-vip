@@ -19,20 +19,22 @@ export default function ReservationResult({ reservation, onBack, onHome }) {
       return;
     }
 
-    if (hashPassword(password) !== reservation.password) {
-      showToast('비밀번호가 일치하지 않습니다.', 'error');
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('reservations')
-        .update({ status: '취소' })
-        .eq('id', reservation.id);
+      // 비밀번호 검증과 상태 업데이트를 RPC에서 원자적으로 처리
+      // (클라이언트 직접 UPDATE가 아닌 SECURITY DEFINER 함수 경유 — 변조 방지)
+      const { data: success, error } = await supabase.rpc('cancel_reservation', {
+        p_reservation_id: reservation.id,
+        p_password_hash: hashPassword(password),
+      });
 
       if (error) throw error;
+
+      if (!success) {
+        showToast('비밀번호가 일치하지 않습니다.', 'error');
+        return;
+      }
 
       showToast('예약이 취소되었습니다.', 'success');
       onHome();
