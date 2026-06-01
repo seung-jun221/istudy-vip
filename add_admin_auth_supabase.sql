@@ -57,19 +57,25 @@ BEGIN
   IF v_user_id IS NULL THEN
     v_user_id := gen_random_uuid();
 
+    -- ⚠️ GoTrue (Supabase Auth) 알려진 버그: 일부 문자열 컬럼이 NULL이면
+    -- 로그인 시 "Database error querying schema" 500 에러 발생. 빈 문자열로 명시 지정.
     INSERT INTO auth.users (
       instance_id, id, aud, role,
       email, encrypted_password, email_confirmed_at,
       raw_app_meta_data, raw_user_meta_data,
       created_at, updated_at,
-      is_super_admin, is_sso_user, is_anonymous
+      is_super_admin, is_sso_user, is_anonymous,
+      confirmation_token, recovery_token,
+      email_change, email_change_token_new, email_change_token_current,
+      phone_change, phone_change_token, reauthentication_token
     ) VALUES (
       '00000000-0000-0000-0000-000000000000',
       v_user_id, 'authenticated', 'authenticated',
       p_email, v_password_hash, NOW(),
       p_metadata, '{}'::jsonb,
       NOW(), NOW(),
-      false, false, false
+      false, false, false,
+      '', '', '', '', '', '', '', ''
     );
 
     INSERT INTO auth.identities (
