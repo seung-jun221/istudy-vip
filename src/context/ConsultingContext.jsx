@@ -991,6 +991,7 @@ export function ConsultingProvider({ children }) {
     selectedTime,
     setSelectedTime,
     createConsultingReservation,
+    checkAndOpenNextSlots,
 
     // 컨설팅 유형 관련 (대표/원장)
     consultantType,

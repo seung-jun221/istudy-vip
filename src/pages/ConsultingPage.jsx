@@ -47,6 +47,7 @@ export default function ConsultingPage() {
     setSelectedSeminarId,
     setSelectedLocation,
     loadAvailableDates,
+    checkAndOpenNextSlots,
     // ⭐ 진단검사 관련
     loadTestMethod,
     loadAvailableTestDates,
@@ -101,6 +102,9 @@ export default function ConsultingPage() {
       console.error('진단검사 일정 로드 실패:', error);
       // 에러가 나도 예약 플로우는 계속 진행
     }
+
+    // 페이지 진입 시점에도 자동 슬롯 오픈 체크 (예약 발생이 없어도 임계값 도달 시 다음 날짜 오픈)
+    await checkAndOpenNextSlots(attendeeData.linkedSeminarId);
 
     // 캠페인 ID로 날짜 로드 (location이 아닌 linked_seminar_id 사용)
     // ⭐ 대표 컨설팅 자격 여부 전달 (참석 + 설명회 시간 경과)
