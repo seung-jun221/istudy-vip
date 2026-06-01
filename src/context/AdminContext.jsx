@@ -14,6 +14,8 @@ export function useAdmin() {
 export function AdminProvider({ children }) {
   // 인증 상태는 Supabase Auth 세션에서 도출 (localStorage 사용하지 않음)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // 세션 복원 완료 전엔 ProtectedRoute가 리다이렉트하지 않도록 로딩 플래그 사용
+  const [authLoading, setAuthLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [authMode, setAuthMode] = useState('super');
@@ -37,10 +39,12 @@ export function AdminProvider({ children }) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       applySession(session);
+      setAuthLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       applySession(session);
+      setAuthLoading(false);
     });
 
     // 구버전 localStorage 플래그 정리 (혹시 남아 있다면)
@@ -1625,6 +1629,7 @@ export function AdminProvider({ children }) {
 
   const value = {
     isAuthenticated,
+    authLoading,
     authMode,
     allowedCampaignId,
     loading,
