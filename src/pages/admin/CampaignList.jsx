@@ -71,6 +71,12 @@ export default function CampaignList() {
             <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
               + 신규 캠페인 추가
             </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => navigate('/admin/course-enrollments')}
+            >
+              수강신청 관리
+            </button>
             <button className="btn btn-secondary" onClick={fetchCampaigns}>
               새로고침
             </button>
