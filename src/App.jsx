@@ -14,10 +14,12 @@ import ConsultingPasswordReset from './pages/ConsultingPasswordReset';
 import TestGuidePage from './pages/TestGuidePage';
 import DiagnosticTestPage from './pages/DiagnosticTestPage';
 import DiagnosticReportPage from './pages/DiagnosticReportPage';
+import CourseEnrollmentPage from './pages/CourseEnrollmentPage';
 import AdminLogin from './pages/admin/AdminLogin';
 import CampaignList from './pages/admin/CampaignList';
 import CampaignDetail from './pages/admin/CampaignDetail';
 import DiagnosticGrading from './pages/admin/DiagnosticGrading';
+import CourseEnrollmentsAdmin from './pages/admin/CourseEnrollmentsAdmin';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import Loading from './components/common/Loading';
 import Toast from './components/common/Toast';
@@ -61,9 +63,18 @@ function AppContent() {
         <Route path="/test-guide" element={<TestGuidePage />} />
         <Route path="/diagnostic-test" element={<DiagnosticTestPage />} />
         <Route path="/diagnostic-report/:id" element={<DiagnosticReportPage />} />
+        <Route path="/course-enrollment" element={<CourseEnrollmentPage />} />
 
         {/* 관리자 페이지 */}
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin/course-enrollments"
+          element={
+            <ProtectedRoute>
+              <CourseEnrollmentsAdmin />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/admin/campaigns"
           element={
