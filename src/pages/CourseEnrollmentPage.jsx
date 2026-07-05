@@ -54,6 +54,14 @@ const PROGRESS_GUIDE = [
   { range: '고1(공통수학1) 이상', course: '④ 고등 교과반' },
 ];
 
+// ⑤번은 정보 카드는 없이 폼 라디오에만 노출되는 상담 요청 옵션
+const CONSULT_OPTION = {
+  id: 5,
+  number: '⑤',
+  name: '우리 아이에게 맞는 과정을 상담받고 싶어요',
+  subtitle: '상담 후 결정',
+};
+
 const CENTER_PHONE = '051-715-1580';
 
 export default function CourseEnrollmentPage() {
@@ -175,9 +183,11 @@ export default function CourseEnrollmentPage() {
 
   // 완료 화면
   if (step === 'complete' && completedEnrollment) {
-    const chosen = COURSES.find(
-      (c) => c.id === completedEnrollment.course_option
-    );
+    const chosen =
+      COURSES.find((c) => c.id === completedEnrollment.course_option) ||
+      (completedEnrollment.course_option === CONSULT_OPTION.id
+        ? CONSULT_OPTION
+        : null);
     return (
       <div className="container">
         <div className="card">
@@ -465,8 +475,9 @@ export default function CourseEnrollmentPage() {
               희망 수강 <span className="text-red-500">*</span>
             </label>
             <div className="flex flex-col gap-2">
-              {COURSES.map((course) => {
+              {[...COURSES, CONSULT_OPTION].map((course) => {
                 const isSelected = formData.courseOption === String(course.id);
+                const isConsult = course.id === CONSULT_OPTION.id;
                 return (
                   <label
                     key={course.id}
@@ -482,6 +493,8 @@ export default function CourseEnrollmentPage() {
                       cursor: 'pointer',
                       background: isSelected ? 'var(--color-primary-light)' : 'white',
                       transition: 'all 0.15s',
+                      marginTop: isConsult ? '4px' : 0,
+                      borderStyle: isConsult && !isSelected ? 'dashed' : 'solid',
                     }}
                   >
                     <input
