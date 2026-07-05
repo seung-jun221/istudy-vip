@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Input from '../components/common/Input';
 import { supabase } from '../utils/supabase';
 import { formatPhone, validatePhone } from '../utils/format';
@@ -69,6 +69,18 @@ export default function CourseEnrollmentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [completedEnrollment, setCompletedEnrollment] = useState(null);
   const [error, setError] = useState('');
+
+  // 모바일 여부 (진도별 길잡이 표를 좁은 화면에서 세로 카드로 전환)
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= 480 : false
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 480px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // 이전 예약 정보 불러오기용 상태
   const [surname, setSurname] = useState('');
@@ -272,7 +284,7 @@ export default function CourseEnrollmentPage() {
         ? CONSULT_OPTION
         : null);
     return (
-      <div className="container">
+      <div className="container" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
         <div className="card">
           <div className="text-center space-y-6">
             <div className="text-6xl">✅</div>
@@ -347,7 +359,7 @@ export default function CourseEnrollmentPage() {
 
   // 신청 페이지
   return (
-    <div className="container">
+    <div className="container" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
       {/* 헤더 */}
       <div className="card">
         <div className="title-area">
@@ -374,45 +386,92 @@ export default function CourseEnrollmentPage() {
           우리 아이 현재 진도를 확인하고, 맞는 과정을 선택하세요.
         </p>
 
-        <div
-          style={{
-            border: '1px solid #e0e0e0',
-            borderRadius: '10px',
-            overflow: 'hidden',
-          }}
-        >
+        {isMobile ? (
+          // 모바일: 세로 카드 레이아웃 (진도 → 추천 과정)
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {PROGRESS_GUIDE.map((row, idx) => (
+              <div
+                key={idx}
+                style={{
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                  background: 'white',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '11.5px',
+                    color: 'var(--color-primary-dark)',
+                    fontWeight: 700,
+                    letterSpacing: '0.3px',
+                    marginBottom: '4px',
+                  }}
+                >
+                  현재 진도
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#333', marginBottom: '10px', lineHeight: 1.5 }}>
+                  {row.range} 진행 중
+                </div>
+                <div
+                  style={{
+                    fontSize: '11.5px',
+                    color: 'var(--color-primary-dark)',
+                    fontWeight: 700,
+                    letterSpacing: '0.3px',
+                    marginBottom: '4px',
+                  }}
+                >
+                  추천 과정
+                </div>
+                <div style={{ fontSize: '14px', color: 'var(--color-primary)', fontWeight: 600, lineHeight: 1.5 }}>
+                  {row.course}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // 데스크톱: 기존 2열 표 유지
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1.3fr',
-              background: 'var(--color-primary-light)',
-              padding: '10px 14px',
-              fontSize: '12.5px',
-              fontWeight: 700,
-              color: 'var(--color-primary-dark)',
-              letterSpacing: '0.3px',
+              border: '1px solid #e0e0e0',
+              borderRadius: '10px',
+              overflow: 'hidden',
             }}
           >
-            <div>현재 진도</div>
-            <div>추천 과정</div>
-          </div>
-          {PROGRESS_GUIDE.map((row, idx) => (
             <div
-              key={idx}
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1.3fr',
-                padding: '12px 14px',
-                fontSize: '13.5px',
-                borderTop: idx === 0 ? 'none' : '1px solid #f0f0f0',
-                lineHeight: 1.5,
+                background: 'var(--color-primary-light)',
+                padding: '10px 14px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                color: 'var(--color-primary-dark)',
+                letterSpacing: '0.3px',
               }}
             >
-              <div style={{ fontWeight: 600, color: '#333' }}>{row.range} 진행 중</div>
-              <div style={{ color: 'var(--color-primary)', fontWeight: 500 }}>{row.course}</div>
+              <div>현재 진도</div>
+              <div>추천 과정</div>
             </div>
-          ))}
-        </div>
+            {PROGRESS_GUIDE.map((row, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1.3fr',
+                  padding: '12px 14px',
+                  fontSize: '13.5px',
+                  borderTop: idx === 0 ? 'none' : '1px solid #f0f0f0',
+                  lineHeight: 1.5,
+                }}
+              >
+                <div style={{ fontWeight: 600, color: '#333' }}>{row.range} 진행 중</div>
+                <div style={{ color: 'var(--color-primary)', fontWeight: 500 }}>{row.course}</div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <p
           style={{
@@ -827,7 +886,7 @@ export default function CourseEnrollmentPage() {
                 onChange={(e) => handleChange('privacyConsent', e.target.checked)}
               />
               <label htmlFor="privacyConsent" className="checkbox-label">
-                <strong>[필수]</strong> 위 개인정보 수집 및 이용에 동의합니다.
+                <strong style={{ whiteSpace: 'nowrap' }}>[필수]</strong> 위 개인정보 수집 및 이용에 동의합니다.
               </label>
             </div>
           </div>
