@@ -545,14 +545,14 @@ export default function CourseEnrollmentPage() {
         </div>
       </div>
 
-      {/* 신청 폼 */}
-      <div className="card" style={{ marginTop: '16px' }}>
-        <h3 style={{ fontSize: '17px', fontWeight: 700, margin: '0 0 16px', color: 'var(--color-primary-dark)' }}>
-          신청 정보 입력
-        </h3>
+      {/* 신청 폼 — 희망 수강 선택 카드 + 개인정보 입력 카드 (같은 form 안에 두 카드) */}
+      <form onSubmit={handleSubmit}>
+        {/* 카드 1: 희망 수강 선택 */}
+        <div className="card" style={{ marginTop: '16px' }}>
+          <h3 style={{ fontSize: '17px', fontWeight: 700, margin: '0 0 16px', color: 'var(--color-primary-dark)' }}>
+            희망 수강 선택
+          </h3>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 희망 수강 (라디오) — 최상단 배치로 무엇 신청하는지 명확히 */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-gray-700">
               희망 수강 <span className="text-red-500">*</span>
@@ -603,7 +603,15 @@ export default function CourseEnrollmentPage() {
               })}
             </div>
           </div>
+        </div>
 
+        {/* 카드 2: 신청 정보 입력 */}
+        <div className="card" style={{ marginTop: '16px' }}>
+          <h3 style={{ fontSize: '17px', fontWeight: 700, margin: '0 0 16px', color: 'var(--color-primary-dark)' }}>
+            신청 정보 입력
+          </h3>
+
+          <div className="space-y-4">
           {/* 학부모 연락처를 먼저 받고, 아래 "이전 정보 불러오기" 성공 시 학생명/학교/학년 자동 채움 */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-gray-700">
@@ -865,8 +873,9 @@ export default function CourseEnrollmentPage() {
               {CENTER_PHONE}
             </a>
           </p>
-        </form>
-      </div>
+          </div>
+        </div>
+      </form>
     </div>
   );
 }
