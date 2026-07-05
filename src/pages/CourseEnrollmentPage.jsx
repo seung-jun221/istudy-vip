@@ -70,6 +70,12 @@ export default function CourseEnrollmentPage() {
   const [completedEnrollment, setCompletedEnrollment] = useState(null);
   const [error, setError] = useState('');
 
+  // 이전 예약 정보 불러오기용 상태
+  const [surname, setSurname] = useState('');
+  const [loadingPrevious, setLoadingPrevious] = useState(false);
+  const [previousLoaded, setPreviousLoaded] = useState(false);
+  const [loadMessage, setLoadMessage] = useState({ type: '', text: '' });
+
   const [formData, setFormData] = useState({
     studentName: '',
     parentPhone: '',
@@ -91,10 +97,84 @@ export default function CourseEnrollmentPage() {
         value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
     }
     setFormData((prev) => ({ ...prev, parentPhone: formatted }));
+    // 연락처를 다시 바꾸면 이전 로드 상태 초기화
+    if (previousLoaded) {
+      setPreviousLoaded(false);
+      setLoadMessage({ type: '', text: '' });
+    }
   };
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // 이전 설명회 예약에서 학생 정보 불러오기
+  // 성 1자 + 연락처로 매칭. 학생명·학교·학년만 채우고 선행정도는 비움 (시간 지나 변할 수 있음).
+  const handleLoadPrevious = async () => {
+    setLoadMessage({ type: '', text: '' });
+
+    if (!validatePhone(formData.parentPhone)) {
+      setLoadMessage({ type: 'error', text: '먼저 학부모 연락처를 정확히 입력해주세요.' });
+      return;
+    }
+    if (!surname || surname.trim().length < 1) {
+      setLoadMessage({ type: 'error', text: '학생 성을 입력해주세요.' });
+      return;
+    }
+
+    setLoadingPrevious(true);
+    try {
+      const phone = formatPhone(formData.parentPhone);
+      const { data: reservations, error: qErr } = await supabase
+        .from('reservations')
+        .select('student_name, school, grade, registered_at')
+        .eq('parent_phone', phone)
+        .neq('status', '취소')
+        .order('registered_at', { ascending: false });
+
+      if (qErr) throw qErr;
+
+      if (!reservations || reservations.length === 0) {
+        setLoadMessage({
+          type: 'info',
+          text: '이전 정보를 불러올 수 없어 직접 입력이 필요합니다.',
+        });
+        return;
+      }
+
+      const matched = reservations.find((r) =>
+        r.student_name?.startsWith(surname.trim())
+      );
+
+      if (!matched) {
+        setLoadMessage({
+          type: 'info',
+          text: `성이 "${surname.trim()}"인 이전 정보를 찾을 수 없어 직접 입력이 필요합니다.`,
+        });
+        return;
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        studentName: matched.student_name || '',
+        school: matched.school || '',
+        grade: matched.grade || '',
+        mathLevel: '', // 선행정도는 시간이 지나 변할 수 있어 항상 새로 입력
+      }));
+      setPreviousLoaded(true);
+      setLoadMessage({
+        type: 'success',
+        text: '이전 정보를 불러왔습니다. 확인 후 필요 시 수정해주세요.',
+      });
+    } catch (err) {
+      console.error('이전 정보 로드 실패:', err);
+      setLoadMessage({
+        type: 'error',
+        text: '이전 정보를 불러오는 중 오류가 발생했습니다.',
+      });
+    } finally {
+      setLoadingPrevious(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -177,6 +257,9 @@ export default function CourseEnrollmentPage() {
     });
     setCompletedEnrollment(null);
     setError('');
+    setSurname('');
+    setPreviousLoaded(false);
+    setLoadMessage({ type: '', text: '' });
     setStep('form');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -521,14 +604,7 @@ export default function CourseEnrollmentPage() {
             </div>
           </div>
 
-          <Input
-            label="학생명"
-            value={formData.studentName}
-            onChange={(e) => handleChange('studentName', e.target.value)}
-            placeholder="홍길동"
-            required
-          />
-
+          {/* 학부모 연락처를 먼저 받고, 아래 "이전 정보 불러오기" 성공 시 학생명/학교/학년 자동 채움 */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-gray-700">
               학부모 연락처 <span className="text-red-500">*</span>
@@ -543,6 +619,101 @@ export default function CourseEnrollmentPage() {
               required
             />
           </div>
+
+          {/* 이전 정보 불러오기 (설명회 예약 시 입력한 학생명·학교·학년 자동 채움) */}
+          <div
+            style={{
+              background: 'var(--color-primary-light)',
+              border: '1px solid #bcd7f5',
+              borderRadius: '10px',
+              padding: '14px 16px',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '13.5px',
+                fontWeight: 700,
+                color: 'var(--color-primary-dark)',
+                marginBottom: '4px',
+              }}
+            >
+              📂 이전 정보 불러오기
+            </div>
+            <p style={{ fontSize: '12.5px', color: '#4a6d8f', margin: '0 0 10px', lineHeight: 1.5 }}>
+              설명회 예약 시 입력한 정보가 있다면, 학생 성을 입력해 자동으로
+              채울 수 있습니다.
+            </p>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'stretch' }}>
+              <input
+                type="text"
+                value={surname}
+                onChange={(e) => setSurname(e.target.value)}
+                placeholder="예: 홍"
+                maxLength={2}
+                className="px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-primary"
+                style={{ width: '80px', flexShrink: 0, fontSize: '14px' }}
+              />
+              <button
+                type="button"
+                onClick={handleLoadPrevious}
+                disabled={loadingPrevious}
+                style={{
+                  flex: 1,
+                  padding: '8px 14px',
+                  background: loadingPrevious ? '#9ca3af' : 'white',
+                  color: loadingPrevious ? 'white' : 'var(--color-primary-dark)',
+                  border: '1.5px solid var(--color-primary)',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '13.5px',
+                  cursor: loadingPrevious ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {loadingPrevious ? '조회 중...' : '불러오기'}
+              </button>
+            </div>
+            {loadMessage.text && (
+              <div
+                style={{
+                  marginTop: '10px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12.5px',
+                  lineHeight: 1.5,
+                  background:
+                    loadMessage.type === 'success'
+                      ? '#e8f5e9'
+                      : loadMessage.type === 'error'
+                      ? '#fef2f2'
+                      : '#f3f4f6',
+                  color:
+                    loadMessage.type === 'success'
+                      ? '#2e7d32'
+                      : loadMessage.type === 'error'
+                      ? '#b91c1c'
+                      : '#4b5563',
+                  border: `1px solid ${
+                    loadMessage.type === 'success'
+                      ? '#a5d6a7'
+                      : loadMessage.type === 'error'
+                      ? '#fecaca'
+                      : '#e5e7eb'
+                  }`,
+                }}
+              >
+                {loadMessage.type === 'success' && '✅ '}
+                {loadMessage.text}
+              </div>
+            )}
+          </div>
+
+          <Input
+            label="학생명"
+            value={formData.studentName}
+            onChange={(e) => handleChange('studentName', e.target.value)}
+            placeholder="홍길동"
+            required
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <Input
