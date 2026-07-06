@@ -225,27 +225,28 @@ export default function CourseEnrollmentPage() {
     setSubmitting(true);
 
     try {
-      const { data, error: dbError } = await supabase
+      const payload = {
+        student_name: formData.studentName.trim(),
+        parent_phone: formatPhone(formData.parentPhone),
+        school: formData.school.trim(),
+        grade: formData.grade,
+        math_level: formData.mathLevel.trim(),
+        course_option: parseInt(formData.courseOption, 10),
+        notes: formData.notes.trim() || null,
+        privacy_consent: 'Y',
+        status: '신청',
+      };
+
+      // .select() 없이 INSERT만 수행 — RETURNING을 요청하지 않음으로써
+      // anon 역할에 SELECT 정책이 없어도 RLS를 통과 (완료 화면은 payload로 구성)
+      const { error: dbError } = await supabase
         .from('course_enrollments')
-        .insert([
-          {
-            student_name: formData.studentName.trim(),
-            parent_phone: formatPhone(formData.parentPhone),
-            school: formData.school.trim(),
-            grade: formData.grade,
-            math_level: formData.mathLevel.trim(),
-            course_option: parseInt(formData.courseOption, 10),
-            notes: formData.notes.trim() || null,
-            privacy_consent: 'Y',
-            status: '신청',
-          },
-        ])
-        .select()
-        .single();
+        .insert([payload]);
 
       if (dbError) throw dbError;
 
-      setCompletedEnrollment(data);
+      // 완료 화면은 서버 반환값 대신 방금 보낸 payload를 그대로 사용
+      setCompletedEnrollment(payload);
       setStep('complete');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
