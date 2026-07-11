@@ -156,12 +156,38 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
     setLoading(true);
     const newResultsMap = {};
 
-    // 예약 학생들의 전화번호로 결과 조회
+    // row에 해당하는 최신 결과 하나 찾기.
+    // 매칭 기준: student_name(필수) + test_type(있으면) → 그중 최신 attempt_number(같으면 submitted_at/created_at DESC)
+    const findMatchingResult = (results, { studentName, testType }) => {
+      const filtered = results.filter((r) => {
+        if (!r.result || r.student_name !== studentName) return false;
+        // test_type이 지정되면 반드시 일치. 지정 안 됐으면 모두 허용.
+        if (testType && r.test_type !== testType) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) return null;
+
+      // 최신 회차 우선. 같은 회차면 시간 최신.
+      filtered.sort((a, b) => {
+        const attemptDiff = (b.attempt_number || 0) - (a.attempt_number || 0);
+        if (attemptDiff !== 0) return attemptDiff;
+        const aTime = a.submitted_at || a.created_at || '';
+        const bTime = b.submitted_at || b.created_at || '';
+        return bTime.localeCompare(aTime);
+      });
+
+      return filtered[0];
+    };
+
+    // 예약 학생들 (test_reservations) — test_type이 row에 없으면 학생명으로만 매칭
     for (const test of tests) {
       try {
         const results = await getAllResultsByPhone(test.parent_phone);
-        // result가 있고 student_name이 일치하는 submission 찾기
-        const submissionWithResult = results.find(r => r.result && r.student_name === test.student_name);
+        const submissionWithResult = findMatchingResult(results, {
+          studentName: test.student_name,
+          testType: test.test_type, // 없으면 undefined → student_name만으로 매칭
+        });
         if (submissionWithResult && submissionWithResult.result) {
           newResultsMap[test.id] = submissionWithResult.result;
         }
@@ -170,13 +196,17 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
       }
     }
 
-    // 등록 학생들의 전화번호로 결과 조회
+    // 수동 등록 학생들 (diagnostic_submissions where submission_type='registration')
+    // 이 row에는 test_type이 있으므로 반드시 test_type까지 일치시켜야 함
+    // (기존 버그: 다른 test_type 결과가 잘못 붙던 원인)
     for (const reg of registrations) {
       if (reg.submission_type === 'registration') {
         try {
           const results = await getAllResultsByPhone(reg.parent_phone);
-          // result가 있고 student_name이 일치하는 submission 찾기
-          const submissionWithResult = results.find(r => r.result && r.student_name === reg.student_name);
+          const submissionWithResult = findMatchingResult(results, {
+            studentName: reg.student_name,
+            testType: reg.test_type,
+          });
           if (submissionWithResult && submissionWithResult.result) {
             newResultsMap[reg.id] = submissionWithResult.result;
           }
@@ -186,12 +216,14 @@ export default function TestsTab({ tests, testSlots, campaignId, onPhoneClick, o
       }
     }
 
-    // ⭐ 입학테스트 학생들의 전화번호로 결과 조회
+    // ⭐ 입학테스트 학생들
     for (const test of entranceTests) {
       try {
         const results = await getAllResultsByPhone(test.parent_phone);
-        // result가 있고 student_name이 일치하는 submission 찾기
-        const submissionWithResult = results.find(r => r.result && r.student_name === test.student_name);
+        const submissionWithResult = findMatchingResult(results, {
+          studentName: test.student_name,
+          testType: test.test_type,
+        });
         if (submissionWithResult && submissionWithResult.result) {
           newResultsMap[test.id] = submissionWithResult.result;
         }
