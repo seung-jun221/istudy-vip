@@ -15,7 +15,9 @@ export default function ResultStep() {
     );
   }
 
-  const { result } = submissionResult;
+  const { result, submission } = submissionResult;
+  const attemptNumber = submission?.attempt_number || 1;
+  const isRetake = attemptNumber > 1;
 
   const get5GradeColor = (grade) => {
     const colors = {
@@ -52,6 +54,23 @@ export default function ResultStep() {
         <p className="result-subtitle">
           채점이 완료되었습니다. 자세한 분석 보고서는 이메일로 발송됩니다.
         </p>
+        {isRetake && (
+          <div
+            style={{
+              marginTop: '12px',
+              padding: '10px 14px',
+              background: '#e3f2fd',
+              border: '1px solid #90caf9',
+              borderRadius: '8px',
+              color: '#1557b0',
+              fontSize: '13.5px',
+              lineHeight: 1.5,
+            }}
+          >
+            📌 이전 진단검사 이력이 확인되어 이번 응시는{' '}
+            <strong>{attemptNumber}회차</strong>로 기록되었습니다.
+          </div>
+        )}
       </div>
 
       {/* 종합 성적 */}
