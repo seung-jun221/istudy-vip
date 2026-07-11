@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { useDiagnostic } from '../../context/DiagnosticContext';
+import { supabase } from '../../utils/supabase';
 import Input from '../common/Input';
 import Button from '../common/Button';
 import './StudentInfoStep.css';
 
 export default function StudentInfoStep() {
   const { studentInfo, setStudentInfo, setCurrentStep, showToast } = useDiagnostic();
+  const [checkingPrior, setCheckingPrior] = useState(false);
 
   const handleChange = (field, value) => {
     setStudentInfo((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // 유효성 검사
     if (studentInfo.studentName.length < 2) {
       showToast('학생명을 정확히 입력해주세요.', 'error');
@@ -26,6 +28,34 @@ export default function StudentInfoStep() {
     if (!studentInfo.grade) {
       showToast('학년을 선택해주세요.', 'error');
       return;
+    }
+
+    // 재응시 감지 — 같은 학생의 기존 진단검사 이력 확인
+    // 검사 유형(test_type)은 다음 스텝에서 선택하므로 여기선 전체 이력만 확인
+    setCheckingPrior(true);
+    try {
+      const rawPhone = studentInfo.parentPhone.replace(/-/g, '');
+      const formattedPhone = `${rawPhone.slice(0, 3)}-${rawPhone.slice(3, 7)}-${rawPhone.slice(7)}`;
+
+      const { data, error } = await supabase
+        .from('diagnostic_submissions')
+        .select('id')
+        .eq('student_name', studentInfo.studentName)
+        .in('parent_phone', [rawPhone, formattedPhone])
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        showToast(
+          '이전 진단검사 이력이 확인됩니다. 재응시로 진행됩니다.',
+          'info',
+          4000
+        );
+      }
+    } catch (err) {
+      // 감지 실패는 조용히 무시 — 재응시 안내는 알림용이라 흐름 막지 않음
+      console.warn('재응시 감지 실패:', err);
+    } finally {
+      setCheckingPrior(false);
     }
 
     setCurrentStep('test-select');
@@ -107,8 +137,8 @@ export default function StudentInfoStep() {
           placeholder="예: 중3 (고1 선행 중)"
         />
 
-        <Button type="submit" className="next-button">
-          다음 단계 →
+        <Button type="submit" className="next-button" disabled={checkingPrior}>
+          {checkingPrior ? '확인 중...' : '다음 단계 →'}
         </Button>
       </form>
     </div>
