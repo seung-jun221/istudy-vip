@@ -12,9 +12,12 @@ export default function CampaignList() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // 캠페인 관리자는 자동으로 해당 캠페인 상세 페이지로 리다이렉트
+  // 지점 관리자는 자동으로 메타인지 관리 페이지로 리다이렉트
   useEffect(() => {
     if (authMode === 'campaign' && allowedCampaignId) {
       navigate(`/admin/campaigns/${allowedCampaignId}`, { replace: true });
+    } else if (authMode === 'branch') {
+      navigate('/admin/metacog', { replace: true });
     }
   }, [authMode, allowedCampaignId, navigate]);
 
@@ -76,6 +79,12 @@ export default function CampaignList() {
               onClick={() => navigate('/admin/course-enrollments')}
             >
               수강신청 관리
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => navigate('/admin/metacog')}
+            >
+              메타인지 관리
             </button>
             <button className="btn btn-secondary" onClick={fetchCampaigns}>
               새로고침
