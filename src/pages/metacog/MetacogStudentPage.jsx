@@ -1,7 +1,7 @@
 // 메타인지 트레이닝 학생 응시 페이지 (/metacog)
 // 프로토타입 UI 톤(다크 브라운/골드) + 실제 시스템 연동(RPC/Storage)
 //
-// 단계: auth → confirm → intro → sample → test → done | already
+// 단계: auth → confirm → intro → sample → ready → test → done | already
 // - auth: 이름 + 뒷4자리 명부 대조 (authenticate_student RPC)
 // - confirm: "○○○ 학생 맞나요?" (get_active_session_for_student RPC)
 // - intro: 규칙 안내 + 시작하기 (프로토타입 인트로 이식)
@@ -82,7 +82,7 @@ function preloadImage(url) {
 }
 
 export default function MetacogStudentPage() {
-  const [phase, setPhase] = useState('auth'); // auth | confirm | intro | sample | test | done | already
+  const [phase, setPhase] = useState('auth'); // auth | confirm | intro | sample | ready | test | done | already
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -247,7 +247,9 @@ export default function MetacogStudentPage() {
       return;
     }
 
-    const paths = qs.map((q) => q.image_url);
+    // 정확히 60개만 사용 (관리자가 61개 이상 등록해도 안전하게)
+    const trimmed = qs.slice(0, 60);
+    const paths = trimmed.map((q) => q.image_url);
     const { data: urls, error: urlErr } = await supabase.storage
       .from(BUCKET)
       .createSignedUrls(paths, 3600);
@@ -259,7 +261,7 @@ export default function MetacogStudentPage() {
       return;
     }
 
-    const enriched = qs.map((q, i) => ({
+    const enriched = trimmed.map((q, i) => ({
       ...q,
       signedUrl: urls?.[i]?.signedUrl || null,
     }));
@@ -281,7 +283,12 @@ export default function MetacogStudentPage() {
   };
 
   const skipSample = () => {
-    startTest();
+    // 샘플 스킵 또는 완료 → 본검사 시작 안내 페이지
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setPhase('ready');
   };
 
   // ------------------------------------------------------------
@@ -383,8 +390,8 @@ export default function MetacogStudentPage() {
     }
     const nextI = sampleIdx + 1;
     if (nextI >= SAMPLE_QUESTIONS.length) {
-      // 샘플 종료 → 본검사 시작
-      startTest();
+      // 샘플 종료 → 본검사 시작 전 안내 페이지
+      setPhase('ready');
     } else {
       setSampleIdx(nextI);
     }
@@ -435,6 +442,7 @@ export default function MetacogStudentPage() {
         {phase === 'confirm' && renderConfirm()}
         {phase === 'intro' && renderIntro()}
         {phase === 'sample' && renderSample()}
+        {phase === 'ready' && renderReady()}
         {phase === 'test' && renderTest()}
         {phase === 'done' && renderDone()}
         {phase === 'already' && renderAlready()}
@@ -653,6 +661,36 @@ export default function MetacogStudentPage() {
     );
   }
 
+  function renderReady() {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={S.badge}>준비 완료</div>
+        <h1 style={S.h1}>지금부터 본 검사가 시작됩니다</h1>
+
+        <div style={S.ruleBox}>
+          <div style={{ color: COLORS.text, fontSize: 14, lineHeight: 1.7 }}>
+            <div style={{ marginBottom: 10 }}>
+              총 <b style={{ color: COLORS.goldBright }}>{questions.length}문항</b> · 문항당 <b style={{ color: COLORS.goldBright }}>10초</b>
+            </div>
+            <div style={{ color: COLORS.sub, fontSize: 13, lineHeight: 1.6 }}>
+              · 시작 버튼을 누르면 첫 문항부터 시간이 즉시 흐릅니다<br />
+              · 한 번 선택하면 되돌릴 수 없습니다<br />
+              · 시간이 초과되면 경고음 + 1초 유예 → 자동으로 '없다' 처리
+            </div>
+          </div>
+        </div>
+
+        <div style={S.warnBox}>
+          집중하고 <b>시작하기</b>를 누르세요.
+        </div>
+
+        <button onClick={startTest} style={S.startBtn}>
+          시작하기 →
+        </button>
+      </div>
+    );
+  }
+
   function renderTest() {
     const q = questions[idx];
     if (!q) return null;
@@ -721,8 +759,22 @@ export default function MetacogStudentPage() {
         </div>
 
         {submitting && (
-          <div style={{ textAlign: 'center', marginTop: 16, color: COLORS.sub }}>
-            제출 중...
+          <div style={{ textAlign: 'center', marginTop: 16, color: COLORS.goldBright, fontWeight: 700 }}>
+            제출 중... 잠시만 기다려주세요
+          </div>
+        )}
+
+        {error && !submitting && (
+          <div style={{ marginTop: 16 }}>
+            <div style={S.errorBox}>{error}</div>
+            {idx + 1 >= questions.length && (
+              <button
+                onClick={() => submitAttempt(answers)}
+                style={{ ...S.startBtn, marginTop: 12 }}
+              >
+                제출 다시 시도
+              </button>
+            )}
           </div>
         )}
       </div>
