@@ -26,6 +26,13 @@ export default function QuestionsTab() {
   const [uploadStatus, setUploadStatus] = useState(null); // { current, total, errors }
   const fileInputRef = useRef(null);
 
+  // 미리보기 모달 상태
+  const [previewQuestion, setPreviewQuestion] = useState(null); // { q_no, image_url, ... }
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [replaceUploading, setReplaceUploading] = useState(false);
+  const replaceInputRef = useRef(null);
+
   const loadQuestions = async (trackCode) => {
     setLoading(true);
     setError('');
@@ -116,8 +123,35 @@ export default function QuestionsTab() {
     loadQuestions(track);
   };
 
+  // 미리보기 열기 — signed URL 발급 후 모달 표시
+  const openPreview = async (question) => {
+    setPreviewQuestion(question);
+    setPreviewUrl(null);
+    setPreviewLoading(true);
+
+    const { data, error: err } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(question.image_url, 300); // 5분 유효
+
+    if (err) {
+      console.error('미리보기 URL 발급 실패:', err);
+      setPreviewUrl(null);
+    } else {
+      setPreviewUrl(data.signedUrl);
+    }
+    setPreviewLoading(false);
+  };
+
+  const closePreview = () => {
+    setPreviewQuestion(null);
+    setPreviewUrl(null);
+    setReplaceUploading(false);
+    if (replaceInputRef.current) replaceInputRef.current.value = '';
+  };
+
   const handleDeleteQuestion = async (qNo) => {
-    if (!window.confirm(`Q${qNo}번 문항을 삭제하시겠습니까?`)) return;
+    if (!window.confirm(`Q${qNo}번 문항을 삭제하시겠습니까?\n이미지 파일과 DB 기록이 모두 제거됩니다.`))
+      return;
     const path = `${track}/q${String(qNo).padStart(2, '0')}.png`;
 
     // Storage 파일 삭제
@@ -133,7 +167,51 @@ export default function QuestionsTab() {
     if (err) {
       alert('DB 삭제 실패: ' + err.message);
     } else {
+      closePreview();
       loadQuestions(track);
+    }
+  };
+
+  // 미리보기에서 이미지 수정(교체) — 같은 q_no로 덮어쓰기
+  const handleReplaceImage = async (file) => {
+    if (!file || !previewQuestion) return;
+    const qNo = previewQuestion.q_no;
+    const path = `${track}/q${String(qNo).padStart(2, '0')}.png`;
+
+    setReplaceUploading(true);
+
+    const { error: upErr } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, file, { upsert: true, contentType: file.type || 'image/png' });
+
+    if (upErr) {
+      alert('업로드 실패: ' + upErr.message);
+      setReplaceUploading(false);
+      return;
+    }
+
+    const { error: dbErr } = await supabase
+      .from('metacog_questions')
+      .upsert(
+        { track, q_no: qNo, image_url: path, updated_at: new Date().toISOString() },
+        { onConflict: 'track,q_no' }
+      );
+
+    setReplaceUploading(false);
+
+    if (dbErr) {
+      alert('DB 갱신 실패: ' + dbErr.message);
+    } else {
+      // 성공: 목록 갱신 + 새 이미지 URL로 미리보기 리프레시
+      loadQuestions(track);
+      // 새 signed URL 다시 발급 (같은 경로지만 캐시 회피용 timestamp 붙임)
+      const { data } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(path, 300);
+      if (data?.signedUrl) {
+        setPreviewUrl(data.signedUrl + '&t=' + Date.now());
+      }
+      if (replaceInputRef.current) replaceInputRef.current.value = '';
     }
   };
 
@@ -281,11 +359,11 @@ export default function QuestionsTab() {
             return (
               <button
                 key={n}
-                onClick={filled ? () => handleDeleteQuestion(n) : undefined}
+                onClick={filled ? () => openPreview(q) : undefined}
                 disabled={!filled}
                 title={
                   filled
-                    ? `Q${n} 클릭 시 삭제 · ${q.image_url}`
+                    ? `Q${n} 클릭 시 미리보기 · ${q.image_url}`
                     : `Q${n} 미업로드`
                 }
                 style={{
@@ -312,8 +390,164 @@ export default function QuestionsTab() {
       )}
 
       <div style={{ marginTop: '12px', fontSize: '12px', color: '#666' }}>
-        업로드 완료 {questions.length}/60 · 누락 {missing.length}건 · 파란색 셀 클릭 시 개별 삭제
+        업로드 완료 {questions.length}/60 · 누락 {missing.length}건 · 녹색 셀 클릭 시 미리보기·수정·삭제
       </div>
+
+      {/* 미리보기 모달 */}
+      {previewQuestion && (
+        <div
+          onClick={closePreview}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '20px',
+              maxWidth: '720px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+            }}
+          >
+            {/* 헤더 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div>
+                <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a1a' }}>
+                  Q{previewQuestion.q_no}
+                </div>
+                <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                  {TRACKS.find((t) => t.code === track)?.label} · {previewQuestion.image_url}
+                </div>
+              </div>
+              <button
+                onClick={closePreview}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '4px 8px',
+                }}
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* 이미지 미리보기 */}
+            <div
+              style={{
+                background: '#f5f5f5',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '16px',
+                minHeight: '300px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {previewLoading ? (
+                <div style={{ color: '#666', fontSize: '13px' }}>이미지 로드 중...</div>
+              ) : previewUrl ? (
+                <img
+                  src={previewUrl}
+                  alt={`Q${previewQuestion.q_no}`}
+                  style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '4px' }}
+                />
+              ) : (
+                <div style={{ color: '#b91c1c', fontSize: '13px' }}>
+                  이미지를 불러올 수 없습니다.
+                </div>
+              )}
+            </div>
+
+            {/* 액션 버튼 */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <input
+                ref={replaceInputRef}
+                type="file"
+                accept="image/png,image/jpeg"
+                onChange={(e) => e.target.files?.[0] && handleReplaceImage(e.target.files[0])}
+                disabled={replaceUploading}
+                style={{ display: 'none' }}
+              />
+              <button
+                onClick={() => replaceInputRef.current?.click()}
+                disabled={replaceUploading}
+                style={{
+                  flex: 1,
+                  minWidth: '120px',
+                  padding: '10px',
+                  background: replaceUploading ? '#9ca3af' : '#1976d2',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: replaceUploading ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {replaceUploading ? '업로드 중...' : '📝 이미지 수정 (교체)'}
+              </button>
+              <button
+                onClick={() => handleDeleteQuestion(previewQuestion.q_no)}
+                disabled={replaceUploading}
+                style={{
+                  flex: 1,
+                  minWidth: '120px',
+                  padding: '10px',
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                🗑 삭제
+              </button>
+              <button
+                onClick={closePreview}
+                style={{
+                  minWidth: '80px',
+                  padding: '10px',
+                  background: 'white',
+                  color: '#666',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                닫기
+              </button>
+            </div>
+            <p style={{ fontSize: '11px', color: '#999', marginTop: '10px', lineHeight: 1.5 }}>
+              • 이미지 수정: 같은 Q번호로 새 이미지가 덮어쓰기 됩니다<br />
+              • 삭제: Storage 파일 + DB 기록이 함께 제거됩니다
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
