@@ -16,7 +16,7 @@ import { supabase } from '../../utils/supabase';
 const BUCKET = 'metacog-questions';
 const TIME_LIMIT = 10; // 초
 const GRACE = 1; // 경고 후 유예 시간(초)
-const DONE_AUTO_RESET_MS = 8000;
+const DONE_AUTO_RESET_MS = 60000;
 
 // 샘플 테스트 (옵션 C: 이미지 없이 텍스트/도형 UX 체험, 결과 저장 안 함)
 const SAMPLE_QUESTIONS = [
@@ -826,7 +826,7 @@ export default function MetacogStudentPage() {
         </div>
 
         <p style={{ ...S.hint, marginTop: 14 }}>
-          잠시 후 처음 화면으로 돌아갑니다...
+          1분 후 처음 화면으로 돌아갑니다. 검증 문항 번호를 종이에 옮겨 적으세요.
         </p>
         <button onClick={resetAll} style={S.secondaryBtn}>
           지금 다시 시작
