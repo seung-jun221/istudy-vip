@@ -147,8 +147,12 @@ export default function MetacogReportPage() {
 
         {/* 헤더 */}
         <div className="mr-head">
-          <span className="mr-badge">메타인지 진단</span>
-          <h1>안다고 생각하는 것과<br />실제로 아는 것</h1>
+          <span className="mr-badge">수리탐구 메타인지 트레이닝</span>
+          <h1>
+            <span className="mr-l1">메타인지 트레이닝</span>
+            <br />
+            <span className="mr-l2">결과 분석 보고서</span>
+          </h1>
           <div className="mr-desc">
             우리 아이가 자기 실력을 얼마나 정확히<br />
             파악하고 있는지 진단한 결과입니다.
@@ -167,22 +171,23 @@ export default function MetacogReportPage() {
           <div className="mr-summary-label">한눈에 보기</div>
           {isFullyGraded ? (
             <p>
-              {student.name} 학생은 {stats.total_count}문항 중{' '}
-              <b>{stats.can_count}문항</b>을 "풀 수 있다"고 판단했고,
+              <b>{student.name} 학생</b>은<br />
+              {stats.total_count}문항 중 <b>{stats.can_count}문항</b>을 "풀 수 있다"고 판단했고,<br />
               이 중 무작위 <b>{verify.total}문항</b>을 실제로 풀어본 결과{' '}
               <span className="mr-hl"><b>{verify.correct}문항</b>을 맞혔습니다.</span>
             </p>
           ) : noVerify ? (
             <p>
-              {student.name} 학생은 {stats.total_count}문항 모두를 "모르겠다"로 판단했습니다.
+              <b>{student.name} 학생</b>은<br />
+              {stats.total_count}문항 모두를 "모르겠다"로 판단했습니다.<br />
               검증할 문항이 없어 처방 위주로 안내드립니다.
             </p>
           ) : (
             <p>
-              {student.name} 학생은 {stats.total_count}문항 중{' '}
-              <b>{stats.can_count}문항</b>을 "풀 수 있다"고 판단했습니다.
-              검증 <b>{verify.total}문항</b> 채점이 완료되면
-              <span className="mr-hl"> 자기인식 결과</span>가 함께 표시됩니다.
+              <b>{student.name} 학생</b>은<br />
+              {stats.total_count}문항 중 <b>{stats.can_count}문항</b>을 "풀 수 있다"고 판단했습니다.<br />
+              검증 <b>{verify.total}문항</b> 채점이 완료되면{' '}
+              <span className="mr-hl">자기인식 결과</span>가 함께 표시됩니다.
             </p>
           )}
         </div>
