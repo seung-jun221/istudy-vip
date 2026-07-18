@@ -208,61 +208,65 @@ export default function SessionsTab({ branchId }) {
                 flexWrap: 'wrap',
               }}
             >
-              <div style={{ flex: '1 1 200px' }}>
+              {/* 좌측: 오픈/마감 배지 */}
+              <span
+                style={{
+                  flexShrink: 0,
+                  padding: '4px 10px',
+                  minWidth: '48px',
+                  textAlign: 'center',
+                  background: s.status === 'open' ? '#e8f5e9' : '#f5f5f5',
+                  color: s.status === 'open' ? '#2e7d32' : '#666',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                }}
+              >
+                {s.status === 'open' ? '오픈' : '마감'}
+              </span>
+
+              {/* 중앙: 제목 · 트랙/생성일 */}
+              <div style={{ flex: '1 1 200px', minWidth: 0 }}>
                 <div style={{ fontSize: '15px', fontWeight: 600 }}>{s.title}</div>
                 <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
                   {TRACK_LABELS[s.track] || s.track} · 생성{' '}
                   {new Date(s.created_at).toLocaleDateString('ko-KR')}
                 </div>
               </div>
-              <span
+
+              {/* 우측: 액션 버튼 그룹 (오른쪽 정렬, 통일 크기) */}
+              <div
                 style={{
-                  padding: '4px 10px',
-                  background: s.status === 'open' ? '#e8f5e9' : '#f5f5f5',
-                  color: s.status === 'open' ? '#2e7d32' : '#666',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: 600,
+                  display: 'flex',
+                  gap: '6px',
+                  marginLeft: 'auto',
+                  flexShrink: 0,
                 }}
               >
-                {s.status === 'open' ? '오픈' : '마감'}
-              </span>
-              <button
-                onClick={() => setSelectedSession(s)}
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  background: '#0d3b2e',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
-              >
-                응시 현황
-              </button>
-              <button
-                onClick={() => handleToggleStatus(s)}
-                className="btn btn-secondary"
-                style={{ padding: '6px 12px', fontSize: '12px' }}
-              >
-                {s.status === 'open' ? '마감 처리' : '오픈 처리'}
-              </button>
-              <button
-                onClick={() => handleDelete(s)}
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  background: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                삭제
-              </button>
+                <button
+                  onClick={() => setSelectedSession(s)}
+                  style={{ ...sessionBtn, background: '#0d3b2e', color: '#fff' }}
+                >
+                  응시 현황
+                </button>
+                <button
+                  onClick={() => handleToggleStatus(s)}
+                  style={{
+                    ...sessionBtn,
+                    background: 'white',
+                    color: '#333',
+                    border: '1px solid #d1d5db',
+                  }}
+                >
+                  {s.status === 'open' ? '마감 처리' : '오픈 처리'}
+                </button>
+                <button
+                  onClick={() => handleDelete(s)}
+                  style={{ ...sessionBtn, background: '#ef4444', color: 'white' }}
+                >
+                  삭제
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -270,3 +274,16 @@ export default function SessionsTab({ branchId }) {
     </div>
   );
 }
+
+// 회차 카드 액션 버튼 공통 스타일 — 크기 통일 (min-width로 시각 정렬 안정화)
+const sessionBtn = {
+  padding: '7px 14px',
+  minWidth: '92px',
+  fontSize: '12px',
+  fontWeight: 700,
+  border: 'none',
+  borderRadius: '6px',
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+  boxSizing: 'border-box',
+};
