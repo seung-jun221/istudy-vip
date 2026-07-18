@@ -277,7 +277,16 @@ export default function SessionAttendanceView({ session, onBack }) {
                             >
                               {isExpanded ? '접기' : gradedRow ? '재채점' : '채점'}
                             </button>
-                            <button style={disabledBtn} disabled title="다음 단계에서 활성화">
+                            <button
+                              onClick={() =>
+                                window.open(
+                                  `/admin/metacog/verify-sheet/${r.attempt_id}`,
+                                  '_blank',
+                                  'noopener,noreferrer'
+                                )
+                              }
+                              style={{ ...actionBtn, background: '#d4a537', color: '#0d3b2e' }}
+                            >
                               검증지
                             </button>
                           </div>
