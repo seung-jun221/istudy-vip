@@ -18,8 +18,10 @@ export function AdminProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  // authMode: 'super' | 'campaign' | 'branch' — 메타인지 시스템 등 신규 모듈용 'branch' 추가
   const [authMode, setAuthMode] = useState('super');
   const [allowedCampaignId, setAllowedCampaignId] = useState(null);
+  const [allowedBranchId, setAllowedBranchId] = useState(null);
 
   // JWT app_metadata에서 상태 도출
   const applySession = (session) => {
@@ -27,12 +29,21 @@ export function AdminProvider({ children }) {
       setIsAuthenticated(false);
       setAuthMode('super');
       setAllowedCampaignId(null);
+      setAllowedBranchId(null);
       return;
     }
     const meta = session.user.app_metadata || {};
     setIsAuthenticated(true);
-    setAuthMode(meta.role === 'super_admin' ? 'super' : 'campaign');
+    // role에 따라 mode 결정. super_admin → 'super', campaign_admin → 'campaign', branch_admin → 'branch'
+    if (meta.role === 'super_admin') {
+      setAuthMode('super');
+    } else if (meta.role === 'branch_admin') {
+      setAuthMode('branch');
+    } else {
+      setAuthMode('campaign');
+    }
     setAllowedCampaignId(meta.campaign_id || null);
+    setAllowedBranchId(meta.branch_id || null);
   };
 
   // 마운트 시 기존 Supabase 세션 복원 + 상태 변경 구독
@@ -85,12 +96,30 @@ export function AdminProvider({ children }) {
       const meta = authData.user.app_metadata || {};
       const role = meta.role || admin.admin_role;
       const campaignId = meta.campaign_id || admin.admin_campaign_id;
+      const branchId = meta.branch_id || admin.admin_branch_id;
 
       // applySession은 onAuthStateChange 리스너에서도 호출되지만, 즉시 반영 위해 한 번 더
       applySession(authData.session);
 
       if (role === 'super_admin') {
         return { success: true, mode: 'super' };
+      }
+
+      if (role === 'branch_admin') {
+        // 지점 admin — 지점 정보 조회 후 반환. UI 라우팅은 호출 측에서 결정.
+        const { data: branch } = await supabase
+          .from('branches')
+          .select('code, name')
+          .eq('id', branchId)
+          .single();
+
+        return {
+          success: true,
+          mode: 'branch',
+          branchId,
+          branchCode: branch?.code,
+          branchName: branch?.name,
+        };
       }
 
       // 캠페인 admin인 경우 진입할 캠페인 정보 조회
@@ -119,6 +148,7 @@ export function AdminProvider({ children }) {
     setIsAuthenticated(false);
     setAuthMode('super');
     setAllowedCampaignId(null);
+    setAllowedBranchId(null);
   };
 
   // Toast 표시
@@ -1632,6 +1662,7 @@ export function AdminProvider({ children }) {
     authLoading,
     authMode,
     allowedCampaignId,
+    allowedBranchId,
     loading,
     toast,
     showToast,
