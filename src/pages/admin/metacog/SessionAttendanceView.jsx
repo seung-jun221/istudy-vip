@@ -292,6 +292,19 @@ export default function SessionAttendanceView({ session, onBack }) {
                             >
                               검증지
                             </button>
+                            <button
+                              onClick={() => {
+                                const url = `${window.location.origin}/metacog-report/${r.attempt_id}`;
+                                navigator.clipboard?.writeText(url).then(
+                                  () => alert('리포트 링크가 복사되었습니다.\n\n' + url),
+                                  () => window.open(url, '_blank', 'noopener,noreferrer')
+                                );
+                              }}
+                              style={{ ...actionBtn, background: '#0d3b2e', color: '#d4a537' }}
+                              title="학부모 리포트 URL 복사 (카톡 발송용)"
+                            >
+                              리포트
+                            </button>
                           </div>
                         ) : done ? (
                           <span style={{ color: '#999', fontSize: 12 }}>—</span>
