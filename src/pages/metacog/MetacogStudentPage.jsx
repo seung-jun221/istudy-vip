@@ -345,7 +345,11 @@ export default function MetacogStudentPage() {
     }
     const q = questions[idx];
     if (!q) return;
-    const next = [...answers, { q_no: q.q_no, judgment, forced }];
+    // 각 판정 시각을 클라이언트에서 기록 (총 소요시간 = MAX-MIN answered_at 계산용)
+    const next = [
+      ...answers,
+      { q_no: q.q_no, judgment, forced, answered_at: new Date().toISOString() },
+    ];
     setAnswers(next);
     if (idx + 1 >= questions.length) {
       submitAttempt(next);

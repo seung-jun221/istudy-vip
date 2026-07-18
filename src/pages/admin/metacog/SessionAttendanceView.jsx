@@ -19,6 +19,9 @@ function formatKST(iso) {
 
 function formatDuration(sec) {
   if (sec == null || sec < 0) return '-';
+  // 0은 실제 값이 될 수 없음 (60문항 응시가 0초 안에 끝날 수 없음).
+  // 구 클라이언트로 제출된 응시는 answered_at이 모두 같아 MAX-MIN=0.
+  if (sec === 0) return '측정 안 됨';
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   if (m === 0) return `${s}초`;
@@ -220,7 +223,15 @@ export default function SessionAttendanceView({ session, onBack }) {
                       {done ? r.forced_count : '-'}
                     </Td>
                     <Td style={{ textAlign: 'right' }}>{done ? `${r.verify_count}/5` : '-'}</Td>
-                    <Td style={{ textAlign: 'right' }}>{done ? formatDuration(r.total_seconds) : '-'}</Td>
+                    <Td
+                      style={{
+                        textAlign: 'right',
+                        color: done && r.total_seconds === 0 ? '#999' : undefined,
+                        fontStyle: done && r.total_seconds === 0 ? 'italic' : undefined,
+                      }}
+                    >
+                      {done ? formatDuration(r.total_seconds) : '-'}
+                    </Td>
                     <Td style={{ fontSize: 12, color: '#666' }}>{done ? formatKST(r.submitted_at) : '-'}</Td>
                     <Td>
                       {done ? (
@@ -261,6 +272,7 @@ export default function SessionAttendanceView({ session, onBack }) {
 
       <p style={{ fontSize: 11, color: '#999', marginTop: 12, lineHeight: 1.6 }}>
         · 소요시간 = 첫 답변 ~ 마지막 답변 (MAX-MIN answered_at). 중간 이탈이 있으면 실제와 다를 수 있음.<br />
+        · <b>"측정 안 됨"</b> = 클라이언트 시각 저장 이전(초기 버전)에 응시한 데이터. 이후 응시분부터 정상 표시.<br />
         · 검증 = 응시 후 서버 사이드에서 랜덤 고정된 검증 문항 수 (있다 5개 미만이면 그만큼만).
       </p>
     </div>
