@@ -204,7 +204,10 @@ export default function SessionAttendanceView({ session, onBack }) {
                 const done = !!r.attempt_id;
                 const gradedRow =
                   done && r.verify_count > 0 && r.verify_count === r.verify_graded_count;
-                const isExpanded = expandedAttemptId === r.attempt_id;
+                // r.attempt_id가 null(미응시자)이면 확장 로직 자체를 비활성화
+                // (null === null이 true라서 모든 미응시자가 확장되던 버그 방지)
+                const isExpanded =
+                  r.attempt_id != null && expandedAttemptId === r.attempt_id;
                 const canGrade = done && r.verify_count > 0;
 
                 return (

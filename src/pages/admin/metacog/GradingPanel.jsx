@@ -199,10 +199,6 @@ export default function GradingPanel({ attemptId, track, onDone, onCancel }) {
         </div>
       )}
 
-      {error && !loading && (
-        <div style={{ ...styles.errorBox, marginTop: 10 }}>{error}</div>
-      )}
-
       <div style={styles.actions}>
         <button
           onClick={onCancel}
