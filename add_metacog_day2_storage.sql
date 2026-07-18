@@ -8,14 +8,18 @@
 -- ============================================================
 
 -- ------------------------------------------------------------
--- 버킷 생성
+-- ⚠️ 버킷 생성은 SQL로 안 됨 (Supabase가 storage.buckets를
+--    supabase_storage_admin 소유로 잠가둠, ERROR: 42501)
+--
+-- Supabase 대시보드 → Storage → New bucket 로 생성:
+--   - Name: metacog-questions
+--   - Public bucket: 체크 해제
+--
+-- 아래 INSERT는 참고용이며 그대로 실행하면 42501 에러 발생.
 -- ------------------------------------------------------------
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('metacog-questions', 'metacog-questions', false)
-ON CONFLICT (id) DO UPDATE SET public = false;
-
-COMMENT ON TABLE storage.buckets IS
-  'metacog-questions 버킷: 메타인지 문항 이미지. private. signed URL로 anon 접근';
+-- INSERT INTO storage.buckets (id, name, public)
+-- VALUES ('metacog-questions', 'metacog-questions', false)
+-- ON CONFLICT (id) DO UPDATE SET public = false;
 
 -- ------------------------------------------------------------
 -- Storage RLS 정책
