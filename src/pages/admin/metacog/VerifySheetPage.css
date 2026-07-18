@@ -1,0 +1,208 @@
+/* 메타인지 검증지 인쇄 스타일 — 시안 그대로 이식
+   딥그린 #0D3B2E, 골드 #D4A537, 아이보리 #F5F1E8 */
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  color: #1a1a1a;
+  font-family: 'Noto Sans KR', 'Noto Sans CJK KR', -apple-system, sans-serif;
+  background: #f5f5f5;
+}
+
+.vs-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #666;
+}
+
+.vs-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: #0d3b2e;
+  color: white;
+  font-size: 13px;
+}
+.vs-toolbar button {
+  padding: 6px 14px;
+  background: #d4a537;
+  color: #0d3b2e;
+  border: none;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+.vs-toolbar button:hover {
+  opacity: 0.9;
+}
+
+.vs-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 14mm 12mm;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  page-break-after: always;
+  background: white;
+  margin: 12px auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ── 헤더 ── */
+.vs-header {
+  border-bottom: 2px solid #0d3b2e;
+  padding-bottom: 5mm;
+  margin-bottom: 6mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.vs-badge {
+  display: inline-block;
+  background: #0d3b2e;
+  color: #d4a537;
+  font-size: 9pt;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-bottom: 4px;
+}
+.vs-header h1 {
+  font-size: 15pt;
+  font-weight: 800;
+  color: #0d3b2e;
+  margin: 0;
+}
+.vs-sub {
+  font-size: 9pt;
+  color: #666;
+  margin-top: 2px;
+}
+.vs-meta {
+  text-align: right;
+  font-size: 9pt;
+  color: #333;
+  line-height: 1.6;
+}
+.vs-meta b {
+  color: #0d3b2e;
+}
+
+/* ── 안내 ── */
+.vs-notice {
+  background: #f5f1e8;
+  border-left: 3px solid #d4a537;
+  padding: 4mm 5mm;
+  margin-bottom: 6mm;
+  font-size: 8.5pt;
+  color: #555;
+  line-height: 1.5;
+}
+.vs-notice b {
+  color: #0d3b2e;
+}
+
+/* ── 문항 그리드 (2×2) ── */
+.vs-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 5mm;
+}
+.vs-q-cell {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.vs-q-empty {
+  border-style: dashed;
+  opacity: 0.35;
+}
+.vs-q-head {
+  background: #0d3b2e;
+  color: #fff;
+  padding: 2.5mm 4mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9pt;
+}
+.vs-qno {
+  font-weight: 800;
+  font-size: 11pt;
+  color: #d4a537;
+}
+.vs-q-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+  overflow: hidden;
+  padding: 3mm;
+}
+.vs-q-body img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.vs-q-nope {
+  color: #bbb;
+  font-size: 9pt;
+}
+.vs-empty-mark {
+  color: #bbb;
+  font-size: 9pt;
+  text-align: center;
+  padding: 0 8mm;
+}
+.vs-q-answer {
+  border-top: 1px dashed #ddd;
+  padding: 2mm 4mm;
+  min-height: 16mm;
+  font-size: 7.5pt;
+  color: #aaa;
+}
+
+/* ── 푸터 ── */
+.vs-footer {
+  margin-top: 5mm;
+  padding-top: 3mm;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8pt;
+  color: #999;
+}
+
+/* ── 인쇄 시 ── */
+@media print {
+  body { background: white; }
+  .no-print { display: none !important; }
+  .vs-page {
+    margin: 0;
+    box-shadow: none;
+    page-break-after: always;
+  }
+  .vs-page:last-child {
+    page-break-after: auto;
+  }
+}
