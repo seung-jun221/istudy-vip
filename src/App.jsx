@@ -20,6 +20,7 @@ import CampaignList from './pages/admin/CampaignList';
 import CampaignDetail from './pages/admin/CampaignDetail';
 import DiagnosticGrading from './pages/admin/DiagnosticGrading';
 import CourseEnrollmentsAdmin from './pages/admin/CourseEnrollmentsAdmin';
+import MetacogAdmin from './pages/admin/metacog/MetacogAdmin';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import Loading from './components/common/Loading';
 import Toast from './components/common/Toast';
@@ -72,6 +73,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <CourseEnrollmentsAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/metacog"
+          element={
+            <ProtectedRoute>
+              <MetacogAdmin />
             </ProtectedRoute>
           }
         />
