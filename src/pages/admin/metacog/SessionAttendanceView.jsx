@@ -5,8 +5,12 @@
 // - 미응시자 필터 토글
 // - 각 응시자 행: [채점 입력] / [검증지 출력] 액션 (다음 단계에서 활성화)
 
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
+import GradingPanel from './GradingPanel';
+
+// key를 갖는 Fragment 래퍼 (map 안에서 <>...</>는 key 못 받음)
+const FragmentRow = Fragment;
 
 const TRACK_LABELS = { mono: '모노', tri: '트라이', tetra: '테트라' };
 
@@ -33,6 +37,7 @@ export default function SessionAttendanceView({ session, onBack }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showNonAttendees, setShowNonAttendees] = useState(true);
+  const [expandedAttemptId, setExpandedAttemptId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -199,70 +204,104 @@ export default function SessionAttendanceView({ session, onBack }) {
                 const done = !!r.attempt_id;
                 const gradedRow =
                   done && r.verify_count > 0 && r.verify_count === r.verify_graded_count;
+                const isExpanded = expandedAttemptId === r.attempt_id;
+                const canGrade = done && r.verify_count > 0;
+
                 return (
-                  <tr
-                    key={r.student_id}
-                    style={{
-                      borderTop: '1px solid #f0f0f0',
-                      background: done ? 'white' : '#fafafa',
-                      color: done ? '#1a1a1a' : '#999',
-                    }}
-                  >
-                    <Td><b>{r.student_name}</b></Td>
-                    <Td>{r.class_name || '-'}</Td>
-                    <Td style={{ textAlign: 'center' }}>
-                      {done ? (
-                        <Badge color="#0d3b2e" bg="#e8f5e9">완료</Badge>
-                      ) : (
-                        <Badge color="#a8543f" bg="#fef2f2">미응시</Badge>
-                      )}
-                    </Td>
-                    <Td style={{ textAlign: 'right' }}>{done ? r.can_count : '-'}</Td>
-                    <Td style={{ textAlign: 'right' }}>{done ? r.cannot_count : '-'}</Td>
-                    <Td style={{ textAlign: 'right', color: done && r.forced_count > 0 ? '#a8543f' : undefined }}>
-                      {done ? r.forced_count : '-'}
-                    </Td>
-                    <Td style={{ textAlign: 'right' }}>{done ? `${r.verify_count}/5` : '-'}</Td>
-                    <Td
+                  <FragmentRow key={r.student_id}>
+                    <tr
                       style={{
-                        textAlign: 'right',
-                        color: done && r.total_seconds === 0 ? '#999' : undefined,
-                        fontStyle: done && r.total_seconds === 0 ? 'italic' : undefined,
+                        borderTop: '1px solid #f0f0f0',
+                        background: isExpanded
+                          ? '#fffbeb'
+                          : done
+                          ? 'white'
+                          : '#fafafa',
+                        color: done ? '#1a1a1a' : '#999',
                       }}
                     >
-                      {done ? formatDuration(r.total_seconds) : '-'}
-                    </Td>
-                    <Td style={{ fontSize: 12, color: '#666' }}>{done ? formatKST(r.submitted_at) : '-'}</Td>
-                    <Td>
-                      {done ? (
-                        gradedRow ? (
+                      <Td><b>{r.student_name}</b></Td>
+                      <Td>{r.class_name || '-'}</Td>
+                      <Td style={{ textAlign: 'center' }}>
+                        {done ? (
                           <Badge color="#0d3b2e" bg="#e8f5e9">완료</Badge>
-                        ) : r.verify_count === 0 ? (
-                          <Badge color="#666" bg="#f0f0f0">검증 없음</Badge>
                         ) : (
-                          <Badge color="#92400e" bg="#fffbeb">
-                            {r.verify_graded_count}/{r.verify_count}
-                          </Badge>
-                        )
-                      ) : (
-                        '-'
-                      )}
-                    </Td>
-                    <Td>
-                      {done ? (
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <button style={disabledBtn} disabled title="다음 단계에서 활성화">
-                            채점
-                          </button>
-                          <button style={disabledBtn} disabled title="다음 단계에서 활성화">
-                            검증지
-                          </button>
-                        </div>
-                      ) : (
-                        '-'
-                      )}
-                    </Td>
-                  </tr>
+                          <Badge color="#a8543f" bg="#fef2f2">미응시</Badge>
+                        )}
+                      </Td>
+                      <Td style={{ textAlign: 'right' }}>{done ? r.can_count : '-'}</Td>
+                      <Td style={{ textAlign: 'right' }}>{done ? r.cannot_count : '-'}</Td>
+                      <Td style={{ textAlign: 'right', color: done && r.forced_count > 0 ? '#a8543f' : undefined }}>
+                        {done ? r.forced_count : '-'}
+                      </Td>
+                      <Td style={{ textAlign: 'right' }}>{done ? `${r.verify_count}/5` : '-'}</Td>
+                      <Td
+                        style={{
+                          textAlign: 'right',
+                          color: done && r.total_seconds === 0 ? '#999' : undefined,
+                          fontStyle: done && r.total_seconds === 0 ? 'italic' : undefined,
+                        }}
+                      >
+                        {done ? formatDuration(r.total_seconds) : '-'}
+                      </Td>
+                      <Td style={{ fontSize: 12, color: '#666' }}>{done ? formatKST(r.submitted_at) : '-'}</Td>
+                      <Td>
+                        {done ? (
+                          gradedRow ? (
+                            <Badge color="#0d3b2e" bg="#e8f5e9">완료</Badge>
+                          ) : r.verify_count === 0 ? (
+                            <Badge color="#666" bg="#f0f0f0">검증 없음</Badge>
+                          ) : (
+                            <Badge color="#92400e" bg="#fffbeb">
+                              {r.verify_graded_count}/{r.verify_count}
+                            </Badge>
+                          )
+                        ) : (
+                          '-'
+                        )}
+                      </Td>
+                      <Td>
+                        {canGrade ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <button
+                              onClick={() =>
+                                setExpandedAttemptId(isExpanded ? null : r.attempt_id)
+                              }
+                              style={{
+                                ...actionBtn,
+                                background: isExpanded ? '#a8543f' : '#0d3b2e',
+                                color: 'white',
+                              }}
+                            >
+                              {isExpanded ? '접기' : gradedRow ? '재채점' : '채점'}
+                            </button>
+                            <button style={disabledBtn} disabled title="다음 단계에서 활성화">
+                              검증지
+                            </button>
+                          </div>
+                        ) : done ? (
+                          <span style={{ color: '#999', fontSize: 12 }}>—</span>
+                        ) : (
+                          '-'
+                        )}
+                      </Td>
+                    </tr>
+                    {isExpanded && (
+                      <tr style={{ background: '#fffbeb' }}>
+                        <td colSpan={11} style={{ padding: 0 }}>
+                          <GradingPanel
+                            attemptId={r.attempt_id}
+                            track={session.track}
+                            onCancel={() => setExpandedAttemptId(null)}
+                            onDone={() => {
+                              setExpandedAttemptId(null);
+                              load(); // roster 갱신
+                            }}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </FragmentRow>
                 );
               })}
             </tbody>
@@ -359,4 +398,13 @@ const disabledBtn = {
   border: '1px solid #e5e7eb',
   borderRadius: 4,
   cursor: 'not-allowed',
+};
+
+const actionBtn = {
+  padding: '5px 10px',
+  fontSize: 11,
+  border: 'none',
+  borderRadius: 4,
+  cursor: 'pointer',
+  fontWeight: 700,
 };
