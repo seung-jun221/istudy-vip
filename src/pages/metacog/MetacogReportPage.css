@@ -47,12 +47,21 @@
   border-radius: 20px;
   margin-bottom: 12px;
 }
-.mr-head h1 {
-  font-size: 19px;
-  font-weight: 800;
-  line-height: 1.4;
-  margin: 0 0 6px;
+/* h1 격리 — 사이트 전역 h1(파란색·가운데 정렬 등)이 상속되지 않도록
+   모든 관련 속성을 명시적으로 재설정 */
+.mr-body .mr-head h1 {
+  all: unset;
+  display: block;
+  font-family: inherit;
+  font-size: 24px;
+  line-height: 1.35;
+  color: #fff;
+  text-align: left;
+  margin: 0 0 8px;
+  font-weight: normal; /* 실제 weight는 자식 span에서 지정 */
 }
+.mr-body .mr-head h1 .mr-l1 { font-weight: 300; }
+.mr-body .mr-head h1 .mr-l2 { font-weight: 800; }
 .mr-desc {
   font-size: 12.5px;
   color: #c5d6ce;
