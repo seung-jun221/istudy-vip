@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
+import SessionAttendanceView from './SessionAttendanceView';
 
 const TRACK_LABELS = {
   mono: '모노',
@@ -15,6 +16,9 @@ export default function SessionsTab({ branchId }) {
   const [addTitle, setAddTitle] = useState('');
   const [addTrack, setAddTrack] = useState('mono');
   const [saving, setSaving] = useState(false);
+
+  // 드릴다운: 클릭한 회차 (null이면 목록 화면)
+  const [selectedSession, setSelectedSession] = useState(null);
 
   const loadSessions = async () => {
     setLoading(true);
@@ -97,6 +101,19 @@ export default function SessionsTab({ branchId }) {
       loadSessions();
     }
   };
+
+  // 드릴다운 뷰
+  if (selectedSession) {
+    return (
+      <SessionAttendanceView
+        session={selectedSession}
+        onBack={() => {
+          setSelectedSession(null);
+          loadSessions();
+        }}
+      />
+    );
+  }
 
   return (
     <div>
@@ -210,6 +227,21 @@ export default function SessionsTab({ branchId }) {
               >
                 {s.status === 'open' ? '오픈' : '마감'}
               </span>
+              <button
+                onClick={() => setSelectedSession(s)}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  background: '#0d3b2e',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                응시 현황
+              </button>
               <button
                 onClick={() => handleToggleStatus(s)}
                 className="btn btn-secondary"
