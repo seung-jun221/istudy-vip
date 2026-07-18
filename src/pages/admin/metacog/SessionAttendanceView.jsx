@@ -247,13 +247,15 @@ export default function SessionAttendanceView({ session, onBack }) {
                       <Td style={{ fontSize: 12, color: '#666' }}>{done ? formatKST(r.submitted_at) : '-'}</Td>
                       <Td>
                         {done ? (
-                          gradedRow ? (
-                            <Badge color="#0d3b2e" bg="#e8f5e9">완료</Badge>
-                          ) : r.verify_count === 0 ? (
+                          r.verify_count === 0 ? (
                             <Badge color="#666" bg="#f0f0f0">검증 없음</Badge>
                           ) : (
-                            <Badge color="#92400e" bg="#fffbeb">
+                            <Badge
+                              color={gradedRow ? '#0d3b2e' : '#92400e'}
+                              bg={gradedRow ? '#e8f5e9' : '#fffbeb'}
+                            >
                               {r.verify_graded_count}/{r.verify_count}
+                              {gradedRow ? ' ✓' : ''}
                             </Badge>
                           )
                         ) : (
