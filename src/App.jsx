@@ -16,6 +16,7 @@ import DiagnosticTestPage from './pages/DiagnosticTestPage';
 import DiagnosticReportPage from './pages/DiagnosticReportPage';
 import CourseEnrollmentPage from './pages/CourseEnrollmentPage';
 import MetacogStudentPage from './pages/metacog/MetacogStudentPage';
+import MetacogReportPage from './pages/metacog/MetacogReportPage';
 import AdminLogin from './pages/admin/AdminLogin';
 import CampaignList from './pages/admin/CampaignList';
 import CampaignDetail from './pages/admin/CampaignDetail';
@@ -68,6 +69,7 @@ function AppContent() {
         <Route path="/diagnostic-report/:id" element={<DiagnosticReportPage />} />
         <Route path="/course-enrollment" element={<CourseEnrollmentPage />} />
         <Route path="/metacog" element={<MetacogStudentPage />} />
+        <Route path="/metacog-report/:attemptId" element={<MetacogReportPage />} />
 
         {/* 관리자 페이지 */}
         <Route path="/admin/login" element={<AdminLogin />} />
