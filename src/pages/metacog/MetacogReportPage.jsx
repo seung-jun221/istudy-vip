@@ -173,7 +173,7 @@ export default function MetacogReportPage() {
             <p>
               <b>{student.name} 학생</b>은<br />
               {stats.total_count}문항 중 <b>{stats.can_count}문항</b>을 "풀 수 있다"고 판단했고,<br />
-              이 중 무작위 <b>{verify.total}문항</b>을 실제로 풀어본 결과{' '}
+              이 중 무작위 <b>{verify.total}문항</b>을 실제로 풀어{' '}
               <span className="mr-hl"><b>{verify.correct}문항</b>을 맞혔습니다.</span>
             </p>
           ) : noVerify ? (
@@ -324,38 +324,38 @@ export default function MetacogReportPage() {
             </div>
           </div>
 
-          <div className="mr-rx-item">
-            <div className="mr-rx-ic">3</div>
-            <div className="mr-rx-tx">
-              {isFullyGraded && chart?.type ? (
-                <>
-                  <div className="mr-rt">
-                    {chart.type.key === 'q1' && '심화 도전'}
-                    {chart.type.key === 'q2' && '자신감 코칭'}
-                    {chart.type.key === 'q3' && '기초 개념 정리'}
-                    {chart.type.key === 'q4' && '정직한 자기평가 훈련'}
-                  </div>
-                  <div className="mr-rd">
-                    {chart.type.key === 'q1' &&
-                      '자기 실력을 정확히 알고 있으니 다음 단계 심화 문제로 도전 폭을 넓힙니다.'}
-                    {chart.type.key === 'q2' &&
-                      '아는 것을 "안다"고 말할 수 있도록 발표·설명 훈련을 병행합니다.'}
-                    {chart.type.key === 'q3' &&
-                      '판단 근거가 될 기초 개념부터 다시 짚어 자기평가의 토대를 만듭니다.'}
-                    {chart.type.key === 'q4' &&
-                      '"확실할 때만 확실하다"고 말하는 훈련을 통해 자기평가 정확도를 높입니다.'}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="mr-rt">맞춤 코칭</div>
-                  <div className="mr-rd">
-                    검증 채점 완료 후 학생별 유형에 맞는 코칭 방향을 안내드립니다.
-                  </div>
-                </>
-              )}
+          {/* 3번 처방: q1(진짜 아는) 유형은 별도 코칭 불필요 → 항목 자체 생략 */}
+          {(!isFullyGraded || (chart?.type && chart.type.key !== 'q1')) && (
+            <div className="mr-rx-item">
+              <div className="mr-rx-ic">3</div>
+              <div className="mr-rx-tx">
+                {isFullyGraded && chart?.type ? (
+                  <>
+                    <div className="mr-rt">
+                      {chart.type.key === 'q2' && '자신감 코칭'}
+                      {chart.type.key === 'q3' && '기초 개념 정리'}
+                      {chart.type.key === 'q4' && '정직한 자기평가 훈련'}
+                    </div>
+                    <div className="mr-rd">
+                      {chart.type.key === 'q2' &&
+                        '아는 것을 "안다"고 말할 수 있도록 발표·설명 훈련을 병행합니다.'}
+                      {chart.type.key === 'q3' &&
+                        '판단 근거가 될 기초 개념부터 다시 짚어 자기평가의 토대를 만듭니다.'}
+                      {chart.type.key === 'q4' &&
+                        '"확실할 때만 확실하다"고 말하는 훈련을 통해 자기평가 정확도를 높입니다.'}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="mr-rt">맞춤 코칭</div>
+                    <div className="mr-rd">
+                      검증 채점 완료 후 학생별 유형에 맞는 코칭 방향을 안내드립니다.
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* 마무리 */}
@@ -365,7 +365,7 @@ export default function MetacogReportPage() {
             성적표의 점수는 "지금 몇 점인가"를 말합니다.
             메타인지 진단은 "아이가 자기 실력을 정확히 아는가"를 봅니다.
             자기 실력을 아는 아이가 스스로 공부의 방향을 잡습니다.
-            저희는 매달 이 능력을 훈련합니다.
+            저희는 주기적으로 이 능력을 훈련합니다.
           </p>
           <div className="mr-foot">
             i.study 수리탐구학원<br />
