@@ -293,6 +293,29 @@ export default function SessionAttendanceView({ session, onBack }) {
                               검증지
                             </button>
                             <button
+                              onClick={() =>
+                                window.open(
+                                  `/admin/metacog/review-sheet/${r.attempt_id}`,
+                                  '_blank',
+                                  'noopener,noreferrer'
+                                )
+                              }
+                              disabled={r.cannot_count === 0}
+                              title={
+                                r.cannot_count === 0
+                                  ? "'모르겠다' 문항이 없어 과제지가 없습니다"
+                                  : `${r.cannot_count}문항 복습과제지 출력`
+                              }
+                              style={{
+                                ...actionBtn,
+                                background: r.cannot_count === 0 ? '#f0f0f0' : '#b5541f',
+                                color: r.cannot_count === 0 ? '#999' : 'white',
+                                cursor: r.cannot_count === 0 ? 'not-allowed' : 'pointer',
+                              }}
+                            >
+                              과제지
+                            </button>
+                            <button
                               onClick={() => {
                                 const url = `${window.location.origin}/metacog-report/${r.attempt_id}`;
                                 navigator.clipboard?.writeText(url).then(
