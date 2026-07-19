@@ -24,6 +24,7 @@ import DiagnosticGrading from './pages/admin/DiagnosticGrading';
 import CourseEnrollmentsAdmin from './pages/admin/CourseEnrollmentsAdmin';
 import MetacogAdmin from './pages/admin/metacog/MetacogAdmin';
 import VerifySheetPage from './pages/admin/metacog/VerifySheetPage';
+import ReviewSheetPage from './pages/admin/metacog/ReviewSheetPage';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import Loading from './components/common/Loading';
 import Toast from './components/common/Toast';
@@ -94,6 +95,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <VerifySheetPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/metacog/review-sheet/:attemptId"
+          element={
+            <ProtectedRoute>
+              <ReviewSheetPage />
             </ProtectedRoute>
           }
         />
