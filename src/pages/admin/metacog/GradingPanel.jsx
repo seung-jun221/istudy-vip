@@ -92,18 +92,35 @@ export default function GradingPanel({ attemptId, onDone, onCancel }) {
   };
 
   return (
-    <div style={styles.panel}>
+    <div
+      style={styles.overlay}
+      onClick={(e) => {
+        // 배경 클릭 시 취소 (저장 중일 땐 무시)
+        if (e.target === e.currentTarget && !saving) onCancel?.();
+      }}
+    >
+      <div style={styles.panel} onClick={(e) => e.stopPropagation()}>
       <div style={styles.header}>
         <div>
-          <b style={{ color: '#0d3b2e', fontSize: 14 }}>누테 25문항 채점</b>
+          <b style={{ color: '#0d3b2e', fontSize: 15 }}>누테 25문항 채점</b>
           {data?.student?.name && (
-            <span style={{ color: '#666', fontSize: 12, marginLeft: 8 }}>
+            <span style={{ color: '#666', fontSize: 13, marginLeft: 8 }}>
               {data.student.name} · {data.student.class_name || '-'}
             </span>
           )}
         </div>
-        <div style={{ fontSize: 12, color: '#666' }}>
-          정답 <b style={{ color: '#0d3b2e' }}>{correctCount}</b> · 오답 <b style={{ color: '#a8543f' }}>{wrongCount}</b>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ fontSize: 12, color: '#666' }}>
+            정답 <b style={{ color: '#0d3b2e' }}>{correctCount}</b> · 오답 <b style={{ color: '#a8543f' }}>{wrongCount}</b>
+          </div>
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            aria-label="닫기"
+            style={styles.closeBtn}
+          >
+            ✕
+          </button>
         </div>
       </div>
 
@@ -178,17 +195,43 @@ export default function GradingPanel({ attemptId, onDone, onCancel }) {
           {saving ? '저장 중...' : `저장 (25문항)`}
         </button>
       </div>
+      </div>
     </div>
   );
 }
 
 const styles = {
+  overlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0, 0, 0, 0.55)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    padding: 16,
+  },
   panel: {
     background: '#f5f1e8',
     border: '1px solid #d4a537',
-    borderRadius: 8,
-    padding: 16,
-    margin: '4px 0 8px',
+    borderRadius: 12,
+    padding: 20,
+    margin: 0,
+    maxWidth: 620,
+    width: '100%',
+    maxHeight: 'calc(100vh - 32px)',
+    overflowY: 'auto',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
+  },
+  closeBtn: {
+    background: 'transparent',
+    border: 'none',
+    fontSize: 20,
+    fontWeight: 700,
+    color: '#666',
+    cursor: 'pointer',
+    padding: '2px 6px',
+    lineHeight: 1,
   },
   header: {
     display: 'flex',

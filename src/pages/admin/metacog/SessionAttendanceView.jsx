@@ -5,12 +5,9 @@
 // - 미응시자 필터 토글
 // - 각 응시자 행: [채점 입력] / [검증지 출력] 액션 (다음 단계에서 활성화)
 
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 import GradingPanel from './GradingPanel';
-
-// key를 갖는 Fragment 래퍼 (map 안에서 <>...</>는 key 못 받음)
-const FragmentRow = Fragment;
 
 const TRACK_LABELS = { mono: '모노', tri: '트라이', tetra: '테트라' };
 
@@ -219,24 +216,17 @@ export default function SessionAttendanceView({ session, onBack }) {
                 const done = !!r.attempt_id;
                 const nuteTotal = r.nute_total || 25;
                 const gradedRow = done && r.nute_graded_count >= nuteTotal;
-                // 미응시자 행은 확장 로직 비활성화
-                const isExpanded =
-                  r.attempt_id != null && expandedAttemptId === r.attempt_id;
                 const canGrade = done;
 
                 return (
-                  <FragmentRow key={r.student_id}>
-                    <tr
-                      style={{
-                        borderTop: '1px solid #f0f0f0',
-                        background: isExpanded
-                          ? '#fffbeb'
-                          : done
-                          ? 'white'
-                          : '#fafafa',
-                        color: done ? '#1a1a1a' : '#999',
-                      }}
-                    >
+                  <tr
+                    key={r.student_id}
+                    style={{
+                      borderTop: '1px solid #f0f0f0',
+                      background: done ? 'white' : '#fafafa',
+                      color: done ? '#1a1a1a' : '#999',
+                    }}
+                  >
                       <Td><b>{r.student_name}</b></Td>
                       <Td>{r.class_name || '-'}</Td>
                       <Td style={{ textAlign: 'center' }}>
@@ -292,16 +282,14 @@ export default function SessionAttendanceView({ session, onBack }) {
                         {canGrade ? (
                           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                             <button
-                              onClick={() =>
-                                setExpandedAttemptId(isExpanded ? null : r.attempt_id)
-                              }
+                              onClick={() => setExpandedAttemptId(r.attempt_id)}
                               style={{
                                 ...actionBtn,
-                                background: isExpanded ? '#a8543f' : '#0d3b2e',
+                                background: '#0d3b2e',
                                 color: 'white',
                               }}
                             >
-                              {isExpanded ? '접기' : gradedRow ? '재채점' : '채점'}
+                              {gradedRow ? '재채점' : '채점'}
                             </button>
                             <button
                               onClick={() =>
@@ -359,21 +347,6 @@ export default function SessionAttendanceView({ session, onBack }) {
                         )}
                       </Td>
                     </tr>
-                    {isExpanded && (
-                      <tr style={{ background: '#fffbeb' }}>
-                        <td colSpan={11} style={{ padding: 0 }}>
-                          <GradingPanel
-                            attemptId={r.attempt_id}
-                            onCancel={() => setExpandedAttemptId(null)}
-                            onDone={() => {
-                              setExpandedAttemptId(null);
-                              load(); // roster 갱신
-                            }}
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </FragmentRow>
                 );
               })}
             </tbody>
@@ -387,6 +360,18 @@ export default function SessionAttendanceView({ session, onBack }) {
         · 채점 = 누테 25문항 O/X 채점 완료 수. 25/25 ✓ 되면 점수·등급이 산출됨.<br />
         · <b>유보</b> = 누테 '모른다' 8개 이상 또는 '안다' 0개일 때. 점수 산출을 유보하고 복습 처방으로 전환.
       </p>
+
+      {/* 채점 모달 */}
+      {expandedAttemptId && (
+        <GradingPanel
+          attemptId={expandedAttemptId}
+          onCancel={() => setExpandedAttemptId(null)}
+          onDone={() => {
+            setExpandedAttemptId(null);
+            load(); // roster 갱신
+          }}
+        />
+      )}
     </div>
   );
 }
