@@ -743,8 +743,8 @@ export default function MetacogStudentPage() {
 
     return (
       <div>
+        {/* 상단: 진행 바 + 남은 시간만 (텍스트 진행률은 문제 카드로 이동) */}
         <div style={S.judgeTop}>
-          <span style={S.prog}>문항 {idx + 1} / {questions.length}</span>
           <div style={S.timerWrap}>
             <div
               style={{
@@ -761,11 +761,12 @@ export default function MetacogStudentPage() {
         </div>
 
         <div style={S.qcard}>
-          <div style={S.qnum}>Q{q.q_no}</div>
+          {/* 셔플 순번 기반 진행률 — 원본 q_no는 절대 노출하지 않음 */}
+          <div style={S.qnum}>문항 {idx + 1} / {questions.length}</div>
           {q.signedUrl ? (
             <img
               src={q.signedUrl}
-              alt={`Q${q.q_no}`}
+              alt=""
               style={{ maxWidth: '100%', maxHeight: '50vh', borderRadius: 6 }}
             />
           ) : (
