@@ -62,40 +62,52 @@ function selfAwarenessType(accuracy) {
   };
 }
 
-// 한줄 해석 문구 생성 (base_score와 accuracy 조합)
+// 한 줄 해석 4분기 — finalScore 기준 정렬
+// (학부모가 보는 종합 점수와 해석 문구가 항상 같은 방향)
+//  1분기: final ≥ 75             → 우수
+//  2분기: 60 ≤ final < 75 + 정확도 우세 → 자기 실력 파악은 정확
+//  3분기: 60 ≤ final < 75 + 실력 우세   → 많이 알지만 판단 정확도
+//  4분기: final < 60             → 기초부터
 function oneLineText({ studentName, baseScore, accuracy, finalScore }) {
-  const baseHigh = baseScore >= 75;
-  const accHigh = accuracy >= 0.75;
+  const accPct = accuracy * 100;
 
-  if (accHigh && baseHigh) {
+  // 1분기 — 우수
+  if (finalScore >= 75) {
     return (
       <>
-        {studentName} 학생은 <b>많은 문항을 알고 있으며, "안다"고 한 것을 실제로도 잘 맞혔습니다.</b>{' '}
+        {studentName} 학생은 <b>많은 문항을 알고, "안다"고 한 것을 실제로도 잘 맞혔습니다.</b>{' '}
         실력과 자기인식 모두 <span className="mr-hl">우수한 수준</span>입니다.
       </>
     );
   }
-  if (accHigh && !baseHigh) {
+
+  // 60 ≤ final < 75 — 보통 구간에서 정확도 vs 실력 상대 우열로 분기
+  if (finalScore >= 60) {
+    if (accPct >= baseScore) {
+      // 2분기 — 정확도 우세
+      return (
+        <>
+          {studentName} 학생은 <b>"안다"고 한 문항을 실제로 대부분 맞혀</b>{' '}
+          <span className="mr-hl">자기 실력 파악은 정확</span>한 편입니다.
+          다만 아직 <b>모르는 문항이 남아 있어</b> 종합 점수는 {finalScore}점으로 나타났습니다.
+        </>
+      );
+    }
+    // 3분기 — 실력 우세(실력은 있으나 판단 정확도 낮음)
     return (
       <>
-        {studentName} 학생은 <b>"안다"고 한 문항을 실제로 대부분 맞혀</b>{' '}
-        <span className="mr-hl">자기 실력 파악은 정확</span>한 편입니다.
-        다만 아직 <b>모르는 문항이 남아 있어</b> 종합 점수는 {finalScore}점으로 나타났습니다.
+        {studentName} 학생은 <b>배운 문항 대부분을 알고 있지만,</b>{' '}
+        "안다"고 한 것 중 <span className="mr-hl">틀린 문항이 있어</span>{' '}
+        종합 점수는 {finalScore}점으로 나타났습니다.
+        자기 판단의 정확도를 높이는 연습이 필요합니다.
       </>
     );
   }
-  if (!accHigh && baseHigh) {
-    return (
-      <>
-        {studentName} 학생은 <b>많은 문항을 알고 있지만,</b>{' '}
-        "안다"고 한 것 중 <span className="mr-hl">틀린 문항이 적지 않아</span>{' '}
-        종합 점수는 {finalScore}점으로 나타났습니다. 자기 판단의 정확도를 높이는 연습이 필요합니다.
-      </>
-    );
-  }
+
+  // 4분기 — 미흡(final < 60)
   return (
     <>
-      {studentName} 학생은 <b>모르는 문항이 많고,</b>{' '}
+      {studentName} 학생은 <b>아직 모르는 문항이 많고,</b>{' '}
       "안다"고 한 것도 <span className="mr-hl">실제와 어긋난 경우가 있어</span>{' '}
       종합 점수는 {finalScore}점으로 나타났습니다. 기초부터 함께 다져가겠습니다.
     </>
