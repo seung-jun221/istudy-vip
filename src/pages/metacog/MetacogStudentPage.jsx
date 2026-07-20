@@ -123,6 +123,9 @@ export default function MetacogStudentPage() {
 
   const beep = useBeep();
   const intervalRef = useRef(null);
+  // 탭 숨김 상태에서 타이머 tick을 스킵하기 위한 flag
+  // (실제 판단 시간에만 시간이 흐르게 — 탭 전환 등 이탈 방지)
+  const pausedRef = useRef(false);
 
   // ------------------------------------------------------------
   // 상태 초기화 (순회식: 완료 후 자동 리셋)
@@ -313,6 +316,7 @@ export default function MetacogStudentPage() {
     let warned = false;
 
     intervalRef.current = setInterval(() => {
+      if (pausedRef.current) return; // 탭 숨김/포커스 아웃 → tick 스킵
       t -= 0.1;
       if (t <= 0 && !warned) {
         warned = true;
@@ -337,6 +341,32 @@ export default function MetacogStudentPage() {
     if (questions[idx + 1]) preloadImage(questions[idx + 1].signedUrl);
     if (questions[idx + 2]) preloadImage(questions[idx + 2].signedUrl);
   }, [phase, idx, questions]);
+
+  // 응시 중(test/sample) 이탈 방지 — beforeunload 경고
+  useEffect(() => {
+    if (phase !== 'test' && phase !== 'sample') return;
+    const handler = (e) => {
+      e.preventDefault();
+      e.returnValue = ''; // Chrome/Edge 는 이 세팅이 있어야 대화상자를 띄움
+      return '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [phase]);
+
+  // 탭 숨김(다른 탭 전환/최소화/beforeunload 대화상자 등)이면 타이머 pause
+  // 복귀 시 남은 시간 그대로 이어감
+  useEffect(() => {
+    if (phase !== 'test' && phase !== 'sample') return;
+    const handler = () => {
+      pausedRef.current = document.hidden;
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => {
+      document.removeEventListener('visibilitychange', handler);
+      pausedRef.current = false; // phase 이탈 시 안전하게 해제
+    };
+  }, [phase]);
 
   const chooseTest = (judgment, forced = false) => {
     if (intervalRef.current) {
@@ -369,6 +399,7 @@ export default function MetacogStudentPage() {
     let warned = false;
 
     intervalRef.current = setInterval(() => {
+      if (pausedRef.current) return; // 탭 숨김/포커스 아웃 → tick 스킵
       t -= 0.1;
       if (t <= 0 && !warned) {
         warned = true;

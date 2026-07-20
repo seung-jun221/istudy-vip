@@ -59,6 +59,27 @@ export default function SessionAttendanceView({ session, onBack }) {
     if (session?.id) load();
   }, [session?.id]);
 
+  const handleReset = async (r) => {
+    const msg =
+      `${r.student_name} 학생(${r.class_name || '-'})의 응시 기록을 삭제합니다.\n\n` +
+      `· 응시·답변·검증 채점이 모두 삭제됩니다\n` +
+      `· 되돌릴 수 없습니다\n` +
+      `· 삭제 후 학생은 다시 응시할 수 있습니다\n\n` +
+      `계속하시겠습니까?`;
+    if (!window.confirm(msg)) return;
+
+    const { error: err } = await supabase.rpc('reset_metacog_attempt', {
+      p_attempt_id: r.attempt_id,
+    });
+    if (err) {
+      console.error('reset_metacog_attempt 오류:', err);
+      alert('초기화 실패: ' + err.message);
+      return;
+    }
+    setExpandedAttemptId(null);
+    load();
+  };
+
   const attendees = useMemo(
     () => roster.filter((r) => r.attempt_id),
     [roster]
@@ -327,6 +348,18 @@ export default function SessionAttendanceView({ session, onBack }) {
                               title="학부모 리포트 URL 복사 (카톡 발송용)"
                             >
                               리포트
+                            </button>
+                            <button
+                              onClick={() => handleReset(r)}
+                              style={{
+                                ...actionBtn,
+                                background: 'white',
+                                color: '#a8543f',
+                                border: '1px solid #a8543f',
+                              }}
+                              title="응시 기록 삭제 (재응시 허용)"
+                            >
+                              초기화
                             </button>
                           </div>
                         ) : done ? (
