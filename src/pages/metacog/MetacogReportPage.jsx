@@ -1,15 +1,13 @@
-// 학부모용 메타인지 결과 리포트
+// v2 학부모용 메타인지 결과 리포트 (점수제)
 // - 라우트: /metacog-report/:attemptId
 // - UUID = 인증 (진단검사 리포트와 동일 정책, anon 접근 허용)
-// - 첨부 시안(bb39cf94-*.html) 그대로 이식: 딥그린/골드/아이보리 밝은 톤
-// - 미채점 상태(verify.graded < verify.total) 시 검증 관련 부분을 "채점 대기 중"으로
+// - 4분면 시각화 제거 → 점수·등급 중심
+// - 채점 미완료/측정유보 케이스 각각 안내
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../utils/supabase';
 import './MetacogReportPage.css';
-
-const TRACK_LABELS = { mono: '모노', tri: '트라이', tetra: '테트라' };
 
 function formatKoreanDate(iso) {
   if (!iso) return '-';
@@ -17,46 +15,22 @@ function formatKoreanDate(iso) {
   return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()} 응시`;
 }
 
-// 4분면 유형 판정
-// x = 있다 비율 (>=0.5 자신 있게 / <0.5 신중)
-// y = 실제 정답률 (>=0.5 실제로 잘 앎 / <0.5 실제로는 약함)
-function determineType(x, y) {
-  const highX = x >= 0.5;
-  const highY = y >= 0.5;
-  if (highY && highX) {
-    return {
-      key: 'q1',
-      title: '아는 것을 정확히 압니다',
-      color: '#1a7a4a',
-      bg: '#dbeee2',
-      desc: '자기 실력을 정확히 파악하고 있습니다. 앞으로도 이 감각을 유지하며 다음 단계에 도전할 수 있습니다.',
-    };
+// 등급별 색상/설명 (SQL의 grade cut과 매칭)
+function gradeInfo(grade) {
+  switch (grade) {
+    case '매우우수':
+      return { color: '#1a7a4a', bg: '#dbeee2', label: '매우 우수' };
+    case '우수':
+      return { color: '#2b8a86', bg: '#e8f3ec', label: '우수' };
+    case '보통':
+      return { color: '#c89216', bg: '#fdf4e3', label: '보통' };
+    case '미흡':
+      return { color: '#c0692e', bg: '#fbece8', label: '미흡' };
+    case '매우미흡':
+      return { color: '#a8543f', bg: '#fbe4dd', label: '매우 미흡' };
+    default:
+      return { color: '#666', bg: '#f0f0f0', label: grade || '-' };
   }
-  if (highY && !highX) {
-    return {
-      key: 'q2',
-      title: '실력은 있는데, 자신을 낮게 봅니다',
-      color: '#2b8a86',
-      bg: '#e8f3ec',
-      desc: '실제로 풀 수 있는 문제도 "모르겠다"고 판단하는 경향이 있습니다. 아는 것을 확신하지 못해 도전을 망설일 수 있어, 자신감을 키워주는 지도가 도움이 됩니다.',
-    };
-  }
-  if (!highY && !highX) {
-    return {
-      key: 'q3',
-      title: '기초부터 차근차근 다져야 합니다',
-      color: '#b5541f',
-      bg: '#fbece8',
-      desc: '아직 아는 것과 모르는 것의 경계가 명확하지 않습니다. 기초 개념을 다시 짚으며 판단 근거를 만들어가야 합니다.',
-    };
-  }
-  return {
-    key: 'q4',
-    title: '자신감이 실력보다 앞섭니다',
-    color: '#c89216',
-    bg: '#fdf4e3',
-    desc: '"안다"고 판단한 문항 중 상당수를 실제로는 틀렸습니다. 정직한 자기평가 훈련이 필요합니다.',
-  };
 }
 
 export default function MetacogReportPage() {
@@ -88,22 +62,6 @@ export default function MetacogReportPage() {
     return () => { cancelled = true; };
   }, [attemptId]);
 
-  // 4분면 계산
-  const chart = useMemo(() => {
-    if (!data) return null;
-    const canRatio = data.stats.total_count > 0
-      ? data.stats.can_count / data.stats.total_count
-      : 0;
-    const isFullyGraded =
-      data.verify.total > 0 && data.verify.graded === data.verify.total;
-    const correctRatio = isFullyGraded
-      ? data.verify.correct / data.verify.total
-      : null;
-    const type =
-      correctRatio != null ? determineType(canRatio, correctRatio) : null;
-    return { canRatio, correctRatio, type, isFullyGraded };
-  }, [data]);
-
   if (loading) {
     return (
       <div className="mr-loading">
@@ -125,26 +83,14 @@ export default function MetacogReportPage() {
     );
   }
 
-  const { student, session, stats, verify, cannot_qnos, submitted_at } = data;
-  const isPartiallyGraded =
-    verify.total > 0 && verify.graded < verify.total;
-  const isFullyGraded =
-    verify.total > 0 && verify.graded === verify.total;
-  const noVerify = verify.total === 0;
-
-  // 점 위치 % (4분면 안 좌표)
-  // canRatio 0~1 → left 0%~100%
-  // correctRatio 0~1 → top 100%~0% (위가 y 높음)
-  const dotLeft = chart ? `${Math.max(5, Math.min(95, chart.canRatio * 100))}%` : '50%';
-  const dotTop =
-    chart?.correctRatio != null
-      ? `${Math.max(5, Math.min(95, (1 - chart.correctRatio) * 100))}%`
-      : '50%';
+  const { student, session, stats, score, cannot_qnos, submitted_at } = data;
+  const isScored = score?.is_scored === true;
+  const isReserved = score?.is_reserved === true;
+  const gInfo = gradeInfo(score?.grade);
 
   return (
     <div className="mr-body">
       <div className="mr-sheet">
-
         {/* 헤더 */}
         <div className="mr-head">
           <span className="mr-badge">수리탐구 메타인지 트레이닝</span>
@@ -169,26 +115,64 @@ export default function MetacogReportPage() {
         {/* 핵심 한 문장 */}
         <div className="mr-summary">
           <div className="mr-summary-label">한눈에 보기</div>
-          {isFullyGraded ? (
+          {isReserved ? (
             <p>
               <b>{student.name} 학생</b>은<br />
-              {stats.total_count}문항 중 <b>{stats.can_count}문항</b>을 "풀 수 있다"고 판단했고,<br />
-              이 중 무작위 <b>{verify.total}문항</b>을 실제로 풀어{' '}
-              <span className="mr-hl"><b>{verify.correct}문항</b>을 맞혔습니다.</span>
+              이번 회차는 <span className="mr-hl"><b>기초 학습이 더 필요한 단계</b></span>로 판단되어<br />
+              점수 산출은 유보합니다. 복습 과제를 통해 다져나가겠습니다.
             </p>
-          ) : noVerify ? (
+          ) : isScored ? (
             <p>
-              <b>{student.name} 학생</b>은<br />
-              {stats.total_count}문항 모두를 "모르겠다"로 판단했습니다.<br />
-              검증할 문항이 없어 처방 위주로 안내드립니다.
+              <b>{student.name} 학생</b>의<br />
+              이번 메타인지 결과는{' '}
+              <span className="mr-hl"><b>{score.final_score}점 ({gInfo.label})</b></span>입니다.
             </p>
           ) : (
             <p>
               <b>{student.name} 학생</b>은<br />
               {stats.total_count}문항 중 <b>{stats.can_count}문항</b>을 "풀 수 있다"고 판단했습니다.<br />
-              검증 <b>{verify.total}문항</b> 채점이 완료되면{' '}
-              <span className="mr-hl">자기인식 결과</span>가 함께 표시됩니다.
+              누테 시험 채점이 완료되면 <span className="mr-hl">점수와 등급</span>이 표시됩니다.
             </p>
+          )}
+        </div>
+
+        {/* 점수 카드 (측정유보/채점대기 상태별 분기) */}
+        <div className="mr-section">
+          <div className="mr-stitle">이번 회차 결과</div>
+          <div className="mr-ssub">
+            누테 25문항 채점 결과와 자기 판단을 종합한 점수입니다.
+          </div>
+
+          {isScored ? (
+            <div className="mr-score-card" style={{ background: gInfo.bg }}>
+              <div className="mr-score-num" style={{ color: gInfo.color }}>
+                {score.final_score}
+                <span className="mr-score-unit">/ 100</span>
+              </div>
+              <div className="mr-score-grade" style={{ color: gInfo.color }}>
+                {gInfo.label}
+              </div>
+              <div className="mr-score-detail">
+                기본 점수 <b>{score.base_score}</b> ×{' '}
+                누테 정답률 <b>{score.nute_can_correct}/{score.nute_can}</b>{' '}
+                = 최종 <b>{score.final_score}</b>점
+              </div>
+            </div>
+          ) : isReserved ? (
+            <div className="mr-score-card mr-score-reserved">
+              <div className="mr-score-reserved-title">측정 유보</div>
+              <div className="mr-score-reserved-desc">
+                {score.reserved_reason === '누테 25문항 중 안다 판정이 없음'
+                  ? "이번 회차는 '안다'로 판단한 누테 문항이 없어 점수 산출을 유보합니다."
+                  : "이번 회차는 모르는 문항 비중이 높아 점수 산출을 유보합니다."}
+                <br />
+                복습 과제로 기초를 다진 후 다음 회차에 다시 측정하겠습니다.
+              </div>
+            </div>
+          ) : (
+            <div className="mr-pending">
+              누테 시험 채점 완료 후 이 곳에 점수와 등급이 표시됩니다.
+            </div>
           )}
         </div>
 
@@ -208,66 +192,6 @@ export default function MetacogReportPage() {
           </div>
         </div>
 
-        {/* 자기인식 유형 (4분면) */}
-        <div className="mr-section">
-          <div className="mr-stitle">자기인식 유형</div>
-          <div className="mr-ssub">
-            가로는 '안다고 답한 비율', 세로는 '실제 정답률'입니다.
-            두 축이 만나는 곳에 우리 아이가 있습니다.
-          </div>
-
-          {isFullyGraded && chart?.type ? (
-            <>
-              <div className="mr-quad-wrap">
-                <div className="mr-lbl mr-lbl-top">실제로 잘 앎</div>
-                <div className="mr-lbl mr-lbl-bottom">실제로는 약함</div>
-                <div className="mr-lbl mr-lbl-left">신중하게 판단</div>
-                <div className="mr-lbl mr-lbl-right">자신 있게 판단</div>
-
-                <div className="mr-quad">
-                  <div className="mr-q2">
-                    <div className="mr-q-name">실력 있음 +<br />자신감 부족</div>
-                  </div>
-                  <div className="mr-q1">
-                    <div className="mr-goal-arrow">↗ 목표</div>
-                    <div className="mr-q-name">아는 것을<br />정확히 앎 ★</div>
-                  </div>
-                  <div className="mr-q3">
-                    <div className="mr-q-name">기초부터<br />차근차근</div>
-                  </div>
-                  <div className="mr-q4">
-                    <div className="mr-q-name">자신감이<br />앞섬</div>
-                  </div>
-                </div>
-
-                <div className="mr-cross-v" />
-                <div className="mr-cross-h" />
-
-                <div className="mr-dot" style={{ left: dotLeft, top: dotTop }} />
-              </div>
-              <div className="mr-quad-note">
-                {verify.total}문항 표본으로 측정한 경향성이며, 참고 지표입니다.
-              </div>
-
-              <div
-                className="mr-type-card"
-                style={{ background: chart.type.bg, borderLeftColor: chart.type.color }}
-              >
-                <div className="mr-t" style={{ color: chart.type.color }}>
-                  {chart.type.title}
-                </div>
-                <div className="mr-d">{chart.type.desc}</div>
-              </div>
-            </>
-          ) : (
-            <div className="mr-pending">
-              {noVerify
-                ? "'풀 수 있다'로 판정한 문항이 없어 자기인식 유형 진단이 어렵습니다."
-                : '검증 문항 채점이 완료되면 이 곳에 자기인식 유형이 표시됩니다.'}
-            </div>
-          )}
-        </div>
-
         {/* 처방 */}
         <div className="mr-section">
           <div className="mr-stitle">이렇게 지도합니다</div>
@@ -283,76 +207,29 @@ export default function MetacogReportPage() {
             </div>
           </div>
 
-          <div className="mr-rx-item">
-            <div className="mr-rx-ic">2</div>
-            <div className="mr-rx-tx">
-              {isFullyGraded ? (
-                verify.wrong > 0 ? (
-                  <>
-                    <div className="mr-rt">확인 학습 · {verify.wrong}문항</div>
-                    <div className="mr-rd">
-                      "안다"고 했으나 틀린 문항(<b>{verify.wrong}문항</b>)은
-                      개념을 다시 짚어드립니다.
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="mr-rt">확인 학습 · 해당 없음</div>
-                    <div className="mr-rd">
-                      "안다"고 판단한 문항을 모두 정확히 알고 있었습니다.
-                    </div>
-                  </>
-                )
-              ) : isPartiallyGraded ? (
-                <>
-                  <div className="mr-rt">확인 학습 · 채점 대기 중</div>
-                  <div className="mr-rd">
-                    검증 문항 채점 완료 후 확정됩니다 ({verify.graded}/{verify.total} 채점).
-                  </div>
-                </>
-              ) : noVerify ? (
-                <>
-                  <div className="mr-rt">확인 학습 · 해당 없음</div>
-                  <div className="mr-rd">"안다"고 판단한 문항이 없어 확인 대상이 없습니다.</div>
-                </>
-              ) : (
-                <>
-                  <div className="mr-rt">확인 학습 · 채점 대기 중</div>
-                  <div className="mr-rd">검증 문항 채점 완료 후 확정됩니다.</div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* 3번 처방: q1(진짜 아는) 유형은 별도 코칭 불필요 → 항목 자체 생략 */}
-          {(!isFullyGraded || (chart?.type && chart.type.key !== 'q1')) && (
+          {isScored && score.nute_can_correct < score.nute_can && (
             <div className="mr-rx-item">
-              <div className="mr-rx-ic">3</div>
+              <div className="mr-rx-ic">2</div>
               <div className="mr-rx-tx">
-                {isFullyGraded && chart?.type ? (
-                  <>
-                    <div className="mr-rt">
-                      {chart.type.key === 'q2' && '자신감 코칭'}
-                      {chart.type.key === 'q3' && '기초 개념 정리'}
-                      {chart.type.key === 'q4' && '정직한 자기평가 훈련'}
-                    </div>
-                    <div className="mr-rd">
-                      {chart.type.key === 'q2' &&
-                        '아는 것을 "안다"고 말할 수 있도록 발표·설명 훈련을 병행합니다.'}
-                      {chart.type.key === 'q3' &&
-                        '판단 근거가 될 기초 개념부터 다시 짚어 자기평가의 토대를 만듭니다.'}
-                      {chart.type.key === 'q4' &&
-                        '"확실할 때만 확실하다"고 말하는 훈련을 통해 자기평가 정확도를 높입니다.'}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="mr-rt">맞춤 코칭</div>
-                    <div className="mr-rd">
-                      검증 채점 완료 후 학생별 유형에 맞는 코칭 방향을 안내드립니다.
-                    </div>
-                  </>
-                )}
+                <div className="mr-rt">
+                  확인 학습 · {score.nute_can - score.nute_can_correct}문항
+                </div>
+                <div className="mr-rd">
+                  "안다"고 판단했으나 실제로 틀린 문항(<b>{score.nute_can - score.nute_can_correct}문항</b>)은
+                  개념을 다시 짚어드립니다.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isReserved && (
+            <div className="mr-rx-item">
+              <div className="mr-rx-ic">2</div>
+              <div className="mr-rx-tx">
+                <div className="mr-rt">기초 다지기</div>
+                <div className="mr-rd">
+                  이번 회차의 복습 과제를 완료한 후, 다음 회차에서 재측정합니다.
+                </div>
               </div>
             </div>
           )}
@@ -369,11 +246,10 @@ export default function MetacogReportPage() {
           </p>
           <div className="mr-foot">
             i.study 수리탐구학원<br />
-            본 진단은 {verify.total || 5}문항 표본 검증으로, 경향성을 보는 참고 지표입니다.
+            본 진단은 누테 25문항 채점 결과 기반이며, 참고 지표입니다.
           </div>
         </div>
 
-        {/* 없다 문항 목록 (참고용, 최소 표기) */}
         {cannot_qnos && cannot_qnos.length > 0 && (
           <details className="mr-details">
             <summary>복습 과제 문항번호 보기 ({cannot_qnos.length}개)</summary>

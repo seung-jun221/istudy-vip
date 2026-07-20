@@ -300,6 +300,63 @@
   line-height: 1.6;
 }
 
+/* v2 점수 카드 */
+.mr-score-card {
+  border-radius: 14px;
+  padding: 22px 20px;
+  text-align: center;
+  margin-top: 4px;
+}
+.mr-score-num {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+.mr-score-unit {
+  font-size: 16px;
+  font-weight: 600;
+  opacity: 0.6;
+  margin-left: 4px;
+}
+.mr-score-grade {
+  font-size: 15px;
+  font-weight: 800;
+  margin-top: 8px;
+  padding: 4px 12px;
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 20px;
+}
+.mr-score-detail {
+  font-size: 11px;
+  color: #666;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  line-height: 1.6;
+}
+.mr-score-detail b {
+  color: #0d3b2e;
+  font-weight: 700;
+}
+
+.mr-score-reserved {
+  background: #f5f1e8;
+  border: 1px dashed #d4a537;
+}
+.mr-score-reserved-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #c0692e;
+  margin-bottom: 8px;
+}
+.mr-score-reserved-desc {
+  font-size: 12.5px;
+  color: #666;
+  line-height: 1.7;
+}
+
 /* ── 처방 ── */
 .mr-rx-item {
   display: flex;

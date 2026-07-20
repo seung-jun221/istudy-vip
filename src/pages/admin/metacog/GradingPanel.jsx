@@ -1,21 +1,22 @@
-// 채점 인라인 확장 패널
+// v2 채점 인라인 확장 패널 — 누테 25문항 5×5 그리드
 // SessionAttendanceView에서 응시자 행 클릭 시 하단에 펼쳐짐.
-// - 검증 5문항(있다 5개 미만이면 그만큼) 로드
-// - 각 문항: 이미지 썸네일 + q_no + O/X 토글
-// - 저장 → grade_verify_items RPC → 성공 시 부모에 알림 → 접힘
+// - 기본: 전체 O 세팅 (진단검사 온라인 채점과 동일 UX)
+// - 틀린 문항만 클릭해서 X로 토글
+// - 저장: grade_nute RPC (UPSERT)
 //
-// 이미지 signed URL 발급 실패 시 문항번호만 표시(폴백).
+// 강사는 이 그리드를 종이 누테 시험지와 대조하며 X만 표시.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../../utils/supabase';
 
-const BUCKET = 'metacog-questions';
+const NUTE_COUNT = 25;
 
-export default function GradingPanel({ attemptId, track, onDone, onCancel }) {
+export default function GradingPanel({ attemptId, onDone, onCancel }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [items, setItems] = useState([]);
-  // items: [{q_no, correct: true|false|null, imageUrl}]
+  const [data, setData] = useState(null);
+  // grades: { [q_no]: true|false } — 로컬 편집 상태
+  const [grades, setGrades] = useState({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -24,199 +25,157 @@ export default function GradingPanel({ attemptId, track, onDone, onCancel }) {
       setLoading(true);
       setError('');
 
-      // 1) 이 attempt의 검증 문항 조회 (기존 correct 값 초기화용)
-      const { data: verify, error: vErr } = await supabase
-        .from('metacog_verify_items')
-        .select('q_no, correct')
-        .eq('attempt_id', attemptId)
-        .order('q_no');
+      const { data: result, error: err } = await supabase.rpc(
+        'get_nute_grading_data',
+        { p_attempt_id: attemptId }
+      );
 
-      if (vErr) {
+      if (err || !result) {
         if (!cancelled) {
-          setError('검증 문항 로드 실패: ' + vErr.message);
+          setError('채점 데이터 로드 실패: ' + (err?.message || 'unknown'));
           setLoading(false);
         }
         return;
       }
 
-      if (!verify || verify.length === 0) {
-        if (!cancelled) {
-          setError('검증 문항이 없습니다. (있다 판정이 없었던 응시)');
-          setLoading(false);
-        }
-        return;
+      const items = result.items || [];
+      const initGrades = {};
+      // 기본 전체 O (true) 세팅. 기존 채점 있으면 그 값으로 오버라이드.
+      for (let n = 1; n <= NUTE_COUNT; n++) {
+        const found = items.find((it) => it.q_no === n);
+        initGrades[n] = found?.correct != null ? found.correct : true;
       }
-
-      // 2) 각 문항 이미지 URL 조회 (metacog_questions에서 image_url 경로)
-      const qNos = verify.map((v) => v.q_no);
-      const { data: qs, error: qErr } = await supabase
-        .from('metacog_questions')
-        .select('q_no, image_url')
-        .eq('track', track)
-        .in('q_no', qNos);
-
-      const qMap = new Map((qs || []).map((q) => [q.q_no, q.image_url]));
-
-      // 3) signed URL 발급 (실패해도 진행 — 이미지 없이 문항번호만)
-      const paths = verify.map((v) => qMap.get(v.q_no)).filter(Boolean);
-      let urlMap = new Map();
-      if (paths.length > 0) {
-        const { data: urls } = await supabase.storage
-          .from(BUCKET)
-          .createSignedUrls(paths, 3600);
-        if (urls) {
-          paths.forEach((p, i) => {
-            if (urls[i]?.signedUrl) urlMap.set(p, urls[i].signedUrl);
-          });
-        }
-      }
-      if (qErr) {
-        console.warn('문항 이미지 경로 조회 실패 (문항번호만 표시):', qErr);
-      }
-
       if (!cancelled) {
-        setItems(
-          verify.map((v) => ({
-            q_no: v.q_no,
-            correct: v.correct, // 이미 채점된 경우 true/false, 아니면 null
-            imageUrl: urlMap.get(qMap.get(v.q_no)) || null,
-          }))
-        );
+        setData(result);
+        setGrades(initGrades);
         setLoading(false);
       }
     })();
+    return () => { cancelled = true; };
+  }, [attemptId]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [attemptId, track]);
-
-  const setCorrect = (q_no, value) => {
-    setItems((prev) =>
-      prev.map((it) => (it.q_no === q_no ? { ...it, correct: value } : it))
-    );
+  const toggle = (n) => {
+    setGrades((prev) => ({ ...prev, [n]: !prev[n] }));
   };
 
-  const gradedCount = items.filter((it) => it.correct !== null).length;
-  const canSave = gradedCount > 0 && !saving;
+  const wrongCount = useMemo(
+    () => Object.values(grades).filter((v) => v === false).length,
+    [grades]
+  );
+  const correctCount = NUTE_COUNT - wrongCount;
 
   const handleSave = async () => {
     setSaving(true);
     setError('');
-    // null이 아닌 항목만 전송 (부분 저장 허용)
-    const results = items
-      .filter((it) => it.correct !== null)
-      .map((it) => ({ q_no: it.q_no, correct: it.correct }));
 
-    const { data, error: err } = await supabase.rpc('grade_verify_items', {
+    const results = [];
+    for (let n = 1; n <= NUTE_COUNT; n++) {
+      if (grades[n] !== undefined) {
+        results.push({ q_no: n, correct: grades[n] });
+      }
+    }
+
+    const { data: resp, error: err } = await supabase.rpc('grade_nute', {
       p_attempt_id: attemptId,
       p_results: results,
     });
 
     if (err) {
-      console.error('grade_verify_items 오류:', err);
+      console.error('grade_nute 오류:', err);
       setError('저장 실패: ' + err.message);
       setSaving(false);
       return;
     }
 
     setSaving(false);
-    if (onDone) onDone({ updated: data?.[0]?.updated_count || 0, total: data?.[0]?.verify_count || 0 });
+    if (onDone) onDone({ upserted: resp?.[0]?.upserted_count || 0, total: resp?.[0]?.total_graded || 0 });
   };
 
   return (
     <div style={styles.panel}>
       <div style={styles.header}>
-        <b style={{ color: '#0d3b2e' }}>검증 문항 채점</b>
-        <span style={{ fontSize: 12, color: '#666' }}>
-          {loading ? '로드 중...' : `${gradedCount}/${items.length} 채점`}
-        </span>
+        <div>
+          <b style={{ color: '#0d3b2e', fontSize: 14 }}>누테 25문항 채점</b>
+          {data?.student?.name && (
+            <span style={{ color: '#666', fontSize: 12, marginLeft: 8 }}>
+              {data.student.name} · {data.student.class_name || '-'}
+            </span>
+          )}
+        </div>
+        <div style={{ fontSize: 12, color: '#666' }}>
+          정답 <b style={{ color: '#0d3b2e' }}>{correctCount}</b> · 오답 <b style={{ color: '#a8543f' }}>{wrongCount}</b>
+        </div>
+      </div>
+
+      <div style={styles.hint}>
+        기본은 <b style={{ color: '#0d3b2e' }}>전체 O</b>입니다.
+        종이 누테 시험지를 보며 <b style={{ color: '#a8543f' }}>틀린 문항 번호</b>만 눌러 X로 바꾸세요.
       </div>
 
       {loading ? (
-        <div style={{ padding: 20, textAlign: 'center', color: '#666' }}>
-          로드 중...
-        </div>
+        <div style={{ padding: 30, textAlign: 'center', color: '#666' }}>로드 중...</div>
       ) : error ? (
         <div style={styles.errorBox}>{error}</div>
-      ) : items.length === 0 ? (
-        <div style={{ padding: 20, textAlign: 'center', color: '#666' }}>
-          검증 문항이 없습니다.
-        </div>
       ) : (
-        <div style={styles.list}>
-          {items.map((it) => (
-            <div key={it.q_no} style={styles.row}>
-              <div style={styles.thumb}>
-                {it.imageUrl ? (
-                  <img
-                    src={it.imageUrl}
-                    alt={`Q${it.q_no}`}
-                    style={{ maxWidth: '100%', maxHeight: 140, display: 'block' }}
-                  />
-                ) : (
-                  <span style={{ color: '#999', fontSize: 12 }}>이미지 없음</span>
+        <div style={styles.grid}>
+          {Array.from({ length: NUTE_COUNT }, (_, i) => i + 1).map((n) => {
+            const isCorrect = grades[n];
+            const item = data?.items?.find((it) => it.q_no === n);
+            return (
+              <button
+                key={n}
+                type="button"
+                onClick={() => toggle(n)}
+                disabled={saving}
+                title={
+                  item?.judgment === 'can'
+                    ? '학생: 안다고 판단'
+                    : item?.judgment === 'cannot'
+                    ? '학생: 모른다고 판단'
+                    : ''
+                }
+                style={{
+                  ...styles.cell,
+                  background: isCorrect ? '#e8f5e9' : '#a8543f',
+                  color: isCorrect ? '#0d3b2e' : '#fff',
+                  borderColor: isCorrect ? '#3f7d5a' : '#a8543f',
+                }}
+              >
+                <div style={styles.cellNum}>{n}</div>
+                <div style={styles.cellMark}>{isCorrect ? 'O' : 'X'}</div>
+                {item?.judgment && (
+                  <div
+                    style={{
+                      ...styles.cellJudgment,
+                      color: isCorrect
+                        ? item.judgment === 'can' ? '#3f7d5a' : '#a8543f'
+                        : '#fff',
+                      opacity: 0.75,
+                    }}
+                  >
+                    {item.judgment === 'can' ? '안다' : '모른다'}
+                  </div>
                 )}
-              </div>
-              <div style={styles.qMeta}>
-                <div style={styles.qNo}>Q{it.q_no}</div>
-                <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-                  {it.correct === true
-                    ? '정답'
-                    : it.correct === false
-                    ? '오답'
-                    : '미채점'}
-                </div>
-              </div>
-              <div style={styles.toggle}>
-                <button
-                  onClick={() => setCorrect(it.q_no, true)}
-                  disabled={saving}
-                  style={{
-                    ...styles.toggleBtn,
-                    background: it.correct === true ? '#3f7d5a' : 'white',
-                    color: it.correct === true ? 'white' : '#3f7d5a',
-                    borderColor: '#3f7d5a',
-                  }}
-                >
-                  O
-                </button>
-                <button
-                  onClick={() => setCorrect(it.q_no, false)}
-                  disabled={saving}
-                  style={{
-                    ...styles.toggleBtn,
-                    background: it.correct === false ? '#a8543f' : 'white',
-                    color: it.correct === false ? 'white' : '#a8543f',
-                    borderColor: '#a8543f',
-                  }}
-                >
-                  X
-                </button>
-              </div>
-            </div>
-          ))}
+              </button>
+            );
+          })}
         </div>
       )}
 
+      {error && !loading && (
+        <div style={{ ...styles.errorBox, marginTop: 10 }}>{error}</div>
+      )}
+
       <div style={styles.actions}>
-        <button
-          onClick={onCancel}
-          disabled={saving}
-          style={styles.cancelBtn}
-        >
+        <button onClick={onCancel} disabled={saving} style={styles.cancelBtn}>
           취소
         </button>
         <button
           onClick={handleSave}
-          disabled={!canSave}
-          style={{
-            ...styles.saveBtn,
-            opacity: canSave ? 1 : 0.5,
-            cursor: canSave ? 'pointer' : 'not-allowed',
-          }}
+          disabled={saving || loading}
+          style={{ ...styles.saveBtn, opacity: saving || loading ? 0.5 : 1 }}
         >
-          {saving ? '저장 중...' : `저장 (${gradedCount}건)`}
+          {saving ? '저장 중...' : `저장 (25문항)`}
         </button>
       </div>
     </div>
@@ -235,57 +194,54 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
     fontSize: 14,
   },
-  list: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 10,
-  },
-  row: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    padding: 10,
-    background: 'white',
-    border: '1px solid #e5e7eb',
+  hint: {
+    fontSize: 12,
+    color: '#666',
+    padding: '8px 12px',
+    background: 'rgba(255,255,255,0.6)',
     borderRadius: 6,
+    marginBottom: 12,
+    lineHeight: 1.5,
   },
-  thumb: {
-    width: 160,
-    height: 140,
-    flexShrink: 0,
-    background: '#fafafa',
-    border: '1px solid #eee',
-    borderRadius: 4,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  qMeta: {
-    flex: 1,
-    minWidth: 0,
-  },
-  qNo: {
-    fontSize: 20,
-    fontWeight: 800,
-    color: '#0d3b2e',
-  },
-  toggle: {
-    display: 'flex',
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(5, 1fr)',
     gap: 8,
-    flexShrink: 0,
   },
-  toggleBtn: {
-    width: 56,
-    height: 56,
+  cell: {
+    aspectRatio: '1',
+    minHeight: 64,
     border: '2px solid',
     borderRadius: 8,
+    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 4,
+    transition: 'background 0.1s',
+    userSelect: 'none',
+  },
+  cellNum: {
+    fontSize: 12,
+    fontWeight: 600,
+    opacity: 0.7,
+    lineHeight: 1,
+  },
+  cellMark: {
     fontSize: 22,
     fontWeight: 800,
-    cursor: 'pointer',
+    lineHeight: 1.2,
+    marginTop: 2,
+  },
+  cellJudgment: {
+    fontSize: 9.5,
+    fontWeight: 700,
+    lineHeight: 1,
+    marginTop: 2,
   },
   errorBox: {
     padding: 10,

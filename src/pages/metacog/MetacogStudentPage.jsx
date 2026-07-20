@@ -118,7 +118,6 @@ export default function MetacogStudentPage() {
   const [sampleInGrace, setSampleInGrace] = useState(false);
 
   // 완료 후 결과
-  const [verifyQNos, setVerifyQNos] = useState([]);
   const [forcedCount, setForcedCount] = useState(0);
 
   const beep = useBeep();
@@ -151,7 +150,6 @@ export default function MetacogStudentPage() {
     setSampleTimeLeft(TIME_LIMIT);
     setSampleInGrace(false);
     setSubmitting(false);
-    setVerifyQNos([]);
     setForcedCount(0);
   }, []);
 
@@ -269,8 +267,16 @@ export default function MetacogStudentPage() {
       signedUrl: urls?.[i]?.signedUrl || null,
     }));
 
-    enriched.slice(0, 3).forEach((q) => preloadImage(q.signedUrl));
-    setQuestions(enriched);
+    // v2: 학생마다 무작위 셔플 (누테 문항 q_no 1~25 위치를 학생이 눈치채지 못하게)
+    // Fisher-Yates in-place shuffle
+    const shuffled = [...enriched];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    shuffled.slice(0, 3).forEach((q) => preloadImage(q.signedUrl));
+    setQuestions(shuffled);
     setLoading(false);
     setPhase('intro');
   };
@@ -459,8 +465,7 @@ export default function MetacogStudentPage() {
       return;
     }
 
-    const row = Array.isArray(data) ? data[0] : data;
-    setVerifyQNos(row?.verify_q_nos || []);
+    // v2: submit RPC가 verify_q_nos 반환 안 함 (검증 5문항 로직 폐기)
     setForcedCount(finalAnswers.filter((a) => a.forced).length);
     setPhase('done');
 
@@ -835,33 +840,24 @@ export default function MetacogStudentPage() {
             <div style={S.statLabel}>없다 → 과제</div>
           </div>
           <div style={S.stat}>
-            <div style={{ ...S.statNum, color: COLORS.gold }}>{verifyQNos.length}</div>
-            <div style={S.statLabel}>랜덤 검증</div>
+            <div style={{ ...S.statNum, color: COLORS.gold }}>{forcedCount}</div>
+            <div style={S.statLabel}>시간초과</div>
           </div>
         </div>
 
         {forcedCount > 0 && (
-          <p style={S.forcedNote}>⏱ 시간 초과로 자동 처리된 문항: {forcedCount}개</p>
+          <p style={S.forcedNote}>⏱ 시간 초과 문항은 자동으로 '없다'로 저장되었습니다.</p>
         )}
 
         <div style={S.verifyBox}>
-          <div style={S.verifyTitle}>검증 대상 문항 (실제로 풀어봅니다)</div>
-          <div style={S.verifyList}>
-            {verifyQNos.length > 0 ? (
-              verifyQNos.map((n) => (
-                <span key={n} style={S.chip}>Q{n}</span>
-              ))
-            ) : (
-              <span style={{ color: COLORS.sub }}>'있다'로 고른 문항이 없습니다</span>
-            )}
-          </div>
-          <p style={S.verifyNote}>
-            이 중 틀린 1문항당 20문항의 추가 과제가 부과됩니다.
+          <div style={S.verifyTitle}>수고했어요!</div>
+          <p style={{ color: COLORS.sub, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+            누테(당월 시험) 채점 결과와 함께 최종 리포트가 학부모님께 전달됩니다.
           </p>
         </div>
 
         <p style={{ ...S.hint, marginTop: 14 }}>
-          1분 후 처음 화면으로 돌아갑니다. 검증 문항 번호를 종이에 옮겨 적으세요.
+          1분 후 처음 화면으로 돌아갑니다.
         </p>
         <button onClick={resetAll} style={S.secondaryBtn}>
           지금 다시 시작
