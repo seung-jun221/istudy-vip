@@ -23,7 +23,6 @@ import CampaignDetail from './pages/admin/CampaignDetail';
 import DiagnosticGrading from './pages/admin/DiagnosticGrading';
 import CourseEnrollmentsAdmin from './pages/admin/CourseEnrollmentsAdmin';
 import MetacogAdmin from './pages/admin/metacog/MetacogAdmin';
-import VerifySheetPage from './pages/admin/metacog/VerifySheetPage';
 import ReviewSheetPage from './pages/admin/metacog/ReviewSheetPage';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import Loading from './components/common/Loading';
@@ -87,14 +86,6 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <MetacogAdmin />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/metacog/verify-sheet/:attemptId"
-          element={
-            <ProtectedRoute>
-              <VerifySheetPage />
             </ProtectedRoute>
           }
         />

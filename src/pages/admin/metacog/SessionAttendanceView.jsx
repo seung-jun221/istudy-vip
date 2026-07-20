@@ -88,19 +88,13 @@ export default function SessionAttendanceView({ session, onBack }) {
     () => roster.filter((r) => !r.attempt_id),
     [roster]
   );
+  // v2: 누테 25문항 채점 기준
   const graded = useMemo(
-    () =>
-      attendees.filter(
-        (r) => r.verify_count > 0 && r.verify_count === r.verify_graded_count
-      ),
+    () => attendees.filter((r) => r.nute_graded_count >= (r.nute_total || 25)),
     [attendees]
   );
   const ungraded = useMemo(
-    () =>
-      attendees.filter(
-        (r) =>
-          r.verify_count === 0 || r.verify_count !== r.verify_graded_count
-      ),
+    () => attendees.filter((r) => r.nute_graded_count < (r.nute_total || 25)),
     [attendees]
   );
 
@@ -213,23 +207,22 @@ export default function SessionAttendanceView({ session, onBack }) {
                 <Th style={{ textAlign: 'right' }}>있다</Th>
                 <Th style={{ textAlign: 'right' }}>없다</Th>
                 <Th style={{ textAlign: 'right' }}>시간초과</Th>
-                <Th style={{ textAlign: 'right' }}>검증</Th>
                 <Th style={{ textAlign: 'right' }}>소요시간</Th>
                 <Th>제출일시</Th>
                 <Th>채점</Th>
+                <Th style={{ textAlign: 'right' }}>점수</Th>
                 <Th>액션</Th>
               </tr>
             </thead>
             <tbody>
               {displayed.map((r) => {
                 const done = !!r.attempt_id;
-                const gradedRow =
-                  done && r.verify_count > 0 && r.verify_count === r.verify_graded_count;
-                // r.attempt_id가 null(미응시자)이면 확장 로직 자체를 비활성화
-                // (null === null이 true라서 모든 미응시자가 확장되던 버그 방지)
+                const nuteTotal = r.nute_total || 25;
+                const gradedRow = done && r.nute_graded_count >= nuteTotal;
+                // 미응시자 행은 확장 로직 비활성화
                 const isExpanded =
                   r.attempt_id != null && expandedAttemptId === r.attempt_id;
-                const canGrade = done && r.verify_count > 0;
+                const canGrade = done;
 
                 return (
                   <FragmentRow key={r.student_id}>
@@ -258,7 +251,6 @@ export default function SessionAttendanceView({ session, onBack }) {
                       <Td style={{ textAlign: 'right', color: done && r.forced_count > 0 ? '#a8543f' : undefined }}>
                         {done ? r.forced_count : '-'}
                       </Td>
-                      <Td style={{ textAlign: 'right' }}>{done ? `${r.verify_count}/5` : '-'}</Td>
                       <Td
                         style={{
                           textAlign: 'right',
@@ -271,24 +263,34 @@ export default function SessionAttendanceView({ session, onBack }) {
                       <Td style={{ fontSize: 12, color: '#666' }}>{done ? formatKST(r.submitted_at) : '-'}</Td>
                       <Td>
                         {done ? (
-                          r.verify_count === 0 ? (
-                            <Badge color="#666" bg="#f0f0f0">검증 없음</Badge>
-                          ) : (
-                            <Badge
-                              color={gradedRow ? '#0d3b2e' : '#92400e'}
-                              bg={gradedRow ? '#e8f5e9' : '#fffbeb'}
-                            >
-                              {r.verify_graded_count}/{r.verify_count}
-                              {gradedRow ? ' ✓' : ''}
-                            </Badge>
-                          )
+                          <Badge
+                            color={gradedRow ? '#0d3b2e' : '#92400e'}
+                            bg={gradedRow ? '#e8f5e9' : '#fffbeb'}
+                          >
+                            {r.nute_graded_count}/{nuteTotal}
+                            {gradedRow ? ' ✓' : ''}
+                          </Badge>
                         ) : (
                           '-'
                         )}
                       </Td>
+                      <Td style={{ textAlign: 'right' }}>
+                        {!done ? '-' : r.is_reserved ? (
+                          <Badge color="#c0692e" bg="#fdf4e3">유보</Badge>
+                        ) : r.final_score != null ? (
+                          <span>
+                            <b style={{ color: '#0d3b2e', fontSize: 15 }}>{r.final_score}</b>
+                            <span style={{ color: '#666', fontSize: 11, marginLeft: 4 }}>
+                              {r.grade || ''}
+                            </span>
+                          </span>
+                        ) : (
+                          <span style={{ color: '#999', fontSize: 11 }}>채점 대기</span>
+                        )}
+                      </Td>
                       <Td>
                         {canGrade ? (
-                          <div style={{ display: 'flex', gap: 4 }}>
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                             <button
                               onClick={() =>
                                 setExpandedAttemptId(isExpanded ? null : r.attempt_id)
@@ -300,18 +302,6 @@ export default function SessionAttendanceView({ session, onBack }) {
                               }}
                             >
                               {isExpanded ? '접기' : gradedRow ? '재채점' : '채점'}
-                            </button>
-                            <button
-                              onClick={() =>
-                                window.open(
-                                  `/admin/metacog/verify-sheet/${r.attempt_id}`,
-                                  '_blank',
-                                  'noopener,noreferrer'
-                                )
-                              }
-                              style={{ ...actionBtn, background: '#d4a537', color: '#0d3b2e' }}
-                            >
-                              검증지
                             </button>
                             <button
                               onClick={() =>
@@ -374,7 +364,6 @@ export default function SessionAttendanceView({ session, onBack }) {
                         <td colSpan={11} style={{ padding: 0 }}>
                           <GradingPanel
                             attemptId={r.attempt_id}
-                            track={session.track}
                             onCancel={() => setExpandedAttemptId(null)}
                             onDone={() => {
                               setExpandedAttemptId(null);
@@ -395,7 +384,8 @@ export default function SessionAttendanceView({ session, onBack }) {
       <p style={{ fontSize: 11, color: '#999', marginTop: 12, lineHeight: 1.6 }}>
         · 소요시간 = 첫 답변 ~ 마지막 답변 (MAX-MIN answered_at). 중간 이탈이 있으면 실제와 다를 수 있음.<br />
         · <b>"측정 안 됨"</b> = 클라이언트 시각 저장 이전(초기 버전)에 응시한 데이터. 이후 응시분부터 정상 표시.<br />
-        · 검증 = 응시 후 서버 사이드에서 랜덤 고정된 검증 문항 수 (있다 5개 미만이면 그만큼만).
+        · 채점 = 누테 25문항 O/X 채점 완료 수. 25/25 ✓ 되면 점수·등급이 산출됨.<br />
+        · <b>유보</b> = 누테 '모른다' 8개 이상 또는 '안다' 0개일 때. 점수 산출을 유보하고 복습 처방으로 전환.
       </p>
     </div>
   );
