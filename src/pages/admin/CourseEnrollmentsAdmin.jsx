@@ -7,6 +7,7 @@ import { formatTimestampShort, formatDateTimeForExcel } from '../../utils/format
 import './CampaignList.css';
 
 const COURSE_OPTIONS = {
+  0: '9월 개강 사전 신청 (진도 확인 후 반 배정)',
   1: '초등 교과반 바로 입학 (주2회 / 초4~초6)',
   2: '중등입문 방학특강 → 9월 정규/주1회',
   3: '중등심화 방학특강 → 9월 정규/주1회',
