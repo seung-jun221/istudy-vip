@@ -35,6 +35,15 @@ const RENAME_MAPPING = {
   54: 56, 56: 57, 57: 58, 59: 59, 60: 60,
 };
 
+const SQL_DROP = `-- 마이그레이션 실행 전 (CHECK 임시 해제)
+ALTER TABLE metacog_questions
+  DROP CONSTRAINT IF EXISTS metacog_questions_q_no_check;`;
+
+const SQL_READD = `-- 마이그레이션 완료 후 (CHECK 복구)
+ALTER TABLE metacog_questions
+  ADD CONSTRAINT metacog_questions_q_no_check
+  CHECK (q_no BETWEEN 1 AND 60);`;
+
 const pad2 = (n) => String(n).padStart(2, '0');
 const finalPath = (n) => `${TRACK}/q${pad2(n)}.png`;
 const tempPath = (n) => `${TRACK}/_tmp_${n}.png`;
@@ -126,9 +135,11 @@ export default function MigrateMonoV2Page() {
   const execute = async () => {
     const msg =
       '⚠️ 되돌릴 수 없는 작업입니다.\n\n' +
-      `· 삭제 예정: ${pf.willDelete.length}문항\n` +
+      `· 삭제 예정: ${pf.willDelete.length}문항 (이미 0이면 건너뜀)\n` +
       `· 재배치 예정: ${pf.willRename.length}문항\n\n` +
-      '백업을 다운로드하셨나요? 계속하시겠습니까?';
+      '⚠️ q_no CHECK 제약을 미리 DROP 하셨나요?\n' +
+      '   (아래 [사전 SQL] 을 Supabase SQL Editor에서 먼저 실행)\n\n' +
+      '계속하시겠습니까?';
     if (!window.confirm(msg)) return;
 
     setRunning(true);
@@ -137,6 +148,10 @@ export default function MigrateMonoV2Page() {
 
     try {
       appendLog('=== 1단계: 삭제 15문항 ===');
+
+      if (pf.willDelete.length === 0) {
+        appendLog('삭제 대상 없음 — 이미 완료된 것으로 판단, 건너뜀', 'info');
+      }
 
       // 1a. Storage 파일 삭제
       const delPaths = pf.willDelete.map((n) => oldPath(n));
@@ -241,6 +256,10 @@ export default function MigrateMonoV2Page() {
 
       appendLog('=== 완료 ===', 'ok');
       appendLog(
+        '⚠️ 지금 [② 사후 SQL]을 Supabase SQL Editor에서 실행해 CHECK 제약을 복구하세요.',
+        'warn'
+      );
+      appendLog(
         '1~15번 슬롯은 비어있습니다. 관리자 문항 페이지에서 업로드하세요.',
         'info'
       );
@@ -296,12 +315,60 @@ export default function MigrateMonoV2Page() {
         }}
       >
         <b>⚠️ 되돌릴 수 없는 작업입니다.</b><br />
-        · 15문항 <b>삭제</b> (DB + Storage)<br />
+        · 15문항 <b>삭제</b> (DB + Storage) — 이미 완료됐으면 자동 건너뜀<br />
         · 45문항 <b>재배치</b> (q_no + Storage 파일명)<br />
         · 1~15번 슬롯은 <b>빈 상태</b>로 유지 (수동 업로드 대기)<br /><br />
         <b>실행 전 반드시 백업하세요:</b><br />
         1) 아래 [백업 JSON 다운로드] 로 DB 상태 저장<br />
         2) Supabase 대시보드 → Storage → <code>metacog-questions/mono/</code> 파일 전체 다운로드
+      </div>
+
+      {/* CHECK 제약 안내 - 사전/사후 SQL */}
+      <div
+        style={{
+          background: '#fffbeb',
+          border: '1px solid #fcd34d',
+          borderRadius: 8,
+          padding: 14,
+          marginBottom: 16,
+          fontSize: 13,
+          lineHeight: 1.6,
+          color: '#78350f',
+        }}
+      >
+        <b>⚠️ q_no CHECK 제약 해제 필요</b><br />
+        임시 번호(1000+)가 <code>q_no BETWEEN 1 AND 60</code> 제약에 걸립니다.
+        아래 SQL을 Supabase SQL Editor에서 순서대로 실행해주세요.
+        <div style={{ marginTop: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <b>① 사전 SQL — 마이그레이션 실행 전</b>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(SQL_DROP);
+                alert('사전 SQL이 복사되었습니다.');
+              }}
+              style={{ ...btnStyle, padding: '4px 10px', fontSize: 11, background: '#0d3b2e', color: 'white' }}
+            >
+              복사
+            </button>
+          </div>
+          <pre style={sqlPreStyle}>{SQL_DROP}</pre>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <b>② 사후 SQL — 마이그레이션 완료 후</b>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(SQL_READD);
+                alert('사후 SQL이 복사되었습니다.');
+              }}
+              style={{ ...btnStyle, padding: '4px 10px', fontSize: 11, background: '#0d3b2e', color: 'white' }}
+            >
+              복사
+            </button>
+          </div>
+          <pre style={sqlPreStyle}>{SQL_READD}</pre>
+        </div>
       </div>
 
       {loading ? (
@@ -454,4 +521,17 @@ const warnBoxStyle = {
   borderRadius: 6,
   fontSize: 12,
   lineHeight: 1.6,
+};
+
+const sqlPreStyle = {
+  background: '#1f2937',
+  color: '#e5e7eb',
+  padding: 10,
+  borderRadius: 6,
+  fontSize: 11.5,
+  lineHeight: 1.5,
+  marginTop: 6,
+  overflowX: 'auto',
+  fontFamily: 'monospace',
+  whiteSpace: 'pre',
 };
