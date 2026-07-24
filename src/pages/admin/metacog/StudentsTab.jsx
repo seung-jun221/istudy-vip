@@ -198,7 +198,8 @@ export default function StudentsTab({ branchId }) {
 
   /**
    * CSV 붙여넣기 파싱.
-   * 지원 구분자: 탭, 콤마
+   * 지원 구분자: 탭, 콤마, 공백(연속 가능)
+   *   → 한글 이름/반명은 공백을 안 포함하므로 공백도 안전한 구분자
    * 헤더 자동 감지 (첫 줄에 "이름/name" 포함 시 스킵)
    * 열 순서: 이름, 반, 트랙, 뒷4자리
    */
@@ -221,9 +222,12 @@ export default function StudentsTab({ branchId }) {
     const errors = [];
 
     dataLines.forEach((line, idx) => {
-      const parts = line.split(/[\t,]/).map((p) => p.trim());
+      // 탭·콤마·공백(1개 이상) 모두 구분자로 인식
+      const parts = line.split(/[,\s]+/).map((p) => p.trim()).filter(Boolean);
       if (parts.length < 4) {
-        errors.push(`${idx + 1}번째 줄: 4열(이름, 반, 트랙, 뒷4자리) 필요`);
+        errors.push(
+          `${idx + 1}번째 줄: 4열(이름, 반, 트랙, 뒷4자리) 필요 — 현재 ${parts.length}열 감지됨`
+        );
         return;
       }
       const [name, class_name, trackRaw, verify_code] = parts;
@@ -377,9 +381,10 @@ export default function StudentsTab({ branchId }) {
             엑셀에서 4열(이름, 반, 트랙, 뒷4자리)을 복사해 붙여넣으세요
           </div>
           <div style={{ fontSize: '12px', color: '#666', marginBottom: '10px', lineHeight: 1.5 }}>
+            • 구분자: 탭 · 콤마 · 공백 모두 가능<br />
             • 트랙 값: <code>mono</code> / <code>tri</code><br />
             • 첫 줄에 "이름"이나 "name" 있으면 헤더로 스킵<br />
-            • 예: <code>홍길동&nbsp;&nbsp;MS_3A&nbsp;&nbsp;mono&nbsp;&nbsp;1234</code>
+            • 예: <code>홍길동 MS_3A mono 1234</code>
           </div>
           <textarea
             value={csvText}
