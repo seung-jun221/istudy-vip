@@ -23,6 +23,7 @@ import CampaignDetail from './pages/admin/CampaignDetail';
 import DiagnosticGrading from './pages/admin/DiagnosticGrading';
 import CourseEnrollmentsAdmin from './pages/admin/CourseEnrollmentsAdmin';
 import MetacogAdmin from './pages/admin/metacog/MetacogAdmin';
+import MigrateMonoV2Page from './pages/admin/metacog/MigrateMonoV2Page';
 import ReviewSheetPage from './pages/admin/metacog/ReviewSheetPage';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import Loading from './components/common/Loading';
@@ -86,6 +87,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <MetacogAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/metacog/migrate-mono-v2"
+          element={
+            <ProtectedRoute>
+              <MigrateMonoV2Page />
             </ProtectedRoute>
           }
         />
